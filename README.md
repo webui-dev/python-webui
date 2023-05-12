@@ -1,6 +1,6 @@
 # WebUI Python v2.3.0
 
-[![Website](https://img.shields.io/circleci/project/github/badges/shields/master?style=for-the-badge)](https://github.com/webui-dev/webui) [![Website](https://img.shields.io/github/issues/webui-dev/webui.svg?branch=master&style=for-the-badge&url=https://google.com)](https://github.com/webui-dev/webui/issues) [![Website](https://img.shields.io/website?label=webui.me&style=for-the-badge&url=https://google.com)](https://webui.me/)
+[![Website](https://img.shields.io/circleci/project/github/badges/shields/master?style=for-the-badge)](https://github.com/webui-dev/python-webui) [![Website](https://img.shields.io/github/issues/webui-dev/python-webui.svg?branch=master&style=for-the-badge&url=https://google.com)](https://github.com/webui-dev/python-webui/issues) [![Website](https://img.shields.io/website?label=webui.me&style=for-the-badge&url=https://google.com)](https://webui.me/)
 
 > Use any web browser as GUI, with Python in the backend and HTML5 in the frontend, all in a lightweight Python pypi package.
 
@@ -37,6 +37,10 @@ webui.wait()
 
 [More examples](https://github.com/webui-dev/python-webui/tree/main/examples)
 
+## Documentation
+
+ - [Online Documentation](https://webui.me/docs/#/python_api)
+
 ## CppCon 2019 Presentation
 
 [Borislav Stanimirov](https://ibob.bg/) explained at [C++ Conference 2019 (*YouTube*)](https://www.youtube.com/watch?v=bbbcZd4cuxg) how beneficial it is to use the web browser as GUI.
@@ -68,10 +72,6 @@ Think of WebUI like a WebView controller, but instead of embedding the WebView c
 | Runtime Dependencies on Windows | *WebView2* | *QtCore, QtGui, QtWidgets* | ***A Web Browser*** |
 | Runtime Dependencies on Linux | *GTK3, WebKitGTK* | *QtCore, QtGui, QtWidgets* | ***A Web Browser*** |
 | Runtime Dependencies on macOS | *Cocoa, WebKit* | *QtCore, QtGui, QtWidgets* | ***A Web Browser*** |
-
-## Documentation
-
- - [Online Documentation](https://webui.me/docs/#/python_api)
 
 ## Supported Web Browsers
 
