@@ -1,7 +1,7 @@
 # WebUI PyPI Package
 
 ```sh
-git clone https://github.com/alifcommunity/webui.git
+git clone https://github.com/webui-dev/webui.git
 cd webui/packages/PyPI
 python -m pip install --upgrade pip
 python -m pip install --upgrade build

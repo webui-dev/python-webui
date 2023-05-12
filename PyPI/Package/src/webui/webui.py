@@ -2,7 +2,7 @@
 # webui_lib Library 2.3.0
 #
 # http://webui.me
-# https://github.com/alifcommunity/webui
+# https://github.com/webui-dev/webui
 #
 # Copyright (c) 2020-2023 Hassan Draga.
 # Licensed under MIT License.

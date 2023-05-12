@@ -1,31 +1,41 @@
 # WebUI Python v2.3.0
 
-[![Website](https://img.shields.io/circleci/project/github/badges/shields/master?style=for-the-badge)](https://github.com/alifcommunity/webui) [![Website](https://img.shields.io/github/issues/alifcommunity/webui.svg?branch=master&style=for-the-badge&url=https://google.com)](https://github.com/alifcommunity/webui/issues) [![Website](https://img.shields.io/website?label=webui.me&style=for-the-badge&url=https://google.com)](https://webui.me/)
+[![Website](https://img.shields.io/circleci/project/github/badges/shields/master?style=for-the-badge)](https://github.com/webui-dev/webui) [![Website](https://img.shields.io/github/issues/webui-dev/webui.svg?branch=master&style=for-the-badge&url=https://google.com)](https://github.com/webui-dev/webui/issues) [![Website](https://img.shields.io/website?label=webui.me&style=for-the-badge&url=https://google.com)](https://webui.me/)
 
 > Use any web browser as GUI, with Python in the backend and HTML5 in the frontend, all in a lightweight Python pypi package.
 
 ![ScreenShot](screenshot.png)
 
-> :warning: **Notice**:
-> 
-> * WebUI it's not a web-server solution or a framework, but it's an lightweight portable Python package to use any installed web browser as a user interface.
-> 
-> * We are currently writing documentation.
-
 ## Features
 
-- Original library written in Pure C
 - Fully Independent (*No need for any third-party runtimes*)
 - Lightweight *~900 Kb* for the whole package & Small memory footprint
 - Fast binary communication protocol between WebUI and the browser (*Instead of JSON*)
 - Multi-platform & Multi-Browser
 - Using private profile for safety
+- Original library written in Pure C
 
 ## Screenshot
 
-This [text editor example](https://github.com/alifcommunity/webui/tree/main/examples/C/text-editor) is written in Python using WebUI as the GUI library.
+This [text editor example](https://github.com/webui-dev/python-webui/tree/main/examples) is written in Python using WebUI as the GUI library.
 
 ![ScreenShot](webui_python_example.png)
+
+## Installation
+
+`pip install webui2`
+
+## Minimal Example
+
+```
+from webui import webui
+
+MyWindow = webui.window()
+MyWindow.show('<html>Hello World</html>')
+webui.wait()
+```
+
+[More examples](https://github.com/webui-dev/python-webui/tree/main/examples)
 
 ## CppCon 2019 Presentation
 
@@ -61,11 +71,7 @@ Think of WebUI like a WebView controller, but instead of embedding the WebView c
 
 ## Documentation
 
- - [Online Documentation - Python](https://webui.me/docs/#/python_api)
-
-## Examples
-
- - [Python](https://github.com/alifcommunity/webui/tree/main/examples/Python)
+ - [Online Documentation](https://webui.me/docs/#/python_api)
 
 ## Supported Web Browsers
 
@@ -106,16 +112,14 @@ Think of WebUI like a WebView controller, but instead of embedding the WebView c
 
 | Language | Status | Link |
 | ------ | ------ | ------ |
-| C | ✔️ | [examples/C](https://github.com/alifcommunity/webui/tree/main/examples/C) |
-| C++ |  ✔️ | [examples/C++](https://github.com/alifcommunity/webui/tree/main/examples/C%2B%2B) |
-| Python | ✔️ | [examples/Python](https://github.com/alifcommunity/webui/tree/main/examples/Python) |
-| JavaScript | ✔️ | [examples/TypeScript/Nodejs](https://github.com/alifcommunity/webui/tree/main/examples/TypeScript/Nodejs) |
-| TypeScript | ✔️ | [examples/TypeScript/Deno](https://github.com/alifcommunity/webui/tree/main/examples/TypeScript/Deno) |
-| Go | ✔️ | [examples/Go](https://github.com/alifcommunity/webui/tree/main/examples/Go) |
-| Rust | *Not Complete* | [examples/Rust](https://github.com/alifcommunity/webui/tree/main/examples/Rust) |
-| V | ✔️ | [malisipi/vwebui](https://github.com/malisipi/vwebui) |
-| Nim | *Not Complete* | [neroist/webui](https://github.com/neroist/webui) |
-| Zig | *Not Complete* | [desttinghim/webui](https://github.com/desttinghim/webui) |
+| C/C++ | ✔️ | [WebUI](https://github.com/webui-dev/webui) |
+| Python | ✔️ | [Python-WebUI](https://github.com/webui-dev/python-webui) |
+| TypeScript | ✔️ | [Deno](https://github.com/webui-dev/deno-webui) |
+| Go | ✔️ | [Go-WebUI](https://github.com/webui-dev/go-webui) |
+| Rust | *Not Complete* | [Rust-WebUI](https://github.com/webui-dev/rust-webui) |
+| V | ✔️ | [V-WebUI](https://github.com/webui-dev/v-webui) |
+| Nim | ✔️ | [webui-WebUI](https://github.com/webui-dev/nim-webui) |
+| Zig | *Not Complete* | [Zig-WebUI](https://github.com/webui-dev/zig-webui) |
 
 ### License
 
@@ -123,4 +127,4 @@ Think of WebUI like a WebView controller, but instead of embedding the WebView c
 
 ### Stargazers
 
-[![Stargazers repo roster for @alifcommunity/webui](https://reporoster.com/stars/alifcommunity/webui)](https://github.com/alifcommunity/webui/stargazers)
+[![Stargazers repo roster for @webui-dev/webui](https://reporoster.com/stars/webui-dev/python-webui)](https://github.com/webui-dev/python-webui/stargazers)

@@ -18,8 +18,8 @@ classifiers = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/alifcommunity/webui"
-"Bug Tracker" = "https://github.com/alifcommunity/webui/issues"
+"Homepage" = "https://github.com/webui-dev/webui"
+"Bug Tracker" = "https://github.com/webui-dev/webui/issues"
 
 [tool.setuptools]
 include-package-data = true
