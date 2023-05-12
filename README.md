@@ -27,7 +27,7 @@ This [text editor example](https://github.com/webui-dev/python-webui/tree/main/e
 
 ## Minimal Example
 
-```
+```python
 from webui import webui
 
 MyWindow = webui.window()
@@ -114,11 +114,11 @@ Think of WebUI like a WebView controller, but instead of embedding the WebView c
 | ------ | ------ | ------ |
 | C/C++ | ✔️ | [WebUI](https://github.com/webui-dev/webui) |
 | Python | ✔️ | [Python-WebUI](https://github.com/webui-dev/python-webui) |
-| TypeScript | ✔️ | [Deno](https://github.com/webui-dev/deno-webui) |
+| TypeScript / JavaScript | ✔️ | [Deno](https://github.com/webui-dev/deno-webui) |
 | Go | ✔️ | [Go-WebUI](https://github.com/webui-dev/go-webui) |
 | Rust | *Not Complete* | [Rust-WebUI](https://github.com/webui-dev/rust-webui) |
 | V | ✔️ | [V-WebUI](https://github.com/webui-dev/v-webui) |
-| Nim | ✔️ | [webui-WebUI](https://github.com/webui-dev/nim-webui) |
+| Nim | ✔️ | [Nim-WebUI](https://github.com/webui-dev/nim-webui) |
 | Zig | *Not Complete* | [Zig-WebUI](https://github.com/webui-dev/zig-webui) |
 
 ### License
