@@ -1,0 +1,92 @@
+# Build
+*.exe
+*.ilk
+*.pdb
+*.exp
+*.res
+*.out
+*.def
+*.obj
+*.iobj
+*.o
+
+# Logs
+*.log
+*.logs
+*.tlog
+
+# IDE
+.vscode/
+.vs/
+
+# Visual Studio
+.idea/
+*.recipe
+*.idb
+
+# Visual Studio for Mac
+.idea/
+
+# Visual Studio cache files
+ipch/
+*.dbmdl
+*.dbproj.schemaview
+
+# Others
+.builds
+*~*
+*.cache
+*.swp
+*.bak
+*.tmp
+*.swp
+*.userosscache
+*.err
+*.vspscc
+*.vssscc
+*.pidb
+*.svclog
+*.scc
+
+# NuGet
+packages/
+!packages/repositories.config
+*.nupkg
+
+# Microsoft Azure Build Output
+csx/
+*.build.csdef
+
+# User-specific files
+*.suo
+*.user
+*.userprefs
+*.sln.docstates
+
+# Python
+__pycache__/
+dist/
+webui2.egg-info/
+
+# Rust
+target/
+*.lock
+
+# Broken NTFS
+nul
+
+# Zig
+zig-cache/
+zig-out/
+
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# User-specific private settings
+*.DotSettings.user

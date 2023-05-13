@@ -127,4 +127,4 @@ Think of WebUI like a WebView controller, but instead of embedding the WebView c
 
 ### Stargazers
 
-[![Stargazers repo roster for @webui-dev/webui](https://reporoster.com/stars/webui-dev/python-webui)](https://github.com/webui-dev/python-webui/stargazers)
+[![Stargazers repo roster for @webui-dev/python-webui](https://reporoster.com/stars/webui-dev/python-webui)](https://github.com/webui-dev/python-webui/stargazers)

@@ -24,4 +24,4 @@ webui.wait()
 python test.py
 ```
 
-![ScreenShot](https://raw.githubusercontent.com/webui-dev/webui/main/screenshot.png)
+![ScreenShot](https://raw.githubusercontent.com/webui-dev/python-webui/main/screenshot.png)

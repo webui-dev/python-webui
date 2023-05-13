@@ -1,8 +1,8 @@
 # WebUI PyPI Package
 
 ```sh
-git clone https://github.com/webui-dev/webui.git
-cd webui/packages/PyPI
+git clone https://github.com/webui-dev/python-webui.git
+cd python-webui/PyPI
 python -m pip install --upgrade pip
 python -m pip install --upgrade build
 python -m pip install --upgrade twine
