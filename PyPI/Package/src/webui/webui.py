@@ -1,5 +1,5 @@
 
-# webui_lib Library 2.3.0
+# webui_lib Library 2.4.0
 #
 # http://webui.me
 # https://github.com/webui-dev/python-webui

@@ -43,7 +43,7 @@ html = """
 		<script>
 			function MyJS() {
 				const number = document.getElementById('MyInput').value;
-				webui_fn('JS2P', number).then((response) => {
+				webui.call('JS2P', number).then((response) => {
 					document.getElementById('MyInput').value = response;
 				});
 			}
