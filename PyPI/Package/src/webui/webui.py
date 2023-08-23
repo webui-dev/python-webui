@@ -43,6 +43,7 @@ class event:
     event_type = 0
     element = ""
     data = ""
+    len = 0
 
 
 # JavaScript
@@ -91,6 +92,7 @@ class window:
                 ctypes.c_uint, # event type
                 ctypes.c_char_p, # element
                 ctypes.c_char_p, # data
+                ctypes.c_longlong, # data len
                 ctypes.c_uint) # event number
             self.c_events = py_fun(self._events)
         except OSError as e:
@@ -109,6 +111,7 @@ class window:
                event_type: ctypes.c_uint,
                _element: ctypes.c_char_p,
                data: ctypes.c_char_p,
+               len: ctypes.c_longlong,
                event_number: ctypes.c_uint):
         element = _element.decode('utf-8')
         func_id = self.window_id + element
@@ -120,6 +123,7 @@ class window:
         e.window = self # e.window should refer to this class
         e.event_type = int(event_type)
         e.element = element
+        e.len = len
         if data is not None:
             e.data = data.decode('utf-8')
         else:

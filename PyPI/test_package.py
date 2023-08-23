@@ -6,7 +6,8 @@
 
 # Import the WebUI local module
 import sys
-sys.path.append('Package/src/webui')
+sys.path.append('./Package/src/webui')
+
 import webui
 
 # Use the local WebUI Dynamic lib
