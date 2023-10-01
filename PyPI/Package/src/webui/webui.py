@@ -25,17 +25,19 @@ PTR_PTR_CHAR = ctypes.POINTER(PTR_CHAR)
 
 # Scripts Runtime
 class browser:
-    any:int = 0 # Default recommended web browser
-    chrome:int = 1 # Google Chrome
-    firefox:int = 2 # Mozilla Firefox
-    edge:int = 3 # Microsoft Edge
-    safari:int = 4 # Apple Safari
-    chromium:int = 5 # The Chromium Project
-    opera:int = 6 # Opera Browser
-    brave:int = 7 # The Brave Browser
-    vivaldi:int = 8 # The Vivaldi Browser
-    epic:int = 9 # The Epic Browser
-    yandex:int = 10 # The Yandex Browser
+    NoBrowser:int = 0 # No web browser
+    any:int = 1 # Default recommended web browser
+    chrome:int = 2 # Google Chrome
+    firefox:int = 3 # Mozilla Firefox
+    edge:int = 4 # Microsoft Edge
+    safari:int = 5 # Apple Safari
+    chromium:int = 6 # The Chromium Project
+    opera:int = 7 # Opera Browser
+    brave:int = 8 # The Brave Browser
+    vivaldi:int = 9 # The Vivaldi Browser
+    epic:int = 10 # The Epic Browser
+    yandex:int = 11 # The Yandex Browser
+    ChromiumBased:int = 12 # 12. Any Chromium based browser
 
 # event
 class event:
