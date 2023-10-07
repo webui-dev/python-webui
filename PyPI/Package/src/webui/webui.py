@@ -23,6 +23,7 @@ webui_path = os.path.dirname(__file__)
 PTR_CHAR = ctypes.POINTER(ctypes.c_char)
 PTR_PTR_CHAR = ctypes.POINTER(PTR_CHAR)
 
+
 # Scripts Runtime
 class browser:
     NoBrowser:int = 0 # No web browser
@@ -38,6 +39,7 @@ class browser:
     epic:int = 10 # The Epic Browser
     yandex:int = 11 # The Yandex Browser
     ChromiumBased:int = 12 # 12. Any Chromium based browser
+
 
 # event
 class event:
@@ -64,10 +66,12 @@ class runtime:
 # The window class
 class window:
 
+
     window = 0
     window_id = ""
     c_events = None
     cb_fun_list = {}
+
 
     def __init__(self):
         global webui_lib
@@ -208,6 +212,7 @@ class window:
         decode = data.decode('utf-8')
         return decode
 
+
     def get_int(self, e: event, index: c_size_t = 0) -> int:
         global webui_lib
         if webui_lib is None:
@@ -258,6 +263,7 @@ class window:
         res.data = buffer.value.decode('utf-8')
         res.error = not status
         return res
+
 
     # Run JavaScript quickly with no waiting for the response
     def run(self, script):

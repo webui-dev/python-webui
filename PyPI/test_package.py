@@ -21,15 +21,29 @@ html = """
 		<title>WebUI 2 - Python Wrapper Test</title>
 		<script src="webui.js"></script>
 		<style>
-			body {
-				color: white;
-				background: #0F2027;
-				background: -webkit-linear-gradient(to right, #4e99bb, #2c91b5, #07587a);
-				background: linear-gradient(to right, #4e99bb, #2c91b5, #07587a);
-				text-align: center;
-				font-size: 18px;
-				font-family: sans-serif;
-			}
+            body {
+                font-family: 'Arial', sans-serif;
+                color: white;
+                background: linear-gradient(to right, #507d91, #1c596f, #022737);
+                text-align: center;
+                font-size: 18px;
+            }
+            button, input {
+                padding: 10px; 
+                border-radius: 3px; 
+                border: 1px solid #ccc; 
+                box-shadow: 0 3px 5px rgba(0,0,0,0.1); 
+                transition: 0.2s; 
+            }
+            button {
+                background: #3498db; 
+                color: #fff; 
+                cursor: pointer;
+                font-size: 16px;
+            }
+            h1 { text-shadow: -7px 10px 7px rgb(67 57 57 / 76%); }
+            button:hover { background: #c9913d; }
+            input:focus { outline: none; border-color: #3498db; }
 		</style>
 	</head>
 	<body>

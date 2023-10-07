@@ -28,4 +28,4 @@ include-package-data = true
 where = ["src"]
 
 [tool.setuptools.package-data]
-webui = ["*.dll", "*.so", "*.dyn"]
+webui = ["webui-windows-msvc-x64/*", "webui-linux-gcc-x64/*", "webui-macos-clang-x64/*"]
