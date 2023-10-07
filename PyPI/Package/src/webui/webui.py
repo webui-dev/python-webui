@@ -44,8 +44,8 @@ class event:
     window = 0
     event_type = 0
     element = ""
-    data = ""
-    len = 0
+    event_num = 0
+    bind_id = 0
 
 
 # JavaScript
@@ -93,9 +93,8 @@ class window:
                 ctypes.c_size_t, # window
                 ctypes.c_uint, # event type
                 ctypes.c_char_p, # element
-                ctypes.c_char_p, # data
-                ctypes.c_longlong, # data len
-                ctypes.c_uint) # event number
+                ctypes.c_size_t, # event number
+                ctypes.c_uint) # Bind ID
             self.c_events = py_fun(self._events)
         except OSError as e:
             print(
@@ -112,12 +111,10 @@ class window:
     def _events(self, window: ctypes.c_size_t,
                event_type: ctypes.c_uint,
                _element: ctypes.c_char_p,
-               data: ctypes.c_char_p,
-               len: ctypes.c_longlong,
-               event_number: ctypes.c_uint):
+               event_number: ctypes.c_longlong,
+               bind_id: ctypes.c_uint):
         element = _element.decode('utf-8')
-        func_id = self.window_id + element
-        if self.cb_fun_list[func_id] is None:
+        if self.cb_fun_list[bind_id] is None:
             print('webui_lib error: Callback is None.')
             return
         # Create event
@@ -125,13 +122,10 @@ class window:
         e.window = self # e.window should refer to this class
         e.event_type = int(event_type)
         e.element = element
-        e.len = len
-        if data is not None:
-            e.data = data.decode('utf-8')
-        else:
-            e.data = ''
+        e.event_num = event_number
+        e.bind_id = bind_id
         # User callback
-        cb_result = self.cb_fun_list[func_id](e)
+        cb_result = self.cb_fun_list[bind_id](e)
         if cb_result is not None:
             cb_result_str = str(cb_result)
             cb_result_encode = cb_result_str.encode('utf-8')
@@ -149,17 +143,16 @@ class window:
             _err_library_not_found('bind')
             return
         # Bind
-        webui_lib.webui_interface_bind(
+        bindId = webui_lib.webui_interface_bind(
             self.window,
             element.encode('utf-8'),
             self.c_events)
         # Add CB to the list
-        func_id = self.window_id + element
-        self.cb_fun_list[func_id] = func
+        self.cb_fun_list[bindId] = func
 
 
     # Show a window using a embedded HTML, or a file. If the window is already opened then it will be refreshed.
-    def show(self, content="<html></html>", browser:int=0):
+    def show(self, content="<html></html>", browser:int=browser.ChromiumBased):
         global webui_lib
         if self.window == 0:
             _err_window_is_none('show')
@@ -184,18 +177,6 @@ class window:
                         ctypes.c_uint(rt))
 
 
-    def set_multi_access(self, status=False):
-        global webui_lib
-        if self.window == 0:
-            _err_window_is_none('set_multi_access')
-            return
-        if webui_lib is None:
-            _err_library_not_found('set_multi_access')
-            return
-        webui_lib.webui_set_multi_access(self.window, 
-                        ctypes.c_bool(status))
-
-
     # Close the window.
     def close(self):
         global webui_lib
@@ -212,6 +193,46 @@ class window:
             return
         r = bool(webui_lib.webui_is_shown(self.window))
         return r
+
+
+    def get_str(self, e: event, index: c_size_t = 0) -> str:
+        global webui_lib
+        if webui_lib is None:
+            _err_library_not_found('get_str')
+            return
+        c_res = webui_lib.webui_interface_get_string_at
+        c_res.restype = ctypes.c_char_p
+        data = c_res(self.window,
+                    ctypes.c_uint(e.event_num),
+                    ctypes.c_uint(index))
+        decode = data.decode('utf-8')
+        return decode
+
+    def get_int(self, e: event, index: c_size_t = 0) -> int:
+        global webui_lib
+        if webui_lib is None:
+            _err_library_not_found('get_str')
+            return
+        c_res = webui_lib.webui_interface_get_int_at
+        c_res.restype = ctypes.c_longlong
+        data = c_res(self.window,
+                    ctypes.c_uint(e.event_num),
+                    ctypes.c_uint(index))
+        return data
+    
+
+    def get_bool(self, e: event, index: c_size_t = 0) -> bool:
+        global webui_lib
+        if webui_lib is None:
+            _err_library_not_found('get_str')
+            return
+        c_res = webui_lib.webui_interface_get_bool_at
+        c_res.restype = ctypes.c_bool
+        data = c_res(self.window,
+                    ctypes.c_uint(e.event_num),
+                    ctypes.c_uint(index))
+        return data
+    
 
     # Run a JavaScript, and get the response back (Make sure your local buffer can hold the response).
     def script(self, script, timeout=0, response_size=(1024 * 8)) -> javascript:
@@ -255,7 +276,7 @@ class window:
 def _get_library_path() -> str:
     global webui_path
     if platform.system() == 'Darwin':
-        file = '/webui-2-x64.dyn'
+        file = '/webui-macos-clang-x64/webui-2.dyn'
         path = os.getcwd() + file
         if os.path.exists(path):
             return path
@@ -264,7 +285,7 @@ def _get_library_path() -> str:
             return path
         return path
     elif platform.system() == 'Windows':
-        file = '\\webui-2-x64.dll'
+        file = '\\webui-windows-msvc-x64\\webui-2.dll'
         path = os.getcwd() + file
         if os.path.exists(path):
             return path
@@ -273,7 +294,7 @@ def _get_library_path() -> str:
             return path
         return path
     elif platform.system() == 'Linux':
-        file = '/webui-2-x64.so'
+        file = '/webui-linux-gcc-x64/webui-2.so'
         path = os.getcwd() + file
         if os.path.exists(path):
             return path

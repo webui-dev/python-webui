@@ -19,6 +19,7 @@ html = """
 <html>
 	<head>
 		<title>WebUI 2 - Python Wrapper Test</title>
+		<script src="webui.js"></script>
 		<style>
 			body {
 				color: white;
@@ -56,13 +57,14 @@ def all_events(e : webui.event):
 	print('Function: all_events()')
 	print('Element: ' + e.element)
 	print('Type: ' + str(e.event_type))
-	print('Data: ' + e.data)
+	print(' ')
 
 def python_to_js(e : webui.event):
 	print('Function: python_to_js()')
 	print('Element: ' + e.element)
 	print('Type: ' + str(e.event_type))
-	print('Data: ' + e.data)
+	print('Data: ' + e.window.get_str(e))
+	print(' ')
 	# Run JavaScript to get the password
 	res = e.window.script("return document.getElementById('MyInput').value;")
 	# Check for any error
@@ -72,13 +74,15 @@ def python_to_js(e : webui.event):
 		print("JavaScript OK: [" + res.data + "]")
 	# Quick JavaScript (no response waiting)
 	# e.window.run("alert('Fast!')")
+	print(' ')
 
 def js_to_python(e : webui.event):
 	print('Function: js_to_python()')
 	print('Element: ' + e.element)
 	print('Type: ' + str(e.event_type))
-	print('Data: ' + e.data)
-	v = int(e.data)
+	print('Data: ' + e.window.get_str(e, 0))
+	print(' ')
+	v = int(e.window.get_str(e, 0))
 	v = v * 2
 	return v
 
@@ -86,7 +90,8 @@ def exit(e : webui.event):
 	print('Function: exit()')
 	print('Element: ' + e.element)
 	print('Type: ' + str(e.event_type))
-	print('Data: ' + e.data)
+	print('Data: ' + e.window.get_str(e, 0))
+	print(' ')
 	webui.exit()
 
 def main():

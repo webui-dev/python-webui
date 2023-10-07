@@ -9,6 +9,7 @@ login_html = """
 <html>
 	<head>
 		<title>WebUI 2 - Python Example</title>
+		<script src="webui.js"></script>
 		<style>
 			body {
 				color: white;
@@ -38,6 +39,7 @@ dashboard_html = """
 <html>
 	<head>
 		<title>Dashboard</title>
+		<script src="webui.js"></script>
 		<style>
 			body {
 				color: white;
