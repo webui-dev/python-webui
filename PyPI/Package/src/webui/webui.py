@@ -279,37 +279,34 @@ class window:
             ctypes.c_char_p(script.encode('utf-8')))
 
 
+def _get_architecture() -> str:
+    arch = platform.machine()
+    if arch in ['x86_64', 'AMD64', 'amd64']:
+        return 'x64'
+    elif arch in ['aarch64', 'ARM64', 'arm', 'arm64']:
+        return 'arm64'
+    else:
+        return arch
+
+
 def _get_library_path() -> str:
     global webui_path
+    arch = _get_architecture()
     if platform.system() == 'Darwin':
-        file = '/webui-macos-clang-x64/webui-2.dyn'
-        path = os.getcwd() + file
-        if os.path.exists(path):
-            return path
-        path = webui_path + file
-        if os.path.exists(path):
-            return path
-        return path
+        file = f'/webui-macos-clang-{arch}/webui-2.dylib'
     elif platform.system() == 'Windows':
-        file = '\\webui-windows-msvc-x64\\webui-2.dll'
-        path = os.getcwd() + file
-        if os.path.exists(path):
-            return path
-        path = webui_path + file
-        if os.path.exists(path):
-            return path
-        return path
+        file = f'\\webui-windows-msvc-{arch}\\webui-2.dll'
     elif platform.system() == 'Linux':
-        file = '/webui-linux-gcc-x64/webui-2.so'
-        path = os.getcwd() + file
-        if os.path.exists(path):
-            return path
-        path = webui_path + file
-        if os.path.exists(path):
-            return path
-        return path
+        file = f'/webui-linux-gcc-{arch}/webui-2.so'
     else:
         return ""
+    path = os.getcwd() + file
+    if os.path.exists(path):
+        return path
+    path = webui_path + file
+    if os.path.exists(path):
+        return path
+    return path
 
 
 # Load webui_lib Dynamic Library
