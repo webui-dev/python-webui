@@ -1,4 +1,4 @@
-# WebUI Python v2.4.0
+# WebUI Python v2.4.0.3
 
 [![Website](https://img.shields.io/circleci/project/github/badges/shields/master?style=for-the-badge)](https://github.com/webui-dev/python-webui) [![Website](https://img.shields.io/github/issues/webui-dev/python-webui.svg?branch=master&style=for-the-badge&url=https://google.com)](https://github.com/webui-dev/python-webui/issues) [![Website](https://img.shields.io/website?label=webui.me&style=for-the-badge&url=https://google.com)](https://webui.me/)
 
