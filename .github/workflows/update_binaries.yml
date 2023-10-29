@@ -1,0 +1,54 @@
+name: Update WebUI Binaries
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - update-webui
+
+jobs:
+  update-binaries:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout the repo
+      uses: actions/checkout@v2
+
+    - name: Setup Git
+      run: |
+        git config user.name "GitHub Actions"
+        git config user.email "actions@github.com"
+
+    - name: Download and Extract Binaries
+      run: |
+        urls=(
+          "https://github.com/webui-dev/webui/releases/download/2.4.0/webui-linux-clang-x64.zip"
+          "https://github.com/webui-dev/webui/releases/download/2.4.0/webui-linux-gcc-arm.zip"
+          "https://github.com/webui-dev/webui/releases/download/2.4.0/webui-linux-gcc-arm64.zip"
+          "https://github.com/webui-dev/webui/releases/download/2.4.0/webui-linux-gcc-x64.zip"
+          "https://github.com/webui-dev/webui/releases/download/2.4.0/webui-macos-clang-x64.tar.gz"
+          "https://github.com/webui-dev/webui/releases/download/2.4.0/webui-windows-gcc-x64.zip"
+          "https://github.com/webui-dev/webui/releases/download/2.4.0/webui-windows-msvc-x64.zip"
+        )
+        
+        for url in "${urls[@]}"; do
+          filename=$(basename "$url")
+          curl -L -O "$url"
+          mkdir -p "PyPI/Package/src/webui/$filename"
+          if [[ "$filename" == *.zip ]]; then
+            unzip "$filename" -d "PyPI/Package/src/webui/$filename"
+          elif [[ "$filename" == *.tar.gz ]]; then
+            tar -xzf "$filename" -C "PyPI/Package/src/webui/$filename"
+          else
+            echo "Unsupported file type: $filename"
+            exit 1
+          fi
+          rm "$filename"
+        done
+
+    - name: Commit and Push Changes
+      run: |
+        git add PyPI/Package/src/webui/
+        git commit -m "Update WebUI binaries" || echo "No changes to commit"
+        git push
