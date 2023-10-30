@@ -2,15 +2,12 @@ name: Update WebUI Binaries
 
 on:
   push:
-    branches:
-      - main
     tags:
-      - update-webui
+      - 'update-webui'
 
 jobs:
   update-webui-binaries:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout the repo
         uses: actions/checkout@v2
