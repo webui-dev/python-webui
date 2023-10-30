@@ -11,7 +11,7 @@ sys.path.append('./Package/src/webui')
 import webui
 
 # Use the local WebUI Dynamic lib
-# webui.set_library_path('../../../build/Windows/MSVC')
+# webui.set_library_path('')
 
 # HTML
 html = """
@@ -59,7 +59,7 @@ html = """
 		<script>
 			function MyJS() {
 				const number = document.getElementById('MyInput').value;
-				webui.call('JS2P', number).then((response) => {
+				JS2P(number).then((response) => {
 					document.getElementById('MyInput').value = response;
 				});
 			}

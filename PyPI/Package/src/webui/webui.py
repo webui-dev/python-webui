@@ -279,12 +279,28 @@ class window:
             ctypes.c_char_p(script.encode('utf-8')))
 
 
+    # Set the web-server root folder path for a specific window
+    def set_root_folder(self, path):
+        global webui_lib
+        if self.window == 0:
+            _err_window_is_none('set_root_folder')
+            return
+        if webui_lib is None:
+            _err_library_not_found('set_root_folder')
+            return
+        # Set path
+        webui_lib.webui_set_root_folder(self.window, 
+            ctypes.c_char_p(path.encode('utf-8')))
+
+
 def _get_architecture() -> str:
     arch = platform.machine()
     if arch in ['x86_64', 'AMD64', 'amd64']:
         return 'x64'
-    elif arch in ['aarch64', 'ARM64', 'arm', 'arm64']:
+    elif arch in ['aarch64', 'ARM64', 'arm64']:
         return 'arm64'
+    elif arch in ['arm']:
+        return 'arm'
     else:
         return arch
 

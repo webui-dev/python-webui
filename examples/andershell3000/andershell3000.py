@@ -37,7 +37,7 @@ class CommandExecutor:
         self.shell.wait()
 
 def run_command(e : webui.event):
-    cmd = e.data
+    cmd = e.window.get_str(e, 0)
     if cmd == "exit":
         webui.exit()
     try:
@@ -49,6 +49,7 @@ def run_command(e : webui.event):
 executor = CommandExecutor()
 MyWindow = webui.window()
 MyWindow.bind("Run", run_command)
-MyWindow.show('ui/index.html')
+MyWindow.set_root_folder("ui/")
+MyWindow.show('index.html')
 webui.wait()
 executor.close()
