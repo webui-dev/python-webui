@@ -85,6 +85,8 @@ jobs:
 
       - name: Copy Libs to Wrapper
         run: |
+          mkdir TempOut/include
+          find TempArchives -type f -name 'webui.h' -exec cp {} TempOut/include \; -quit
           cp -ru TempOut/* "$WRAPPER_WEBUI_BIN_PATH/"
 
       - name: Remove Temporary Archives
