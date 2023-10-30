@@ -1,7 +1,7 @@
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
- 
+
 [project]
 name = "webui2"
 version = "2.4.0.3"
