@@ -12,43 +12,28 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout the repo
-      uses: actions/checkout@v2
+      - name: Checkout the repo
+        uses: actions/checkout@v2
 
-    - name: Setup Git
-      run: |
-        git config user.name "GitHub Actions"
-        git config user.email "actions@github.com"
+      - name: Set up directories
+        run: |
+          mkdir -p PyPI/Package/src/webui
 
-    - name: Download and Extract Binaries
-      run: |
-        urls=(
-          "https://github.com/webui-dev/webui/releases/download/2.4.0/webui-linux-clang-x64.zip"
-          "https://github.com/webui-dev/webui/releases/download/2.4.0/webui-linux-gcc-arm.zip"
-          "https://github.com/webui-dev/webui/releases/download/2.4.0/webui-linux-gcc-arm64.zip"
-          "https://github.com/webui-dev/webui/releases/download/2.4.0/webui-linux-gcc-x64.zip"
-          "https://github.com/webui-dev/webui/releases/download/2.4.0/webui-macos-clang-x64.tar.gz"
-          "https://github.com/webui-dev/webui/releases/download/2.4.0/webui-windows-gcc-x64.zip"
-          "https://github.com/webui-dev/webui/releases/download/2.4.0/webui-windows-msvc-x64.zip"
-        )
-        
-        for url in "${urls[@]}"; do
-          filename=$(basename "$url")
-          curl -L -O "$url"
-          mkdir -p "PyPI/Package/src/webui/$filename"
-          if [[ "$filename" == *.zip ]]; then
-            unzip "$filename" -d "PyPI/Package/src/webui/$filename"
-          elif [[ "$filename" == *.tar.gz ]]; then
-            tar -xzf "$filename" -C "PyPI/Package/src/webui/$filename"
-          else
-            echo "Unsupported file type: $filename"
-            exit 1
-          fi
-          rm "$filename"
-        done
+      - name: Download and Extract Binaries
+        run: |
+          wget -q https://github.com/webui-dev/webui/releases/download/2.4.0/webui-linux-clang-x64.zip -O - | unzip -q -d PyPI/Package/src/webui/webui-linux-clang-x64
+          wget -q https://github.com/webui-dev/webui/releases/download/2.4.0/webui-linux-gcc-arm.zip -O - | unzip -q -d PyPI/Package/src/webui/webui-linux-gcc-arm
+          wget -q https://github.com/webui-dev/webui/releases/download/2.4.0/webui-linux-gcc-arm64.zip -O - | unzip -q -d PyPI/Package/src/webui/webui-linux-gcc-arm64
+          wget -q https://github.com/webui-dev/webui/releases/download/2.4.0/webui-linux-gcc-x64.zip -O - | unzip -q -d PyPI/Package/src/webui/webui-linux-gcc-x64
+          wget -q https://github.com/webui-dev/webui/releases/download/2.4.0/webui-macos-clang-arm64.tar.gz -O - | tar -xz -C PyPI/Package/src/webui/webui-macos-clang-arm64
+          wget -q https://github.com/webui-dev/webui/releases/download/2.4.0/webui-macos-clang-x64.tar.gz -O - | tar -xz -C PyPI/Package/src/webui/webui-macos-clang-x64
+          wget -q https://github.com/webui-dev/webui/releases/download/2.4.0/webui-windows-gcc-x64.zip -O - | unzip -q -d PyPI/Package/src/webui/webui-windows-gcc-x64
+          wget -q https://github.com/webui-dev/webui/releases/download/2.4.0/webui-windows-msvc-x64.zip -O - | unzip -q -d PyPI/Package/src/webui/webui-windows-msvc-x64
 
-    - name: Commit and Push Changes
-      run: |
-        git add PyPI/Package/src/webui/
-        git commit -m "Update WebUI binaries" || echo "No changes to commit"
-        git push
+      - name: Commit and Push Changes
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add PyPI/Package/src/webui/
+          git commit -m "Update WebUI binaries" || echo "No changes to commit"
+          git push
