@@ -89,3 +89,8 @@ jobs:
           git add PyPI/Package/src/webui/
           git commit -m "Update WebUI binaries" || echo "No changes to commit"
           git push
+
+      - name: Delete Tag
+        run: |
+          git tag -d update-webui
+          git push --delete origin update-webui
