@@ -15,20 +15,32 @@ jobs:
       - name: Checkout the repo
         uses: actions/checkout@v2
 
-      - name: Set up directories
+      - name: Set up directories and Download Binaries
         run: |
           mkdir -p PyPI/Package/src/webui
+          wget -q https://github.com/webui-dev/webui/releases/download/2.4.0/webui-linux-clang-x64.zip -O webui-linux-clang-x64.zip
+          wget -q https://github.com/webui-dev/webui/releases/download/2.4.0/webui-linux-gcc-arm.zip -O webui-linux-gcc-arm.zip
+          wget -q https://github.com/webui-dev/webui/releases/download/2.4.0/webui-linux-gcc-arm64.zip -O webui-linux-gcc-arm64.zip
+          wget -q https://github.com/webui-dev/webui/releases/download/2.4.0/webui-linux-gcc-x64.zip -O webui-linux-gcc-x64.zip
+          wget -q https://github.com/webui-dev/webui/releases/download/2.4.0/webui-macos-clang-arm64.tar.gz -O webui-macos-clang-arm64.tar.gz
+          wget -q https://github.com/webui-dev/webui/releases/download/2.4.0/webui-macos-clang-x64.tar.gz -O webui-macos-clang-x64.tar.gz
+          wget -q https://github.com/webui-dev/webui/releases/download/2.4.0/webui-windows-gcc-x64.zip -O webui-windows-gcc-x64.zip
+          wget -q https://github.com/webui-dev/webui/releases/download/2.4.0/webui-windows-msvc-x64.zip -O webui-windows-msvc-x64.zip
 
-      - name: Download and Extract Binaries
+      - name: Extract Binaries
         run: |
-          wget -q https://github.com/webui-dev/webui/releases/download/2.4.0/webui-linux-clang-x64.zip -O - | unzip -q -d PyPI/Package/src/webui/webui-linux-clang-x64
-          wget -q https://github.com/webui-dev/webui/releases/download/2.4.0/webui-linux-gcc-arm.zip -O - | unzip -q -d PyPI/Package/src/webui/webui-linux-gcc-arm
-          wget -q https://github.com/webui-dev/webui/releases/download/2.4.0/webui-linux-gcc-arm64.zip -O - | unzip -q -d PyPI/Package/src/webui/webui-linux-gcc-arm64
-          wget -q https://github.com/webui-dev/webui/releases/download/2.4.0/webui-linux-gcc-x64.zip -O - | unzip -q -d PyPI/Package/src/webui/webui-linux-gcc-x64
-          wget -q https://github.com/webui-dev/webui/releases/download/2.4.0/webui-macos-clang-arm64.tar.gz -O - | tar -xz -C PyPI/Package/src/webui/webui-macos-clang-arm64
-          wget -q https://github.com/webui-dev/webui/releases/download/2.4.0/webui-macos-clang-x64.tar.gz -O - | tar -xz -C PyPI/Package/src/webui/webui-macos-clang-x64
-          wget -q https://github.com/webui-dev/webui/releases/download/2.4.0/webui-windows-gcc-x64.zip -O - | unzip -q -d PyPI/Package/src/webui/webui-windows-gcc-x64
-          wget -q https://github.com/webui-dev/webui/releases/download/2.4.0/webui-windows-msvc-x64.zip -O - | unzip -q -d PyPI/Package/src/webui/webui-windows-msvc-x64
+          unzip -q webui-linux-clang-x64.zip -d PyPI/Package/src/webui/webui-linux-clang-x64
+          unzip -q webui-linux-gcc-arm.zip -d PyPI/Package/src/webui/webui-linux-gcc-arm
+          unzip -q webui-linux-gcc-arm64.zip -d PyPI/Package/src/webui/webui-linux-gcc-arm64
+          unzip -q webui-linux-gcc-x64.zip -d PyPI/Package/src/webui/webui-linux-gcc-x64
+          tar -xzf webui-macos-clang-arm64.tar.gz -C PyPI/Package/src/webui/webui-macos-clang-arm64
+          tar -xzf webui-macos-clang-x64.tar.gz -C PyPI/Package/src/webui/webui-macos-clang-x64
+          unzip -q webui-windows-gcc-x64.zip -d PyPI/Package/src/webui/webui-windows-gcc-x64
+          unzip -q webui-windows-msvc-x64.zip -d PyPI/Package/src/webui/webui-windows-msvc-x64
+
+      - name: Remove temporary files
+        run: |
+          rm *.zip *.tar.gz
 
       - name: Commit and Push Changes
         run: |
