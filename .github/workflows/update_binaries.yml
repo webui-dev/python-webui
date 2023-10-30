@@ -2,15 +2,24 @@ name: Update WebUI Binaries
 
 on:
   push:
-    tags:
-      - 'update-webui'
+    branches:
+      - main
+
+env:
+  WRAPPER_WEBUI_BIN_PATH: PyPI/Package/src/webui
 
 jobs:
   update-webui-binaries:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout the repo
         uses: actions/checkout@v2
+
+      - name: Install Tools
+        continue-on-error: true
+        run: |
+          sudo apt-get install -y wget unzip tar git findutils
 
       - name: Download WebUI Archives
         run: |
@@ -75,7 +84,7 @@ jobs:
 
       - name: Copy Libs to Wrapper
         run: |
-          cp -ru TempOut/* PyPI/Package/src/webui/
+          cp -ru TempOut/* "$WRAPPER_WEBUI_BIN_PATH/"
 
       - name: Remove Temporary Archives
         run: |
@@ -86,11 +95,6 @@ jobs:
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git add PyPI/Package/src/webui/
-          git commit -m "Update WebUI binaries" || echo "No changes to commit"
+          git add "$WRAPPER_WEBUI_BIN_PATH/"
+          git commit -m "Update WebUI binaries" || echo "No WebUI binaries changes to commit"
           git push
-
-      - name: Delete Tag
-        run: |
-          git tag -d update-webui
-          git push --delete origin update-webui
