@@ -199,6 +199,18 @@ class window:
         return r
 
 
+    def get_url(self) -> str:
+        global webui_lib
+        if webui_lib is None:
+            _err_library_not_found('get_url')
+            return
+        c_res = webui_lib.webui_get_url
+        c_res.restype = ctypes.c_char_p
+        data = c_res(self.window)
+        decode = data.decode('utf-8')
+        return decode
+
+
     def get_str(self, e: event, index: c_size_t = 0) -> str:
         global webui_lib
         if webui_lib is None:
