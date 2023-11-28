@@ -338,7 +338,6 @@ def _get_library_path() -> str:
 
 
 def run_cmd(command):
-    print("command: " + command)
     subprocess.run(command, shell=True)
 
 

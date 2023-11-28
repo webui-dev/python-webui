@@ -29,4 +29,11 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 webui = [
-  "webui-macos-clang-x64/*","webui-macos-clang-arm64/*","webui-windows-msvc-x64/*","webui-linux-gcc-arm/*","webui-linux-gcc-arm64/*","webui-linux-gcc-x64/*"]
+  "webui-macos-clang-x64/*",
+  "webui-macos-clang-arm64/*",
+  "webui-windows-msvc-x64/*",
+  "webui-linux-gcc-arm/*",
+  "webui-linux-gcc-arm64/*",
+  "webui-linux-gcc-x64/*",
+  "bootstrap.sh",
+  "bootstrap.bat"]
