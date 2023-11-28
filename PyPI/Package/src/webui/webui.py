@@ -1,5 +1,5 @@
 
-# webui_lib Library 2.4.1
+# Python WebUI v2.4.1
 #
 # http://webui.me
 # https://github.com/webui-dev/python-webui
@@ -16,10 +16,10 @@ import sys
 import ctypes
 from ctypes import *
 import shutil
+import subprocess
 
 
-webui_lib = None
-webui_path = os.path.dirname(__file__)
+lib = None
 PTR_CHAR = ctypes.POINTER(ctypes.c_char)
 PTR_PTR_CHAR = ctypes.POINTER(PTR_CHAR)
 
@@ -74,24 +74,23 @@ class window:
 
 
     def __init__(self):
-        global webui_lib
+        global lib
         try:
-            # Load webui_lib Shared Library
+            # Load WebUI Dynamic Library
             _load_library()
             # Check library if correctly loaded
-            if webui_lib is None:
-                print(
-                    'Please download the latest webui_lib lib from https://webui.me')
+            if lib is None:
+                print('WebUI Dynamic Library not found.')
                 sys.exit(1)
-            # Create new webui_lib window
+            # Create new window
             webui_wrapper = None
-            webui_wrapper = webui_lib.webui_new_window
+            webui_wrapper = lib.webui_new_window
             webui_wrapper.restype = c_size_t
             self.window = c_size_t(webui_wrapper())
             # Get the window unique ID
             self.window_id = str(self.window)
             # Initializing events() to be used by
-            # webui_lib library as a callback
+            # WebUI library as a callback
             py_fun = ctypes.CFUNCTYPE(
                 ctypes.c_void_p, # RESERVED
                 ctypes.c_size_t, # window
@@ -102,14 +101,14 @@ class window:
             self.c_events = py_fun(self._events)
         except OSError as e:
             print(
-                "webui_lib Exception: %s" % e)
+                "WebUI Exception: %s" % e)
             sys.exit(1)
 
 
     # def __del__(self):
-    #     global webui_lib
-    #     if self.window is not None and webui_lib is not None:
-    #         webui_lib.webui_close(self.window)
+    #     global lib
+    #     if self.window is not None and lib is not None:
+    #         lib.webui_close(self.window)
 
 
     def _events(self, window: ctypes.c_size_t,
@@ -119,7 +118,7 @@ class window:
                bind_id: ctypes.c_uint):
         element = _element.decode('utf-8')
         if self.cb_fun_list[bind_id] is None:
-            print('webui_lib error: Callback is None.')
+            print('WebUI error: Callback is None.')
             return
         # Create event
         e = event()
@@ -134,20 +133,20 @@ class window:
             cb_result_str = str(cb_result)
             cb_result_encode = cb_result_str.encode('utf-8')
             # Set the response
-            webui_lib.webui_interface_set_response(window, event_number, cb_result_encode)
+            lib.webui_interface_set_response(window, event_number, cb_result_encode)
 
 
     # Bind a specific html element click event with a function. Empty element means all events.
     def bind(self, element, func):
-        global webui_lib
+        global lib
         if self.window == 0:
             _err_window_is_none('bind')
             return
-        if webui_lib is None:
+        if lib is None:
             _err_library_not_found('bind')
             return
         # Bind
-        bindId = webui_lib.webui_interface_bind(
+        bindId = lib.webui_interface_bind(
             self.window,
             element.encode('utf-8'),
             self.c_events)
@@ -157,54 +156,54 @@ class window:
 
     # Show a window using a embedded HTML, or a file. If the window is already opened then it will be refreshed.
     def show(self, content="<html></html>", browser:int=browser.ChromiumBased):
-        global webui_lib
+        global lib
         if self.window == 0:
             _err_window_is_none('show')
             return
-        if webui_lib is None:
+        if lib is None:
             _err_library_not_found('show')
             return
         # Show the window
-        webui_lib.webui_show_browser(self.window, content.encode('utf-8'), ctypes.c_uint(browser))
+        lib.webui_show_browser(self.window, content.encode('utf-8'), ctypes.c_uint(browser))
 
 
     # Chose between Deno and Nodejs runtime for .js and .ts files.
     def set_runtime(self, rt=runtime.deno):
-        global webui_lib
+        global lib
         if self.window == 0:
             _err_window_is_none('set_runtime')
             return
-        if webui_lib is None:
+        if lib is None:
             _err_library_not_found('set_runtime')
             return
-        webui_lib.webui_set_runtime(self.window, 
+        lib.webui_set_runtime(self.window, 
                         ctypes.c_uint(rt))
 
 
     # Close the window.
     def close(self):
-        global webui_lib
-        if webui_lib is None:
+        global lib
+        if lib is None:
             _err_library_not_found('close')
             return
-        webui_lib.webui_close(self.window)
+        lib.webui_close(self.window)
 
 
     def is_shown(self):
-        global webui_lib
-        if webui_lib is None:
+        global lib
+        if lib is None:
             _err_library_not_found('is_shown')
             return
-        r = bool(webui_lib.webui_is_shown(self.window))
+        r = bool(lib.webui_is_shown(self.window))
         return r
 
 
     def get_url(self) -> str:
-        global webui_lib
-        if webui_lib is None:
+        global lib
+        if lib is None:
             _err_library_not_found('get_url')
             return
-        c_res = webui_lib.webui_get_url
+        c_res = lib.webui_get_url
         c_res.restype = ctypes.c_char_p
         data = c_res(self.window)
         decode = data.decode('utf-8')
@@ -212,11 +211,11 @@ class window:
 
 
     def get_str(self, e: event, index: c_size_t = 0) -> str:
-        global webui_lib
-        if webui_lib is None:
+        global lib
+        if lib is None:
             _err_library_not_found('get_str')
             return
-        c_res = webui_lib.webui_interface_get_string_at
+        c_res = lib.webui_interface_get_string_at
         c_res.restype = ctypes.c_char_p
         data = c_res(self.window,
                     ctypes.c_uint(e.event_num),
@@ -226,11 +225,11 @@ class window:
 
 
     def get_int(self, e: event, index: c_size_t = 0) -> int:
-        global webui_lib
-        if webui_lib is None:
+        global lib
+        if lib is None:
             _err_library_not_found('get_str')
             return
-        c_res = webui_lib.webui_interface_get_int_at
+        c_res = lib.webui_interface_get_int_at
         c_res.restype = ctypes.c_longlong
         data = c_res(self.window,
                     ctypes.c_uint(e.event_num),
@@ -239,11 +238,11 @@ class window:
     
 
     def get_bool(self, e: event, index: c_size_t = 0) -> bool:
-        global webui_lib
-        if webui_lib is None:
+        global lib
+        if lib is None:
             _err_library_not_found('get_str')
             return
-        c_res = webui_lib.webui_interface_get_bool_at
+        c_res = lib.webui_interface_get_bool_at
         c_res.restype = ctypes.c_bool
         data = c_res(self.window,
                     ctypes.c_uint(e.event_num),
@@ -253,11 +252,11 @@ class window:
 
     # Run a JavaScript, and get the response back (Make sure your local buffer can hold the response).
     def script(self, script, timeout=0, response_size=(1024 * 8)) -> javascript:
-        global webui_lib
+        global lib
         if self.window == 0:
             _err_window_is_none('script')
             return
-        if webui_lib is None:
+        if lib is None:
             _err_library_not_found('script')
             return
         # Create Buffer
@@ -266,7 +265,7 @@ class window:
         # Create a pointer to the buffer
         buffer_ptr = ctypes.pointer(buffer)
         # Run JavaScript
-        status = bool(webui_lib.webui_script(self.window, 
+        status = bool(lib.webui_script(self.window, 
             ctypes.c_char_p(script.encode('utf-8')), 
             ctypes.c_uint(timeout), buffer_ptr,
             ctypes.c_uint(response_size)))
@@ -279,30 +278,34 @@ class window:
 
     # Run JavaScript quickly with no waiting for the response
     def run(self, script):
-        global webui_lib
+        global lib
         if self.window == 0:
             _err_window_is_none('run')
             return
-        if webui_lib is None:
+        if lib is None:
             _err_library_not_found('run')
             return
         # Run JavaScript
-        webui_lib.webui_run(self.window, 
+        lib.webui_run(self.window, 
             ctypes.c_char_p(script.encode('utf-8')))
 
 
     # Set the web-server root folder path for a specific window
     def set_root_folder(self, path):
-        global webui_lib
+        global lib
         if self.window == 0:
             _err_window_is_none('set_root_folder')
             return
-        if webui_lib is None:
+        if lib is None:
             _err_library_not_found('set_root_folder')
             return
         # Set path
-        webui_lib.webui_set_root_folder(self.window, 
+        lib.webui_set_root_folder(self.window, 
             ctypes.c_char_p(path.encode('utf-8')))
+
+
+def _get_current_folder() -> str:
+    return os.path.dirname(os.path.abspath(__file__))
 
 
 def _get_architecture() -> str:
@@ -317,94 +320,109 @@ def _get_architecture() -> str:
         return arch
 
 
-def _get_library_path() -> str:
-    global webui_path
+def _get_library_folder_name() -> str:
     arch = _get_architecture()
     if platform.system() == 'Darwin':
-        file = f'/webui-macos-clang-{arch}/webui-2.dylib'
+        return f'/webui-macos-clang-{arch}/webui-2.dylib'
     elif platform.system() == 'Windows':
-        file = f'\\webui-windows-msvc-{arch}\\webui-2.dll'
+        return f'\\webui-windows-msvc-{arch}\\webui-2.dll'
     elif platform.system() == 'Linux':
-        file = f'/webui-linux-gcc-{arch}/webui-2.so'
+        return f'/webui-linux-gcc-{arch}/webui-2.so'
     else:
         return ""
-    path = os.getcwd() + file
-    if os.path.exists(path):
-        return path
-    path = webui_path + file
-    if os.path.exists(path):
-        return path
-    return path
 
 
-# Load webui_lib Dynamic Library
+def _get_library_path() -> str:
+    folderName = _get_library_folder_name()
+    return _get_current_folder() + folderName
+
+
+def run_cmd(command):
+    print("command: " + command)
+    subprocess.run(command, shell=True)
+
+
+def _download_library():
+    script = 'sh bootstrap.sh'
+    if platform.system() == 'Windows':
+        script = 'bootstrap.bat'
+    # Run: `cd {folder} && bootstrap.sh minimal`
+    run_cmd('cd ' + _get_current_folder() + 
+               ' && ' + script + ' minimal')
+
+
+# Load WebUI Dynamic Library
 def _load_library():
-    global webui_lib
-    global webui_path
-    if webui_lib is not None:
+    global lib
+    if lib is not None:
+        return
+    libPath = _get_library_path()
+    if not os.path.exists(libPath):
+        _download_library()
+    if not os.path.exists(libPath):
         return
     if platform.system() == 'Darwin':
-        webui_lib = ctypes.CDLL(_get_library_path())
-        if webui_lib is None:
+        lib = ctypes.CDLL(libPath)
+        if lib is None:
             print(
-                "webui_lib error: Failed to load webui_lib lib.")
+                "WebUI Dynamic Library not found.")
     elif platform.system() == 'Windows':
         if sys.version_info.major==3 and sys.version_info.minor<=8:
             os.chdir(os.getcwd())
             os.add_dll_directory(os.getcwd())
-            webui_lib = ctypes.CDLL(_get_library_path())
+            lib = ctypes.CDLL(libPath)
         else:
             os.chdir(os.getcwd())
             os.add_dll_directory(os.getcwd())
-            webui_lib = cdll.LoadLibrary(_get_library_path())
-        if webui_lib is None:
-            print("webui_lib error: Failed to load webui_lib lib.")
+            lib = cdll.LoadLibrary(libPath)
+        if lib is None:
+            print("WebUI Dynamic Library not found.")
     elif platform.system() == 'Linux':
-        webui_lib = ctypes.CDLL(_get_library_path())
-        if webui_lib is None:
-            print("webui_lib error: Failed to load webui_lib lib.")
+        lib = ctypes.CDLL(libPath)
+        if lib is None:
+            print("WebUI Dynamic Library not found.")
     else:
-        print("webui_lib error: Unsupported OS")
+        print("Unsupported OS")
 
 
 # Close all opened windows. webui_wait() will break.
 def exit():
-    global webui_lib
-    if webui_lib is not None:
-        webui_lib.webui_exit()
+    global lib
+    if lib is not None:
+        lib.webui_exit()
 
 
 # Set startup timeout
 def set_timeout(second):
-    global webui_lib
-    if webui_lib is None:
+    global lib
+    if lib is None:
         _load_library()
-        if webui_lib is None:
+        if lib is None:
             _err_library_not_found('set_timeout')
             return
-    webui_lib.webui_set_timeout(ctypes.c_uint(second))
+    lib.webui_set_timeout(ctypes.c_uint(second))
 
 
 def is_app_running():
-    global webui_lib
-    if webui_lib is None:
+    global lib
+    if lib is None:
         _load_library()
-        if webui_lib is None:
+        if lib is None:
             _err_library_not_found('is_app_running')
             return
-    r = bool(webui_lib.webui_interface_is_app_running())
+    r = bool(lib.webui_interface_is_app_running())
     return r
 
 
 # Wait until all opened windows get closed.
 def wait():
-    global webui_lib
-    if webui_lib is None:
+    global lib
+    if lib is None:
         _load_library()
-        if webui_lib is None:
+        if lib is None:
             _err_library_not_found('wait')
             return
-    webui_lib.webui_wait()
+    lib.webui_wait()
     try:
         shutil.rmtree(os.getcwd() + '/__intcache__/')
     except OSError:
@@ -413,15 +431,9 @@ def wait():
 
 # 
 def _err_library_not_found(f):
-    print('webui_lib ' + f + '(): Library Not Found.')
+    print('WebUI ' + f + '(): Library Not Found.')
 
 
 #
 def _err_window_is_none(f):
-    print('webui_lib ' + f + '(): window is None.')
-
-
-# Set the path to the webui_lib prebuilt dynamic lib
-def set_library_path(Path):
-    global webui_path
-    webui_path = Path
+    print('WebUI ' + f + '(): window is None.')
