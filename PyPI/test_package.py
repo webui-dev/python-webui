@@ -1,17 +1,12 @@
-# This script is for debugging & the development of the WebUI Python wrapper.
-# The wrapper source code is located at 'webui/examples/Python/PyPI/Package/src/webui/webui.py'
-
-# [!] Make sure to remove the WebUI package
-# pip uninstall webui2
-
-# Import the WebUI local module
+# --[ Debugging and Development Test ]-----------
+# > pip uninstall webui2
 import sys
 sys.path.append('./Package/src/webui')
-
 import webui
 
-# Use the local WebUI Dynamic lib
-# webui.set_library_path('')
+# --[ Production Test ]--------------------------
+# > pip install --upgrade webui2
+# from webui import webui
 
 # HTML
 html = """
