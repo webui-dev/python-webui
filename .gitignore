@@ -1,3 +1,22 @@
+# Python binaries
+PyPI/Package/src/webui/webui-windows-msvc-x64/
+PyPI/Package/src/webui/webui-windows-msvc-arm/
+PyPI/Package/src/webui/webui-windows-msvc-arm64/
+PyPI/Package/src/webui/webui-macos-clang-x64/
+PyPI/Package/src/webui/webui-macos-clang-arm/
+PyPI/Package/src/webui/webui-macos-clang-arm64/
+PyPI/Package/src/webui/webui-linux-gcc-x64/
+PyPI/Package/src/webui/webui-linux-gcc-arm/
+PyPI/Package/src/webui/webui-linux-gcc-arm64/
+*.dll
+*.so
+*.dylib
+
+# Archives
+*.zip
+*.tar
+*.gz
+
 # Build
 *.exe
 *.ilk
