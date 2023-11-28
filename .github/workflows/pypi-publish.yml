@@ -2,7 +2,7 @@ name: Publish PyPi Package
 
 on:
   release:
-    types: [published]
+    types: [created]
 
 permissions:
   contents: read
@@ -24,6 +24,8 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install --upgrade build
           python -m pip install --upgrade twine
-          cd /PyPI/Package
+          cd PyPI/Package/src/webui
+          sh bootstrap.sh
+          cd ../..
           python -m build
           python -m twine upload --repository pypi dist/* --username __token__ --password ${{ secrets.PYPI_API_TOKEN }}
