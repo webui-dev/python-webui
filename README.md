@@ -1,3 +1,5 @@
+<div align="center">
+
 # WebUI Python v2.4.1
 
 [![Website](https://img.shields.io/circleci/project/github/badges/shields/master?style=for-the-badge)](https://github.com/webui-dev/python-webui) [![Website](https://img.shields.io/github/issues/webui-dev/python-webui.svg?branch=master&style=for-the-badge&url=https://google.com)](https://github.com/webui-dev/python-webui/issues) [![Website](https://img.shields.io/website?label=webui.me&style=for-the-badge&url=https://google.com)](https://webui.me/)
@@ -5,6 +7,8 @@
 > Use any web browser as GUI, with Python in the backend and HTML5 in the frontend, all in a lightweight Python pypi package.
 
 ![ScreenShot](screenshot.png)
+
+</div>
 
 ## Features
 
@@ -31,7 +35,7 @@ This [text editor example](https://github.com/webui-dev/python-webui/tree/main/e
 from webui import webui
 
 MyWindow = webui.window()
-MyWindow.show('<html>Hello World</html>')
+MyWindow.show('<html><script src="webui.js"></script> Hello World! </html>')
 webui.wait()
 ```
 
@@ -67,59 +71,40 @@ Think of WebUI like a WebView controller, but instead of embedding the WebView c
 
 ## Runtime Dependencies Comparison
 
-|  | WebView | Qt | WebUI |
-| ------ | ------ | ------ | ------ |
-| Runtime Dependencies on Windows | *WebView2* | *QtCore, QtGui, QtWidgets* | ***A Web Browser*** |
-| Runtime Dependencies on Linux | *GTK3, WebKitGTK* | *QtCore, QtGui, QtWidgets* | ***A Web Browser*** |
-| Runtime Dependencies on macOS | *Cocoa, WebKit* | *QtCore, QtGui, QtWidgets* | ***A Web Browser*** |
+|                                 | WebView           | Qt                         | WebUI               |
+| ------------------------------- | ----------------- | -------------------------- | ------------------- |
+| Runtime Dependencies on Windows | _WebView2_        | _QtCore, QtGui, QtWidgets_ | **_A Web Browser_** |
+| Runtime Dependencies on Linux   | _GTK3, WebKitGTK_ | _QtCore, QtGui, QtWidgets_ | **_A Web Browser_** |
+| Runtime Dependencies on macOS   | _Cocoa, WebKit_   | _QtCore, QtGui, QtWidgets_ | **_A Web Browser_** |
 
 ## Supported Web Browsers
 
-| OS | Browser | Status |
-| ------ | ------ | ------ |
-| Windows | Mozilla Firefox | ✔️ |
-| Windows | Google Chrome | ✔️ |
-| Windows | Microsoft Edge | ✔️ |
-| Windows | Chromium | ✔️ |
-| Windows | Yandex | ✔️ |
-| Windows | Brave | ✔️ |
-| Windows | Vivaldi | ✔️ |
-| Windows | Epic | ✔️ |
-| Windows | Opera | *coming soon* |
-| - | - | - |
-| Linux | Mozilla Firefox | ✔️ |
-| Linux | Google Chrome | ✔️ |
-| Linux | Microsoft Edge | ✔️ |
-| Linux | Chromium | ✔️ |
-| Linux | Yandex | ✔️ |
-| Linux | Brave | ✔️ |
-| Linux | Vivaldi | ✔️ |
-| Linux | Epic | *Does Not Exist* |
-| Linux | Opera | *coming soon* |
-| - | - | - |
-| macOS | Mozilla Firefox | ✔️ |
-| macOS | Google Chrome | ✔️ |
-| macOS | Microsoft Edge | ✔️ |
-| macOS | Chromium | ✔️ |
-| macOS | Yandex | ✔️ |
-| macOS | Brave | ✔️ |
-| macOS | Vivaldi | ✔️ |
-| macOS | Epic | ✔️ |
-| macOS | Apple Safari | *coming soon* |
-| macOS | Opera | *coming soon* |
+| Browser         | Windows         | macOS         | Linux           |
+| --------------- | --------------- | ------------- | --------------- |
+| Mozilla Firefox | ✔️              | ✔️            | ✔️              |
+| Google Chrome   | ✔️              | ✔️            | ✔️              |
+| Microsoft Edge  | ✔️              | ✔️            | ✔️              |
+| Chromium        | ✔️              | ✔️            | ✔️              |
+| Yandex          | ✔️              | ✔️            | ✔️              |
+| Brave           | ✔️              | ✔️            | ✔️              |
+| Vivaldi         | ✔️              | ✔️            | ✔️              |
+| Epic            | ✔️              | ✔️            | _not available_ |
+| Apple Safari    | _not available_ | _coming soon_ | _not available_ |
+| Opera           | _coming soon_   | _coming soon_ | _coming soon_   |
 
 ## Supported Languages
 
-| Language | Status | Link |
-| ------ | ------ | ------ |
-| C/C++ | ✔️ | [WebUI](https://github.com/webui-dev/webui) |
-| Python | ✔️ | [Python-WebUI](https://github.com/webui-dev/python-webui) |
-| TypeScript / JavaScript | ✔️ | [Deno-WebUI](https://github.com/webui-dev/deno-webui) |
-| Go | ✔️ | [Go-WebUI](https://github.com/webui-dev/go-webui) |
-| Rust | *Not Complete* | [Rust-WebUI](https://github.com/webui-dev/rust-webui) |
-| V | ✔️ | [V-WebUI](https://github.com/webui-dev/v-webui) |
-| Nim | ✔️ | [Nim-WebUI](https://github.com/webui-dev/nim-webui) |
-| Zig | *Not Complete* | [Zig-WebUI](https://github.com/webui-dev/zig-webui) |
+| Language                | Status         | Link                                                      |
+| ----------------------- | -------------- | --------------------------------------------------------- |
+| Go                      | ✔️             | [Go-WebUI](https://github.com/webui-dev/go-webui)         |
+| Nim                     | ✔️             | [Nim-WebUI](https://github.com/webui-dev/nim-webui)       |
+| Pascal                  | ✔️             | [Pascal-WebUI](https://github.com/webui-dev/pascal-webui) |
+| Python                  | ✔️             | [Python-WebUI](https://github.com/webui-dev/python-webui) |
+| Rust                    | _not complete_ | [Rust-WebUI](https://github.com/webui-dev/rust-webui)     |
+| TypeScript / JavaScript | ✔️             | [Deno-WebUI](https://github.com/webui-dev/deno-webui)     |
+| V                       | ✔️             | [V-WebUI](https://github.com/webui-dev/v-webui)           |
+| Zig                     | _not complete_ | [Zig-WebUI](https://github.com/webui-dev/zig-webui)       |
+| Odin                    | _not complete_ | [Odin-WebUI](https://github.com/webui-dev/odin-webui)       |
 
 ### License
 
