@@ -26,7 +26,7 @@ jobs:
           python -m pip install --upgrade twine
           cd PyPI/Package/src/webui
           chmod +x bootstrap.sh
-          bash bootstrap.sh
+          ./bootstrap.sh
           cd ../..
           python -m build
           python -m twine upload --repository pypi dist/* --username __token__ --password ${{ secrets.PYPI_API_TOKEN }}
