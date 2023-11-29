@@ -1,5 +1,5 @@
 
-# Python WebUI v2.4.1
+# Python WebUI v2.4.2
 #
 # http://webui.me
 # https://github.com/webui-dev/python-webui
@@ -338,7 +338,6 @@ def _get_library_path() -> str:
 
 
 def run_cmd(command):
-    print("command: " + command)
     subprocess.run(command, shell=True)
 
 
