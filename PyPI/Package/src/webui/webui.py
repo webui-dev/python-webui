@@ -63,6 +63,15 @@ class runtime:
     nodejs = 2
 
 
+# Event types
+class eventType:
+    DISCONNECTED:int = 0 # Window disconnection event
+    CONNECTED:int = 1 # Window connection event
+    MOUSE_CLICK:int = 2 # Mouse click event
+    NAVIGATION:int = 3 # Window navigation event
+    CALLBACK:int = 4 # Function call event
+
+
 # The window class
 class window:
 
