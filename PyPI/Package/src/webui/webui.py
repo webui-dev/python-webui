@@ -304,6 +304,20 @@ class window:
             ctypes.c_char_p(path.encode('utf-8')))
 
 
+    # Allow a specific window address to be accessible from a public network
+    def set_public(self, status = True):
+        global lib
+        if self.window == 0:
+            _err_window_is_none('set_public')
+            return
+        if lib is None:
+            _err_library_not_found('set_public')
+            return
+        # Set public
+        lib.webui_set_public(self.window, 
+            ctypes.c_bool(status))
+
+
 def _get_current_folder() -> str:
     return os.path.dirname(os.path.abspath(__file__))
 
