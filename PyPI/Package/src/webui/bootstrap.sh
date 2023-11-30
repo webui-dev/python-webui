@@ -6,7 +6,7 @@ if [[ "$1" == "" ]]; then
 
     # --- Full -------------------------------------
     # Download WebUI library for all supported OS.
-    echo "WebUI Deno Bootstrap"
+    echo "WebUI Python Bootstrap"
     echo
 
     # Creating the temporary cache folder
