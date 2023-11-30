@@ -1,27 +1,32 @@
-# WebUI
+# Python WebUI v2.4.3
 
-Use any web browser as GUI, with Python in the backend and HTML5 in the frontend, all in a lightweight portable lib.
+> Use any web browser as GUI, with Python in the backend and HTML5 in the frontend, all in a lightweight Python package.
+
+## Features
+
+- Portable (*Needs only a web browser at runtime*)
+- Lightweight (*Few Kb library*) & Small memory footprint
+- Fast binary communication protocol
+- Multi-platform & Multi-Browser
+- Using private profile for safety
+- Original library is written in Pure C
+
+## Documentation
 
 * [Online Documentation](https://webui.me/docs/#/python_api)
+
+## Install
 
 ```sh
 pip install webui2
 ```
 
+## Example
+
 ```python
 from webui import webui
 
-def my_function(e : webui.event)
-    print("Hi!, You clicked on " + e.element + " element")
-
 MyWindow = webui.window()
-MyWindow.bind("MyID", my_function)
-MyWindow.show("<html>Hello World</html>")
+MyWindow.show('<html><script src="webui.js"></script> Hello World! </html>')
 webui.wait()
 ```
-
-```sh
-python test.py
-```
-
-![ScreenShot](https://raw.githubusercontent.com/webui-dev/python-webui/main/screenshot.png)
