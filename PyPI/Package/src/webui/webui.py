@@ -357,10 +357,12 @@ def run_cmd(command):
 
 def _download_library():
     script = 'sh bootstrap.sh'
+    cd = 'cd '
     if platform.system() == 'Windows':
         script = 'bootstrap.bat'
+        cd = 'cd /d '
     # Run: `cd {folder} && bootstrap.sh minimal`
-    run_cmd('cd ' + _get_current_folder() + 
+    run_cmd(cd + _get_current_folder() + 
                ' && ' + script + ' minimal')
 
 
