@@ -327,6 +327,86 @@ class window:
             ctypes.c_bool(status))
 
 
+    #
+    def set_kiosk(self, status: bool):
+        if self.window == 0:
+            _err_window_is_none('set_kiosk')
+            return
+        lib.webui_set_kiosk(self.window, ctypes.c_bool(status))
+
+
+    #
+    def destroy(self):
+        if self.window == 0:
+            _err_window_is_none('destroy')
+            return
+        lib.webui_destroy(self.window)
+
+
+    #
+    def set_icon(self, icon_path, icon_type):
+        if self.window == 0:
+            _err_window_is_none('set_icon')
+            return
+        lib.webui_set_icon(self.window, ctypes.c_char_p(icon_path.encode('utf-8')), ctypes.c_char_p(icon_type.encode('utf-8')))
+
+
+    #
+    def set_hide(self, status: bool):
+        if self.window == 0:
+            _err_window_is_none('set_hide')
+            return
+        lib.webui_set_hide(self.window, ctypes.c_bool(status))
+
+
+    #
+    def set_size(self, width: int, height: int):
+        if self.window == 0:
+            _err_window_is_none('set_size')
+            return
+        lib.webui_set_size(self.window, ctypes.c_uint(width), ctypes.c_uint(height))
+
+
+    #
+    def set_position(self, x: int, y: int):
+        if self.window == 0:
+            _err_window_is_none('set_position')
+            return
+        lib.webui_set_position(self.window, ctypes.c_uint(x), ctypes.c_uint(y))
+
+
+    #
+    def set_profile(self, name, path):
+        if self.window == 0:
+            _err_window_is_none('set_profile')
+            return
+        lib.webui_set_profile(self.window, ctypes.c_char_p(name.encode('utf-8')), ctypes.c_char_p(path.encode('utf-8')))
+
+
+    #
+    def set_port(self, port: int):
+        if self.window == 0:
+            _err_window_is_none('set_port')
+            return
+        lib.webui_set_port(self.window, ctypes.c_size_t(port))
+
+
+    #
+    def get_parent_process_id(self) -> int:
+        if self.window == 0:
+            _err_window_is_none('get_parent_process_id')
+            return
+        return int(lib.webui_get_parent_process_id(self.window))
+
+
+    #
+    def get_child_process_id(self) -> int:
+        if self.window == 0:
+            _err_window_is_none('get_child_process_id')
+            return
+        return int(lib.webui_get_child_process_id(self.window))
+
+
 def _get_current_folder() -> str:
     return os.path.dirname(os.path.abspath(__file__))
 
@@ -408,12 +488,59 @@ def _load_library():
     else:
         print("Unsupported OS")
 
-
 # Close all opened windows. webui_wait() will break.
 def exit():
     global lib
     if lib is not None:
         lib.webui_exit()
+
+# 
+def free(ptr):
+    global lib
+    if lib is not None:
+        lib.webui_free(ctypes.c_void_p(ptr))
+
+
+# 
+def malloc(size: int) -> int:
+    global lib
+    if lib is not None:
+        return int(lib.webui_malloc(ctypes.c_size_t(size)))
+
+
+# 
+def send_raw(window, function, raw, size):
+    global lib
+    if lib is not None:
+        lib.webui_send_raw(window, ctypes.c_char_p(function.encode('utf-8')), ctypes.c_void_p(raw), ctypes.c_size_t(size))
+
+
+# 
+def clean():
+    global lib
+    if lib is not None:
+        lib.webui_clean()
+
+
+# 
+def delete_all_profiles():
+    global lib
+    if lib is not None:
+        lib.webui_delete_all_profiles()
+
+
+# 
+def delete_profile(window):
+    global lib
+    if lib is not None:
+        lib.webui_delete_profile(ctypes.c_size_t(window))
+
+
+# 
+def set_tls_certificate(certificate_pem, private_key_pem):
+    global lib
+    if lib is not None:
+        lib.webui_set_tls_certificate(ctypes.c_char_p(certificate_pem.encode('utf-8')), ctypes.c_char_p(private_key_pem.encode('utf-8')))
 
 
 # Set startup timeout
