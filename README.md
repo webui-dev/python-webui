@@ -1,8 +1,8 @@
 <div align="center">
 
-![Logo](img/webui.png)
+![Logo](https://raw.githubusercontent.com/webui-dev/webui-logo/main/webui_python.png)
 
-# Python WebUI v2.4.5
+# Python-WebUI v2.4.5
 
 [last-commit]: https://img.shields.io/github/last-commit/webui-dev/webui?style=for-the-badge&logo=github&logoColor=C0CAF5&labelColor=414868
 [release-version]: https://img.shields.io/github/v/tag/webui-dev/webui?style=for-the-badge&logo=webtrees&logoColor=C0CAF5&labelColor=414868&color=7664C6
@@ -14,7 +14,7 @@
 
 > Use any web browser as GUI, with Python in the backend and HTML5 in the frontend, all in a lightweight Python package.
 
-![ScreenShot](img/screenshot.png)
+![Screenshot](https://raw.githubusercontent.com/webui-dev/webui-logo/main/screenshot.png)
 
 </div>
 
@@ -26,12 +26,6 @@
 - Multi-platform & Multi-Browser
 - Using private profile for safety
 - Original library is written in Pure C
-
-## Screenshot
-
-This [text editor example](https://github.com/webui-dev/python-webui/tree/main/examples/text-editor) is written in Python using WebUI as the GUI library.
-
-![ScreenShot](img/webui_python_example.png)
 
 ## Installation
 
