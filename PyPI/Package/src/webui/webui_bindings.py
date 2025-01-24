@@ -5,16 +5,13 @@ import os
 import platform
 import enum
 
-
-# /*
-#   WebUI Library
-#   https://webui.me
-#   https://github.com/webui-dev/webui
-#   Copyright (c) 2020-2024 Hassan Draga.
-#   Licensed under MIT License.
-#   All rights reserved.
-#   Canada.
-# */
+# WebUI Library
+# https://webui.me
+# https://github.com/webui-dev/webui
+# Copyright (c) 2020-2024 Hassan Draga.
+# Licensed under MIT License.
+# All rights reserved.
+# Canada.
 
 
 def _get_current_folder() -> str:
@@ -100,8 +97,6 @@ def _load_library() -> CDLL | None:
     return library
 
 
-
-
 # Loading the library in for bindings
 lib: CDLL | None = _load_library()
 if lib is None:
@@ -110,9 +105,14 @@ if lib is None:
 else:
     webui_lib: CDLL = lib
 
+
 # == Enums ====================================================================
 
+
 class WebuiBrowser(enum.IntEnum):
+    """
+    WebUI Browser enum definition.
+    """
     NoBrowser      = 0    # 0. No web browser
     AnyBrowser     = 1    # 1. Default recommended web browser
     Chrome         = 2    # 2. Google Chrome
@@ -130,6 +130,9 @@ class WebuiBrowser(enum.IntEnum):
 
 
 class WebuiRuntime(enum.IntEnum):
+    """
+    WebUI Runtime enum definition.
+    """
     NoRuntime = 0  # 0. Prevent WebUI from using any runtime for .js and .ts files
     Deno      = 1  # 1. Use Deno runtime for .js and .ts files
     NodeJS    = 2  # 2. Use Nodejs runtime for .js files
@@ -137,15 +140,22 @@ class WebuiRuntime(enum.IntEnum):
 
 
 class WebuiEvent(enum.IntEnum):
-    DISCONNECTED = 0  # 0.Window disconnection event
+    """
+    WebUI Event enum definition.
+    """
+    DISCONNECTED = 0  # 0. Window disconnection event
     CONNECTED    = 1  # 1. Window connection event
     MOUSE_CLICK  = 2  # 2. Mouse click event
     NAVIGATION   = 3  # 3. Window navigation event
     CALLBACK     = 4  # 4. Function call event
 
 
-
 class WebuiConfig(enum.IntEnum):
+    """
+    WebUI Config enum definition.
+    """
+
+    show_wait_connection = 0
     """
     Control if 'webui_show()', 'webui_show_browser()' and
     'webui_show_wv()' should wait for the window to connect
@@ -153,7 +163,8 @@ class WebuiConfig(enum.IntEnum):
 
     Default: True
     """
-    show_wait_connection = 0
+
+    ui_event_blocking = 1
     """
     Control if WebUI should block and process the UI events
     one a time in a single thread `True`, or process every
@@ -163,39 +174,41 @@ class WebuiConfig(enum.IntEnum):
 
     Default: False
     """
-    ui_event_blocking = 1
+
+    folder_monitor = 2
     """
     Automatically refresh the window UI when any file in the
     root folder gets changed.
-    
+
     Default: False
     """
-    folder_monitor = 2
+
+    multi_client = 3
     """
     Allow multiple clients to connect to the same window,
     This is helpful for web apps (non-desktop software),
     Please see the documentation for more details.
-    
+
     Default: False
     """
-    multi_client = 3
+
+    use_cookies = 4
     """
     Allow or prevent WebUI from adding `webui_auth` cookies.
     WebUI uses these cookies to identify clients and block
     unauthorized access to the window content using a URL.
     Please keep this option to `True` if you want only a single
     client to access the window content.
-    
+
     Default: True
     """
-    use_cookies = 4
+
+    asynchronous_response = 5
     """
     If the backend uses asynchronous operations, set this
     option to `True`. This will make webui wait until the
     backend sets a response using `webui_return_x()`.
     """
-    asynchronous_response = 5
-
 
 
 # == Structs ==================================================================
@@ -203,502 +216,790 @@ class WebuiConfig(enum.IntEnum):
 
 class WebuiEventT(Structure):
     _fields_ = [
-        ("window",        c_size_t),
-        ("event_type",    c_size_t),
-        ("element",       c_char_p),
-        ("event_number",  c_size_t),
-        ("bind_id",       c_size_t),
-        ("client_id",     c_size_t),
-        ("connection_id", c_size_t),
-        ("cookies",       c_char_p),
+        ("window",        c_size_t),  # The window object number
+        ("event_type",    c_size_t),  # Event type
+        ("element",       c_char_p),  # HTML element ID
+        ("event_number",  c_size_t),  # Internal WebUI
+        ("bind_id",       c_size_t),  # Bind ID
+        ("client_id",     c_size_t),  # Client's unique ID
+        ("connection_id", c_size_t),  # Client's connection ID
+        ("cookies",       c_char_p),  # Client's full cookies
     ]
 
 
 # == Definitions ==============================================================
 
 
-"""
- @brief Create a new WebUI window object.
- 
- @return Returns the window number.
- 
- @example size_t myWindow = webui_new_window();
-
-WEBUI_EXPORT size_t webui_new_window(void);
-"""
+# -- new_window ---------------------------------
 webui_new_window = webui_lib.webui_new_window
+"""
+brief: 
+ Create a new WebUI window object.
+
+return: 
+ Returns the window number.
+
+example: 
+ size_t myWindow = webui_new_window();
+
+C Signature:
+ WEBUI_EXPORT size_t webui_new_window(void);
+"""
 webui_new_window.argtypes = []
 webui_new_window.restype  = c_size_t
 
 
+# -- new_window_id ------------------------------
+webui_new_window_id = webui_lib.webui_new_window_id
 """
- @brief Create a new webui window object using a specified window number.
+brief: 
+ Create a new webui window object using a specified window number.
 
- @param window_number The window number (should be > 0, and < WEBUI_MAX_IDS)
+param: window_number - The window number (should be > 0, and < WEBUI_MAX_IDS)
 
- @return Returns the same window number if success.
+return: 
+ Returns the same window number if success.
 
- @example size_t myWindow = webui_new_window_id(123);
+example: 
+ size_t myWindow = webui_new_window_id(123);
 
+C Signature:
  WEBUI_EXPORT size_t webui_new_window_id(size_t window_number);
 """
-webui_new_window_id = webui_lib.webui_new_window_id
-webui_new_window_id.argtypes = [c_size_t]
+webui_new_window_id.argtypes = [
+    c_size_t  # size_t window_number
+]
 webui_new_window_id.restype  = c_size_t
 
 
+# -- get_new_window_id --------------------------
+webui_get_new_window_id = webui_lib.webui_get_new_window_id
 """
- @brief Get a free window number that can be used with
+brief: 
+ Get a free window number that can be used with 
  `webui_new_window_id()`.
 
- @return Returns the first available free window number. Starting from 1.
+return: 
+ Returns the first available free window number. Starting from 1.
 
- @example size_t myWindowNumber = webui_get_new_window_id();
+example: 
+ size_t myWindowNumber = webui_get_new_window_id();
 
+C Signature:
  WEBUI_EXPORT size_t webui_get_new_window_id(void);
 """
-webui_get_new_window_id = webui_lib.webui_get_new_window_id
 webui_get_new_window_id.argtypes = []
 webui_get_new_window_id.restype  = c_size_t
 
 
+# -- bind ---------------------------------------
+webui_bind = webui_lib.webui_bind
 """
- @brief Bind an HTML element and a JavaScript object with a backend function. Empty
- element name means all events.
+brief:
+ Bind an HTML element and a JavaScript object with 
+ a backend function. Empty element name means all events.
 
- @param window The window number
- @param element The HTML element / JavaScript object
- @param func The callback function
+param: window - The window number
+param: element - The HTML element / JavaScript object
+param: func - The callback function
 
- @return Returns a unique bind ID.
+return: 
+ Returns a unique bind ID.
 
- @example webui_bind(myWindow, "myFunction", myFunction);
+example:
+ webui_bind(myWindow, "myFunction", myFunction);
 
+C Signature:
  WEBUI_EXPORT size_t webui_bind(size_t window, const char* element, void (*func)(webui_event_t* e));
 """
-webui_bind = webui_lib.webui_bind
-webui_bind.argtypes = [c_size_t, c_char_p, CFUNCTYPE(None, POINTER(WebuiEventT))]
+webui_bind.argtypes = [
+    c_size_t,                                              # size_t window
+    c_char_p,                                              # const char* element
+    CFUNCTYPE(None, POINTER(WebuiEventT))  # void (*func)(webui_event_t* e)
+]
 webui_bind.restype  = c_size_t
 
 
+# -- get_best_browser ---------------------------
+webui_get_best_browser = webui_lib.webui_get_best_browser
 """
- @brief Get the recommended web browser ID to use. If you
+brief: 
+ Get the recommended web browser ID to use. If you
  are already using one, this function will return the same ID.
 
- @param window The window number
+param: window - The window number
 
- @return Returns a web browser ID.
+return: 
+ Returns a web browser ID.
 
- @example size_t browserID = webui_get_best_browser(myWindow);
+example: 
+ size_t browserID = webui_get_best_browser(myWindow);
 
+C Signature:
  WEBUI_EXPORT size_t webui_get_best_browser(size_t window);
 """
-webui_get_best_browser = webui_lib.webui_get_best_browser
-webui_get_best_browser.argtypes = [c_size_t]
+webui_get_best_browser.argtypes = [
+    c_size_t  # size_t window
+]
 webui_get_best_browser.restype  = c_size_t
 
 
+# -- show ---------------------------------------
+webui_show = webui_lib.webui_show
 """
- @brief Show a window using embedded HTML, or a file. If the window is already
+brief: 
+ Show a window using embedded HTML, or a file. If the window is already
  open, it will be refreshed. This will refresh all windows in multi-client mode.
 
- @param window The window number
- @param content The HTML, URL, Or a local file
+param: window - The window number
+param: content - The HTML, URL, Or a local file
 
- @return Returns True if showing the window is successed.
+return:
+ Returns True if showing the window is successed.
 
- @example webui_show(myWindow, "<html>...</html>"); |
- webui_show(myWindow, "index.html"); | webui_show(myWindow, "http://...");
+example:
+ webui_show(myWindow, "<html>...</html>"); 
+ webui_show(myWindow, "index.html");  
+ webui_show(myWindow, "http://...");
 
+C Signature: 
  WEBUI_EXPORT bool webui_show(size_t window, const char* content);
 """
-webui_show = webui_lib.webui_show
-webui_show.argtypes = [c_size_t, c_char_p]
+webui_show.argtypes = [
+    c_size_t,  # size_t window
+    c_char_p   # const char* content
+]
 webui_show.restype  = c_bool
 
 
+# -- show_client --------------------------------
+webui_show_client = webui_lib.webui_show_client
 """
- @brief Show a window using embedded HTML, or a file. If the window is already
+brief:
+ Show a window using embedded HTML, or a file. If the window is already
  open, it will be refreshed. Single client.
 
- @param e The event struct
- @param content The HTML, URL, Or a local file
+param: e - The event struct
+param: content - The HTML, URL, or a local file
 
- @return Returns True if showing the window is successed.
+return:
+ Returns True if showing the window has succeeded.
 
- @example webui_show_client(e, "<html>...</html>"); |
- webui_show_client(e, "index.html"); | webui_show_client(e, "http://...");
+example: 
+ webui_show_client(e, "<html>...</html>"); |
+ webui_show_client(e, "index.html"); |
+ webui_show_client(e, "http://...");
 
+C Signature: 
  WEBUI_EXPORT bool webui_show_client(webui_event_t* e, const char* content);
 """
-webui_show_client = webui_lib.webui_show_client
-webui_show_client.argtypes = [POINTER(WebuiEventT), c_char_p]
-webui_show_client.restype  = c_bool
+webui_show_client.argtypes = [
+    POINTER(WebuiEventT),  # webui_event_t* e
+    c_char_p               # const char* content
+]
+webui_show_client.restype = c_bool
 
 
+# -- show_browser -------------------------------
+webui_show_browser = webui_lib.webui_show_browser
 """
- @brief Same as `webui_show()`. But using a specific web browser.
+brief:
+ Same as `webui_show()`. But using a specific web browser.
 
- @param window The window number
- @param content The HTML, Or a local file
- @param browser The web browser to be used
+param: window - The window number
+param: content - The HTML, Or a local file
+param: browser - The web browser to be used
 
- @return Returns True if showing the window is successed.
+return:
+ Returns True if showing the window is successed.
 
- @example webui_show_browser(myWindow, "<html>...</html>", Chrome); |
+example:
+ webui_show_browser(myWindow, "<html>...</html>", Chrome); |
  webui_show(myWindow, "index.html", Firefox);
 
+C Signature: 
  WEBUI_EXPORT bool webui_show_browser(size_t window, const char* content, size_t browser);
 """
-webui_show_browser = webui_lib.webui_show_browser
-webui_show_browser.argtypes = [c_size_t, c_char_p, c_size_t]
+webui_show_browser.argtypes = [
+    c_size_t,  # size_t window
+    c_char_p,  # const char* content
+    c_size_t   # size_t browser
+]
 webui_show_browser.restype  = c_bool
 
 
+# -- start_server -------------------------------
+webui_start_server = webui_lib.webui_start_server
 """
- @brief Same as `webui_show()`. But start only the web server and return the URL.
+brief: 
+ Same as `webui_show()`. But start only the web server and return the URL.
  No window will be shown.
 
- @param window The window number
- @param content The HTML, Or a local file
+param: window - The window number
+param: content - The HTML, Or a local file
 
- @return Returns the url of this window server.
+return: 
+ Returns the url of this window server.
 
- @example const char* url = webui_start_server(myWindow, "/full/root/path");
+example: 
+ const char* url = webui_start_server(myWindow, "/full/root/path");
 
+C Signature: 
  WEBUI_EXPORT const char* webui_start_server(size_t window, const char* content);
 """
-webui_start_server = webui_lib.webui_start_server
-webui_start_server.argtypes = [c_size_t, c_char_p]
+webui_start_server.argtypes = [
+    c_size_t,  # size_t window
+    c_char_p   # const char* content
+]
 webui_start_server.restype  = c_char_p
 
 
+# -- show_wv ------------------------------------
+webui_show_wv = webui_lib.webui_show_wv
 """
- @brief Show a WebView window using embedded HTML, or a file. If the window is already
+brief: 
+ Show a WebView window using embedded HTML, or a file. If the window is already
  open, it will be refreshed. Note: Win32 need `WebView2Loader.dll`.
 
- @param window The window number
- @param content The HTML, URL, Or a local file
+param: window - The window number
+param: content - The HTML, URL, Or a local file
 
- @return Returns True if showing the WebView window is successed.
+return: 
+ Returns True if showing the WebView window is successed.
 
- @example webui_show_wv(myWindow, "<html>...</html>"); | webui_show_wv(myWindow,
- "index.html"); | webui_show_wv(myWindow, "http://...");
+example: 
+ webui_show_wv(myWindow, "<html>...</html>"); 
+ webui_show_wv(myWindow, "index.html");  
+ webui_show_wv(myWindow, "http://...");
 
+C Signature: 
  WEBUI_EXPORT bool webui_show_wv(size_t window, const char* content);
 """
-webui_show_wv = webui_lib.webui_show_wv
-webui_show_wv.argtypes = [c_size_t, c_char_p]
+webui_show_wv.argtypes = [
+    c_size_t,  # size_t window
+    c_char_p   # const char* content
+]
 webui_show_wv.restype  = c_bool
 
 
+# -- set_kiosk ----------------------------------
+webui_set_kiosk = webui_lib.webui_set_kiosk
 """
- @brief Set the window in Kiosk mode (Full screen).
+brief: 
+ Set the window in Kiosk mode (Full screen).
 
- @param window The window number
- @param status True or False
+param: window - The window number
+param: status - True or False
 
- @example webui_set_kiosk(myWindow, true);
+example: 
+ webui_set_kiosk(myWindow, true);
 
+C Signature: 
  WEBUI_EXPORT void webui_set_kiosk(size_t window, bool status);
 """
-webui_set_kiosk = webui_lib.webui_set_kiosk
-webui_set_kiosk.argtypes = [c_size_t, c_bool]
+webui_set_kiosk.argtypes = [
+    c_size_t,  # size_t window
+    c_bool     # bool status
+]
 webui_set_kiosk.restype  = None
 
 
+# -- set_custom_parameters ----------------------
+webui_set_custom_parameters = webui_lib.webui_set_custom_parameters
 """
- @brief Add a user-defined web browser's CLI parameters.
+brief:
+ Add a user-defined web browser's CLI parameters.
 
- @param window The window number
- @param params Command line parameters
+param: window - The window number
+param: params - Command line parameters
 
- @example webui_set_custom_parameters(myWindow, "--remote-debugging-port=9222");
+example:
+ webui_set_custom_parameters(myWindow, "--remote-debugging-port=9222");
 
+C Signature: 
  WEBUI_EXPORT void webui_set_custom_parameters(size_t window, char *params);
 """
-webui_set_custom_parameters = webui_lib.webui_set_custom_parameters
-webui_set_custom_parameters.argtypes = [c_size_t, c_char_p]
+webui_set_custom_parameters.argtypes = [
+    c_size_t,  # size_t window
+    c_char_p   # char* params
+]
 webui_set_custom_parameters.restype  = None
 
 
+# -- set_high_contrast --------------------------
+webui_set_high_contrast = webui_lib.webui_set_high_contrast
 """
- @brief Set the window with high-contrast support. Useful when you want to
+brief: 
+ Set the window with high-contrast support. Useful when you want to
  build a better high-contrast theme with CSS.
 
- @param window The window number
- @param status True or False
+param: window - The window number
+param: status - True or False
 
- @example webui_set_high_contrast(myWindow, true);
+example:
+ webui_set_high_contrast(myWindow, true);
 
+C Signature: 
  WEBUI_EXPORT void webui_set_high_contrast(size_t window, bool status);
 """
-webui_set_high_contrast = webui_lib.webui_set_high_contrast
-webui_set_high_contrast.argtypes = [c_size_t, c_bool]
+webui_set_high_contrast.argtypes = [
+    c_size_t,  # size_t window
+    c_bool     # bool status
+]
 webui_set_high_contrast.restype  = None
 
 
+# -- is_high_contrast ---------------------------
+webui_is_high_contrast = webui_lib.webui_is_high_contrast
 """
- @brief Get OS high contrast preference.
+brief: 
+ Get OS high contrast preference.
 
- @return Returns True if OS is using high contrast theme
+return:
+ Returns True if OS is using high contrast theme
 
- @example bool hc = webui_is_high_contrast();
+example:
+ bool hc = webui_is_high_contrast();
 
+C Signature: 
  WEBUI_EXPORT bool webui_is_high_contrast(void);
 """
-webui_is_high_contrast = webui_lib.webui_is_high_contrast
 webui_is_high_contrast.argtypes = []
 webui_is_high_contrast.restype  = c_bool
 
 
+# -- browser_exist ------------------------------
+webui_browser_exist = webui_lib.webui_browser_exist
 """
- @brief Check if a web browser is installed.
+brief:
+ Check if a web browser is installed.
 
- @return Returns True if the specified browser is available
+return:
+ Returns True if the specified browser is available
 
- @example bool status = webui_browser_exist(Chrome);
+example:
+ bool status = webui_browser_exist(Chrome);
 
+C Signature: 
  WEBUI_EXPORT bool webui_browser_exist(size_t browser);
 """
-webui_browser_exist = webui_lib.webui_browser_exist
-webui_browser_exist.argtypes = [c_size_t]
+webui_browser_exist.argtypes = [
+    c_size_t  # size_t browser
+]
 webui_browser_exist.restype  = c_bool
 
 
+# -- wait ---------------------------------------
+webui_wait = webui_lib.webui_wait
 """
- @brief Wait until all opened windows get closed.
+brief:
+ Wait until all opened windows get closed.
 
- @example webui_wait();
+example:
+ webui_wait();
 
+C Signature: 
  WEBUI_EXPORT void webui_wait(void);
 """
-webui_wait = webui_lib.webui_wait
 webui_wait.argtypes = []
 webui_wait.restype  = None
 
 
+# -- close --------------------------------------
+webui_close = webui_lib.webui_close
 """
- @brief Close a specific window only. The window object will still exist.
+brief: 
+ Close a specific window only. The window object will still exist.
  All clients.
 
- @param window The window number
+param: window - The window number
 
- @example webui_close(myWindow);
+example:
+ webui_close(myWindow);
 
+C Signature: 
  WEBUI_EXPORT void webui_close(size_t window);
 """
-webui_close = webui_lib.webui_close
-webui_close.argtypes = [c_size_t]
+webui_close.argtypes = [
+    c_size_t  # size_t window
+]
 webui_close.restype  = None
 
 
+# -- close_client -------------------------------
+webui_close_client = webui_lib.webui_close_client
 """
- @brief Close a specific client.
+brief:
+ Close a specific client.
 
- @param e The event struct
+param: e - The event struct
 
- @example webui_close_client(e);
+example:
+ webui_close_client(e);
 
+C Signature: 
  WEBUI_EXPORT void webui_close_client(webui_event_t* e);
 """
-webui_close_client = webui_lib.webui_close_client
-webui_close_client.argtypes = [POINTER(WebuiEventT)]
+webui_close_client.argtypes = [
+    POINTER(WebuiEventT)  # webui_event_t* e
+]
 webui_close_client.restype = None
 
 
+# -- destroy ------------------------------------
+webui_destroy = webui_lib.webui_destroy
 """
- @brief Close a specific window and free all memory resources.
+brief: 
+ Close a specific window and free all memory resources.
 
- @param window The window number
+param: window - The window number
 
- @example webui_destroy(myWindow);
+example:
+ webui_destroy(myWindow);
 
+C Signature: 
  WEBUI_EXPORT void webui_destroy(size_t window);
 """
-webui_destroy = webui_lib.webui_destroy
-webui_destroy.argtypes = [c_size_t]
+webui_destroy.argtypes = [
+    c_size_t  # size_t window
+]
 webui_destroy.restype = None
 
 
+
+# -- exit ---------------------------------------
+webui_exit = webui_lib.webui_exit
 """
- @brief Close all open windows. `webui_wait()` will return (Break).
+brief:
+ Close all open windows. `webui_wait()` will return (Break).
 
- @example webui_exit();
+example:
+ webui_exit();
 
+C Signature: 
  WEBUI_EXPORT void webui_exit(void);
 """
-# void webui_exit(void);
-webui_exit = webui_lib.webui_exit
 webui_exit.argtypes = []
 webui_exit.restype = None
 
 
+# -- set_root_folder ----------------------------
+webui_set_root_folder = webui_lib.webui_set_root_folder
 """
- @brief Set the web-server root folder path for a specific window.
+brief:
+ Set the web-server root folder path for a specific window.
 
- @param window The window number
- @param path The local folder full path
+param: window - The window number
+param: path - The local folder full path
 
- @example webui_set_root_folder(myWindow, "/home/Foo/Bar/");
+example:
+ webui_set_root_folder(myWindow, "/home/Foo/Bar/");
 
+C Signature: 
  WEBUI_EXPORT bool webui_set_root_folder(size_t window, const char* path);
 """
-webui_set_root_folder = webui_lib.webui_set_root_folder
-webui_set_root_folder.argtypes = [c_size_t, c_char_p]
+webui_set_root_folder.argtypes = [
+    c_size_t,  # size_t window
+    c_char_p   # const char* path
+]
 webui_set_root_folder.restype = c_bool
 
 
+# -- set_default_root_folder --------------------
+webui_set_default_root_folder = webui_lib.webui_set_default_root_folder
 """
- @brief Set the web-server root folder path for all windows. Should be used
-  before `webui_show()`.
- 
- @param path The local folder full path
- @example webui_set_default_root_folder("/home/Foo/Bar/");
- 
+brief:
+ Set the web-server root folder path for all windows. Should be used
+ before `webui_show()`.
+
+param: path - The local folder full path
+
+example:
+ webui_set_default_root_folder("/home/Foo/Bar/");
+
+C Signature: 
  WEBUI_EXPORT bool webui_set_default_root_folder(const char* path);
 """
-webui_set_default_root_folder = webui_lib.webui_set_default_root_folder
-webui_set_default_root_folder.argtypes = [c_char_p]
+webui_set_default_root_folder.argtypes = [
+    c_char_p  # const char* path
+]
 webui_set_default_root_folder.restype = c_bool
 
-#
-#
-# /**
-#  * @brief Set a custom handler to serve files. This custom handler should
-#  * return full HTTP header and body.
-#  * This deactivates any previous handler set with `webui_set_file_handler_window`
-#  *
-#  * @param window The window number
-#  * @param handler The handler function: `void myHandler(const char* filename,
-#  * int* length)`
-#  *
-#  * @example webui_set_file_handler(myWindow, myHandlerFunction);
-#  */
-# WEBUI_EXPORT void webui_set_file_handler(size_t window, const void* (*handler)(const char* filename, int* length));
-#
-# /**
-#  * @brief Set a custom handler to serve files. This custom handler should
-#  * return full HTTP header and body.
-#  * This deactivates any previous handler set with `webui_set_file_handler`
-#  *
-#  * @param window The window number
-#  * @param handler The handler function: `void myHandler(size_t window, const char* filename,
-#  * int* length)`
-#  *
-#  * @example webui_set_file_handler_window(myWindow, myHandlerFunction);
-#  */
-# WEBUI_EXPORT void webui_set_file_handler_window(size_t window, const void* (*handler)(size_t window, const char* filename, int* length));
-#
-#
-# /**
-#  * @brief Check if the specified window is still running.
-#  *
-#  * @param window The window number
-#  *
-#  * @example webui_is_shown(myWindow);
-#  */
-# WEBUI_EXPORT bool webui_is_shown(size_t window);
-#
-# /**
-#  * @brief Set the maximum time in seconds to wait for the window to connect.
-#  * This effect `show()` and `wait()`. Value of `0` means wait forever.
-#  *
-#  * @param second The timeout in seconds
-#  *
-#  * @example webui_set_timeout(30);
-#  */
-# WEBUI_EXPORT void webui_set_timeout(size_t second);
-#
-# /**
-#  * @brief Set the default embedded HTML favicon.
-#  *
-#  * @param window The window number
-#  * @param icon The icon as string: `<svg>...</svg>`
-#  * @param icon_type The icon type: `image/svg+xml`
-#  *
-#  * @example webui_set_icon(myWindow, "<svg>...</svg>", "image/svg+xml");
-#  */
-# WEBUI_EXPORT void webui_set_icon(size_t window, const char* icon, const char* icon_type);
-#
-# /**
-#  * @brief Encode text to Base64. The returned buffer need to be freed.
-#  *
-#  * @param str The string to encode (Should be null terminated)
-#  *
-#  * @return Returns the base64 encoded string
-#  *
-#  * @example char* base64 = webui_encode("Foo Bar");
-#  */
-# WEBUI_EXPORT char* webui_encode(const char* str);
-#
-# /**
-#  * @brief Decode a Base64 encoded text. The returned buffer need to be freed.
-#  *
-#  * @param str The string to decode (Should be null terminated)
-#  *
-#  * @return Returns the base64 decoded string
-#  *
-#  * @example char* str = webui_decode("SGVsbG8=");
-#  */
-# WEBUI_EXPORT char* webui_decode(const char* str);
-#
-# /**
-#  * @brief Safely free a buffer allocated by WebUI using `webui_malloc()`.
-#  *
-#  * @param ptr The buffer to be freed
-#  *
-#  * @example webui_free(myBuffer);
-#  */
-# WEBUI_EXPORT void webui_free(void* ptr);
-#
-# /**
-#  * @brief Safely allocate memory using the WebUI memory management system. It
-#  * can be safely freed using `webui_free()` at any time.
-#  *
-#  * @param size The size of memory in bytes
-#  *
-#  * @example char* myBuffer = (char*)webui_malloc(1024);
-#  */
-# WEBUI_EXPORT void* webui_malloc(size_t size);
-#
-# /**
-#  * @brief Safely send raw data to the UI. All clients.
-#  *
-#  * @param window The window number
-#  * @param function The JavaScript function to receive raw data: `function
-#  * myFunc(myData){}`
-#  * @param raw The raw data buffer
-#  * @param size The raw data size in bytes
-#  *
-#  * @example webui_send_raw(myWindow, "myJavaScriptFunc", myBuffer, 64);
-#  */
-# WEBUI_EXPORT void webui_send_raw(size_t window, const char* function, const void* raw, size_t size);
-#
-# /**
-#  * @brief Safely send raw data to the UI. Single client.
-#  *
-#  * @param e The event struct
-#  * @param function The JavaScript function to receive raw data: `function
-#  * myFunc(myData){}`
-#  * @param raw The raw data buffer
-#  * @param size The raw data size in bytes
-#  *
-#  * @example webui_send_raw_client(e, "myJavaScriptFunc", myBuffer, 64);
-#  */
-# WEBUI_EXPORT void webui_send_raw_client(webui_event_t* e, const char* function,
-#     const void* raw, size_t size);
-#
-# /**
-#  * @brief Set a window in hidden mode. Should be called before `webui_show()`.
-#  *
-#  * @param window The window number
-#  * @param status The status: True or False
-#  *
-#  * @example webui_set_hide(myWindow, True);
-#  */
-# WEBUI_EXPORT void webui_set_hide(size_t window, bool status);
-#
+
+# -- set_file_handler----------------------------
+webui_set_file_handler = webui_lib.webui_set_file_handler
+"""
+brief:
+ Set a custom handler to serve files. This custom handler should
+ return full HTTP header and body.
+ This deactivates any previous handler set with `webui_set_file_handler_window`
+
+param: window - The window number
+param: handler - The handler function: `void myHandler(const char* filename, int* length)`
+
+example:
+ webui_set_file_handler(myWindow, myHandlerFunction);
+
+C Signature: 
+ WEBUI_EXPORT void webui_set_file_handler(size_t window, const void* (*handler)(const char* filename, int* length));
+"""
+webui_set_file_handler.argtypes = [
+    c_size_t,                                               # size_t window
+    CFUNCTYPE(c_void_p, c_char_p, POINTER(c_int))  # const void* (*handler)(const char* filename, int* length)
+]
+webui_set_file_handler.restype = None
+
+
+# -- set_file_handler_window --------------------
+webui_set_file_handler_window = webui_lib.webui_set_file_handler
+"""
+brief:
+ Set a custom handler to serve files. This custom handler should
+ return full HTTP header and body. This deactivates any previous 
+ handler set with `webui_set_file_handler`
+
+param: window - The window number
+param: handler - The handler function: `void myHandler(size_t window, const char* filename, int* length)`
+
+example:
+ webui_set_file_handler_window(myWindow, myHandlerFunction);
+
+C Signature: 
+ WEBUI_EXPORT void webui_set_file_handler_window(size_t window, const void* (*handler)(size_t window, const char* filename, int* length));
+"""
+webui_set_file_handler.argtypes = [
+    c_size_t,                                                         # size_t window
+    CFUNCTYPE(c_size_t, c_void_p, c_char_p, POINTER(c_int))  # const void* (*handler)(size_t window, const char* filename, int* length)
+]
+webui_set_file_handler.restype = None
+
+
+# -- is_shown -----------------------------------
+webui_is_shown = webui_lib.webui_is_shown
+"""
+brief:
+ Check if the specified window is still running.
+
+param: window - The window number
+
+example:
+ webui_is_shown(myWindow);
+
+C Signature: 
+ WEBUI_EXPORT bool webui_is_shown(size_t window);
+"""
+webui_is_shown.argtypes = [
+    c_size_t  # size_t window
+]
+webui_is_shown.restype = c_bool
+
+
+# -- set_timeout --------------------------------
+webui_set_timeout = webui_lib.webui_set_timeout
+"""
+brief:
+ Set the maximum time in seconds to wait for the window to connect.
+ This effect `show()` and `wait()`. Value of `0` means wait forever.
+
+param: second - The timeout in seconds
+
+example:
+ webui_set_timeout(30);
+
+C Signature: 
+ WEBUI_EXPORT void webui_set_timeout(size_t second);
+"""
+webui_set_timeout.argtypes = [
+    c_size_t  # size_t second
+]
+webui_set_timeout.restype = None
+
+
+# -- set_icon -----------------------------------
+webui_set_icon = webui_lib.webui_set_icon
+"""
+brief:
+ Set the default embedded HTML favicon.
+
+param: window - The window number
+param: icon - The icon as string: `<svg>...</svg>`
+param: icon_type - The icon type: `image/svg+xml`
+
+example:
+ webui_set_icon(myWindow, "<svg>...</svg>", "image/svg+xml");
+
+C Signature: 
+ WEBUI_EXPORT void webui_set_icon(size_t window, const char* icon, const char* icon_type);
+"""
+webui_set_icon.argtypes = [
+    c_size_t,  # size_t window
+    c_char_p,  # const char* icon
+    c_char_p   # const char* icon_type
+]
+webui_set_icon.restype = None
+
+
+# -- encode -------------------------------------
+webui_encode = webui_lib.webui_encode
+"""
+brief:
+ Encode text to Base64. The returned buffer need to be freed.
+
+param: str - The string to encode (Should be null terminated)
+
+return:
+ Returns the base64 encoded string
+
+example:
+ char* base64 = webui_encode("Foo Bar");
+
+C Signature: 
+ WEBUI_EXPORT char* webui_encode(const char* str);
+"""
+webui_encode.argtypes = [
+    c_char_p  # const char* str
+]
+webui_encode.restype = c_char_p
+
+
+# -- decode -------------------------------------
+webui_decode = webui_lib.webui_decode
+"""
+brief:
+ Decode a Base64 encoded text. The returned buffer need to be freed.
+
+param: str - The string to decode (Should be null terminated)
+
+return:
+ Returns the base64 decoded string
+
+example:
+ char* str = webui_decode("SGVsbG8=");
+
+C Signature: 
+ WEBUI_EXPORT char* webui_decode(const char* str);
+"""
+webui_decode.argtypes = [
+    c_char_p  # const char* str
+]
+webui_decode.restype = c_char_p
+
+
+# -- free ---------------------------------------
+webui_free = webui_lib.webui_free
+"""
+brief:
+ Safely free a buffer allocated by WebUI using `webui_malloc()`.
+
+param: ptr - The buffer to be freed
+
+example:
+ webui_free(myBuffer);
+
+C Signature: 
+ WEBUI_EXPORT void webui_free(void* ptr);
+"""
+webui_free.argtypes = [
+    c_void_p  # void* ptr
+]
+webui_free.restype = None
+
+
+# -- malloc -------------------------------------
+webui_malloc = webui_lib.webui_malloc
+"""
+brief:
+ Safely allocate memory using the WebUI memory management system. It
+ can be safely freed using `webui_free()` at any time.
+
+param: size - The size of memory in bytes
+
+example:
+ char* myBuffer = (char*)webui_malloc(1024);
+
+C Signature:  
+ WEBUI_EXPORT void* webui_malloc(size_t size);
+"""
+webui_malloc.argtypes = [
+    c_size_t  # size_t size
+]
+webui_malloc.restype = c_void_p
+
+
+# -- send_raw -----------------------------------
+webui_send_raw = webui_lib.webui_send_raw
+"""
+brief:
+ Safely send raw data to the UI. All clients.
+
+param: window - The window number
+param: function - The JavaScript function to receive raw data: `function myFunc(myData){}`
+param: raw - The raw data buffer
+param: size - The raw data size in bytes
+
+example:
+ webui_send_raw(myWindow, "myJavaScriptFunc", myBuffer, 64);
+
+C Signature: 
+ WEBUI_EXPORT void webui_send_raw(size_t window, const char* function, const void* raw, size_t size);
+"""
+webui_send_raw.argtypes = [
+    c_size_t,  # size_t window
+    c_char_p,  # const char* function
+    c_void_p,  # const void* raw
+    c_size_t   # size_t size
+]
+
+
+# -- send_raw_client ----------------------------
+webui_send_raw_client = webui_lib.webui_send_raw_client
+"""
+brief:
+ Safely send raw data to the UI. Single client.
+
+param: e - The event struct
+param: function - The JavaScript function to receive raw data: `function myFunc(myData){}`
+param: raw - The raw data buffer
+param: size - The raw data size in bytes
+
+example: 
+ webui_send_raw_client(e, "myJavaScriptFunc", myBuffer, 64);
+
+C Signature: 
+ WEBUI_EXPORT void webui_send_raw_client(webui_event_t* e, const char* function, const void* raw, size_t size);
+"""
+webui_send_raw_client.argtypes = [
+    POINTER(WebuiEventT),  # webui_event_t* e
+    c_char_p,              # const char* function
+    c_void_p,              # const void* raw
+    c_size_t               # size_t size
+]
+webui_send_raw_client.restype = None
+
+
+# -- set_hide -----------------------------------
+webui_set_hide = webui_lib.webui_set_hide
+"""
+brief:
+ Set a window in hidden mode. Should be called before `webui_show()`.
+
+param: window - The window number
+param: status - The status: True or False
+
+example:
+ webui_set_hide(myWindow, True);
+
+C Signature: 
+ WEBUI_EXPORT void webui_set_hide(size_t window, bool status);
+"""
+webui_set_hide.argtypes = [
+    c_size_t,  # size_t window
+    c_bool     # bool status
+]
+webui_set_hide.restype = None
+
+
+
 # /**
 #  * @brief Set the window size.
 #  *
@@ -710,6 +1011,11 @@ webui_set_default_root_folder.restype = c_bool
 #  */
 # WEBUI_EXPORT void webui_set_size(size_t window, unsigned int width, unsigned int height);
 #
+"""
+
+""" # TODO:
+
+
 # /**
 #  * @brief Set the window minimum size.
 #  *
@@ -720,6 +1026,11 @@ webui_set_default_root_folder.restype = c_bool
 #  * @example webui_set_minimum_size(myWindow, 800, 600);
 #  */
 # WEBUI_EXPORT void webui_set_minimum_size(size_t window, unsigned int width, unsigned int height);
+"""
+
+""" # TODO:
+
+
 #
 # /**
 #  * @brief Set the window position.
@@ -731,6 +1042,11 @@ webui_set_default_root_folder.restype = c_bool
 #  * @example webui_set_position(myWindow, 100, 100);
 #  */
 # WEBUI_EXPORT void webui_set_position(size_t window, unsigned int x, unsigned int y);
+"""
+
+""" # TODO:
+
+
 #
 # /**
 #  * @brief Set the web browser profile to use. An empty `name` and `path` means
@@ -744,6 +1060,11 @@ webui_set_default_root_folder.restype = c_bool
 #  * webui_set_profile(myWindow, "", "");
 #  */
 # WEBUI_EXPORT void webui_set_profile(size_t window, const char* name, const char* path);
+"""
+
+""" # TODO:
+
+
 #
 # /**
 #  * @brief Set the web browser proxy server to use. Need to be called before `webui_show()`.
@@ -754,6 +1075,11 @@ webui_set_default_root_folder.restype = c_bool
 #  * @example webui_set_proxy(myWindow, "http://127.0.0.1:8888");
 #  */
 # WEBUI_EXPORT void webui_set_proxy(size_t window, const char* proxy_server);
+"""
+
+""" # TODO:
+
+
 #
 # /**
 #  * @brief Get current URL of a running window.
@@ -765,6 +1091,11 @@ webui_set_default_root_folder.restype = c_bool
 #  * @example const char* url = webui_get_url(myWindow);
 #  */
 # WEBUI_EXPORT const char* webui_get_url(size_t window);
+"""
+
+""" # TODO:
+
+
 #
 # /**
 #  * @brief Open an URL in the native default web browser.
@@ -774,6 +1105,11 @@ webui_set_default_root_folder.restype = c_bool
 #  * @example webui_open_url("https://webui.me");
 #  */
 # WEBUI_EXPORT void webui_open_url(const char* url);
+"""
+
+""" # TODO:
+
+
 #
 # /**
 #  * @brief Allow a specific window address to be accessible from a public network.
@@ -784,6 +1120,11 @@ webui_set_default_root_folder.restype = c_bool
 #  * @example webui_set_public(myWindow, true);
 #  */
 # WEBUI_EXPORT void webui_set_public(size_t window, bool status);
+"""
+
+""" # TODO:
+
+
 #
 # /**
 #  * @brief Navigate to a specific URL. All clients.
@@ -794,6 +1135,11 @@ webui_set_default_root_folder.restype = c_bool
 #  * @example webui_navigate(myWindow, "http://domain.com");
 #  */
 # WEBUI_EXPORT void webui_navigate(size_t window, const char* url);
+"""
+
+""" # TODO:
+
+
 #
 # /**
 #  * @brief Navigate to a specific URL. Single client.
@@ -804,6 +1150,11 @@ webui_set_default_root_folder.restype = c_bool
 #  * @example webui_navigate_client(e, "http://domain.com");
 #  */
 # WEBUI_EXPORT void webui_navigate_client(webui_event_t* e, const char* url);
+"""
+
+""" # TODO:
+
+
 #
 # /**
 #  * @brief Free all memory resources. Should be called only at the end.
@@ -813,6 +1164,11 @@ webui_set_default_root_folder.restype = c_bool
 #  * webui_clean();
 #  */
 # WEBUI_EXPORT void webui_clean(void);
+"""
+
+""" # TODO:
+
+
 #
 # /**
 #  * @brief Delete all local web-browser profiles folder. It should be called at the
@@ -824,6 +1180,11 @@ webui_set_default_root_folder.restype = c_bool
 #  * webui_clean();
 #  */
 # WEBUI_EXPORT void webui_delete_all_profiles(void);
+"""
+
+""" # TODO:
+
+
 #
 # /**
 #  * @brief Delete a specific window web-browser local folder profile.
@@ -839,6 +1200,11 @@ webui_set_default_root_folder.restype = c_bool
 #  * web-browser.
 #  */
 # WEBUI_EXPORT void webui_delete_profile(size_t window);
+"""
+
+""" # TODO:
+
+
 #
 # /**
 #  * @brief Get the ID of the parent process (The web browser may re-create
@@ -851,6 +1217,11 @@ webui_set_default_root_folder.restype = c_bool
 #  * @example size_t id = webui_get_parent_process_id(myWindow);
 #  */
 # WEBUI_EXPORT size_t webui_get_parent_process_id(size_t window);
+"""
+
+""" # TODO:
+
+
 #
 # /**
 #  * @brief Get the ID of the last child process.
@@ -862,6 +1233,11 @@ webui_set_default_root_folder.restype = c_bool
 #  * @example size_t id = webui_get_child_process_id(myWindow);
 #  */
 # WEBUI_EXPORT size_t webui_get_child_process_id(size_t window);
+"""
+
+""" # TODO:
+
+
 #
 # /**
 #  * @brief Get the network port of a running window.
@@ -874,6 +1250,11 @@ webui_set_default_root_folder.restype = c_bool
 #  * @example size_t port = webui_get_port(myWindow);
 #  */
 # WEBUI_EXPORT size_t webui_get_port(size_t window);
+"""
+
+""" # TODO:
+
+
 #
 # /**
 #  * @brief Set a custom web-server/websocket network port to be used by WebUI.
@@ -888,6 +1269,11 @@ webui_set_default_root_folder.restype = c_bool
 #  * @example bool ret = webui_set_port(myWindow, 8080);
 #  */
 # WEBUI_EXPORT bool webui_set_port(size_t window, size_t port);
+"""
+
+""" # TODO:
+
+
 #
 # /**
 #  * @brief Get an available usable free network port.
@@ -897,6 +1283,11 @@ webui_set_default_root_folder.restype = c_bool
 #  * @example size_t port = webui_get_free_port();
 #  */
 # WEBUI_EXPORT size_t webui_get_free_port(void);
+"""
+
+""" # TODO:
+
+
 #
 # /**
 #  * @brief Control the WebUI behaviour. It's recommended to be called at the beginning.
@@ -907,6 +1298,11 @@ webui_set_default_root_folder.restype = c_bool
 #  * @example webui_set_config(show_wait_connection, false);
 #  */
 # WEBUI_EXPORT void webui_set_config(webui_config option, bool status);
+"""
+
+""" # TODO:
+
+
 #
 # /**
 #  * @brief Control if UI events comming from this window should be processed
@@ -920,6 +1316,11 @@ webui_set_default_root_folder.restype = c_bool
 #  * @example webui_set_event_blocking(myWindow, true);
 #  */
 # WEBUI_EXPORT void webui_set_event_blocking(size_t window, bool status);
+"""
+
+""" # TODO:
+
+
 #
 # /**
 #  * @brief Get the HTTP mime type of a file.
@@ -929,9 +1330,15 @@ webui_set_default_root_folder.restype = c_bool
 #  * @example const char* mime = webui_get_mime_type("foo.png");
 #  */
 # WEBUI_EXPORT const char* webui_get_mime_type(const char* file);
-#
-# // -- SSL/TLS -------------------------
-#
+"""
+
+""" # TODO:
+
+
+
+# == SSL/TLS ==================================================================
+
+
 # /**
 #  * @brief Set the SSL/TLS certificate and the private key content, both in PEM
 #  * format. This works only with `webui-2-secure` library. If set empty WebUI
@@ -946,8 +1353,13 @@ webui_set_default_root_folder.restype = c_bool
 #  * CERTIFICATE-----\n...", "-----BEGIN PRIVATE KEY-----\n...");
 #  */
 # WEBUI_EXPORT bool webui_set_tls_certificate(const char* certificate_pem, const char* private_key_pem);
+"""
+
+""" # TODO:
+
+
 #
-# // -- JavaScript ----------------------
+# == JavaScript ===============================================================
 #
 # /**
 #  * @brief Run JavaScript without waiting for the response. All clients.
@@ -958,6 +1370,11 @@ webui_set_default_root_folder.restype = c_bool
 #  * @example webui_run(myWindow, "alert('Hello');");
 #  */
 # WEBUI_EXPORT void webui_run(size_t window, const char* script);
+"""
+
+""" # TODO:
+
+
 #
 # /**
 #  * @brief Run JavaScript without waiting for the response. Single client.
@@ -968,6 +1385,11 @@ webui_set_default_root_folder.restype = c_bool
 #  * @example webui_run_client(e, "alert('Hello');");
 #  */
 # WEBUI_EXPORT void webui_run_client(webui_event_t* e, const char* script);
+"""
+
+""" # TODO:
+
+
 #
 # /**
 #  * @brief Run JavaScript and get the response back. Work only in single client mode.
@@ -985,6 +1407,11 @@ webui_set_default_root_folder.restype = c_bool
 #  */
 # WEBUI_EXPORT bool webui_script(size_t window, const char* script, size_t timeout,
 #     char* buffer, size_t buffer_length);
+"""
+
+""" # TODO:
+
+
 #
 # /**
 #  * @brief Run JavaScript and get the response back. Single client.
@@ -1002,6 +1429,11 @@ webui_set_default_root_folder.restype = c_bool
 #  */
 # WEBUI_EXPORT bool webui_script_client(webui_event_t* e, const char* script, size_t timeout,
 #     char* buffer, size_t buffer_length);
+"""
+
+""" # TODO:
+
+
 #
 # /**
 #  * @brief Chose between Deno and Nodejs as runtime for .js and .ts files.
@@ -1012,6 +1444,11 @@ webui_set_default_root_folder.restype = c_bool
 #  * @example webui_set_runtime(myWindow, Deno);
 #  */
 # WEBUI_EXPORT void webui_set_runtime(size_t window, size_t runtime);
+"""
+
+""" # TODO:
+
+
 #
 # /**
 #  * @brief Get how many arguments there are in an event.
@@ -1023,6 +1460,11 @@ webui_set_default_root_folder.restype = c_bool
 #  * @example size_t count = webui_get_count(e);
 #  */
 # WEBUI_EXPORT size_t webui_get_count(webui_event_t* e);
+"""
+
+""" # TODO:
+
+
 #
 # /**
 #  * @brief Get an argument as integer at a specific index.
@@ -1035,6 +1477,11 @@ webui_set_default_root_folder.restype = c_bool
 #  * @example long long int myNum = webui_get_int_at(e, 0);
 #  */
 # WEBUI_EXPORT long long int webui_get_int_at(webui_event_t* e, size_t index);
+"""
+
+""" # TODO:
+
+
 #
 # /**
 #  * @brief Get the first argument as integer.
@@ -1046,6 +1493,11 @@ webui_set_default_root_folder.restype = c_bool
 #  * @example long long int myNum = webui_get_int(e);
 #  */
 # WEBUI_EXPORT long long int webui_get_int(webui_event_t* e);
+"""
+
+""" # TODO:
+
+
 #
 # /**
 #  * @brief Get an argument as float at a specific index.
@@ -1058,6 +1510,11 @@ webui_set_default_root_folder.restype = c_bool
 #  * @example double myNum = webui_get_float_at(e, 0);
 #  */
 # WEBUI_EXPORT double webui_get_float_at(webui_event_t* e, size_t index);
+"""
+
+""" # TODO:
+
+
 #
 # /**
 #  * @brief Get the first argument as float.
@@ -1069,6 +1526,11 @@ webui_set_default_root_folder.restype = c_bool
 #  * @example double myNum = webui_get_float(e);
 #  */
 # WEBUI_EXPORT double webui_get_float(webui_event_t* e);
+"""
+
+""" # TODO:
+
+
 #
 # /**
 #  * @brief Get an argument as string at a specific index.
@@ -1081,6 +1543,11 @@ webui_set_default_root_folder.restype = c_bool
 #  * @example const char* myStr = webui_get_string_at(e, 0);
 #  */
 # WEBUI_EXPORT const char* webui_get_string_at(webui_event_t* e, size_t index);
+"""
+
+""" # TODO:
+
+
 #
 # /**
 #  * @brief Get the first argument as string.
@@ -1092,6 +1559,11 @@ webui_set_default_root_folder.restype = c_bool
 #  * @example const char* myStr = webui_get_string(e);
 #  */
 # WEBUI_EXPORT const char* webui_get_string(webui_event_t* e);
+"""
+
+""" # TODO:
+
+
 #
 # /**
 #  * @brief Get an argument as boolean at a specific index.
@@ -1104,6 +1576,11 @@ webui_set_default_root_folder.restype = c_bool
 #  * @example bool myBool = webui_get_bool_at(e, 0);
 #  */
 # WEBUI_EXPORT bool webui_get_bool_at(webui_event_t* e, size_t index);
+"""
+
+""" # TODO:
+
+
 #
 # /**
 #  * @brief Get the first argument as boolean.
@@ -1115,6 +1592,11 @@ webui_set_default_root_folder.restype = c_bool
 #  * @example bool myBool = webui_get_bool(e);
 #  */
 # WEBUI_EXPORT bool webui_get_bool(webui_event_t* e);
+"""
+
+""" # TODO:
+
+
 #
 # /**
 #  * @brief Get the size in bytes of an argument at a specific index.
@@ -1127,6 +1609,11 @@ webui_set_default_root_folder.restype = c_bool
 #  * @example size_t argLen = webui_get_size_at(e, 0);
 #  */
 # WEBUI_EXPORT size_t webui_get_size_at(webui_event_t* e, size_t index);
+"""
+
+""" # TODO:
+
+
 #
 # /**
 #  * @brief Get size in bytes of the first argument.
@@ -1138,6 +1625,11 @@ webui_set_default_root_folder.restype = c_bool
 #  * @example size_t argLen = webui_get_size(e);
 #  */
 # WEBUI_EXPORT size_t webui_get_size(webui_event_t* e);
+"""
+
+""" # TODO:
+
+
 #
 # /**
 #  * @brief Return the response to JavaScript as integer.
@@ -1148,6 +1640,11 @@ webui_set_default_root_folder.restype = c_bool
 #  * @example webui_return_int(e, 123);
 #  */
 # WEBUI_EXPORT void webui_return_int(webui_event_t* e, long long int n);
+"""
+
+""" # TODO:
+
+
 #
 # /**
 #  * @brief Return the response to JavaScript as float.
@@ -1158,6 +1655,11 @@ webui_set_default_root_folder.restype = c_bool
 #  * @example webui_return_float(e, 123.456);
 #  */
 # WEBUI_EXPORT void webui_return_float(webui_event_t* e, double f);
+"""
+
+""" # TODO:
+
+
 #
 # /**
 #  * @brief Return the response to JavaScript as string.
@@ -1168,6 +1670,11 @@ webui_set_default_root_folder.restype = c_bool
 #  * @example webui_return_string(e, "Response...");
 #  */
 # WEBUI_EXPORT void webui_return_string(webui_event_t* e, const char* s);
+"""
+
+""" # TODO:
+
+
 #
 # /**
 #  * @brief Return the response to JavaScript as boolean.
@@ -1178,9 +1685,14 @@ webui_set_default_root_folder.restype = c_bool
 #  * @example webui_return_bool(e, true);
 #  */
 # WEBUI_EXPORT void webui_return_bool(webui_event_t* e, bool b);
-#
-# // -- Wrapper's Interface -------------
-#
+"""
+
+""" # TODO:
+
+
+
+# == Wrapper's Interface ======================================================
+
 # /**
 #  * @brief Bind a specific HTML element click event with a function. Empty element means all events.
 #  *
@@ -1194,6 +1706,11 @@ webui_set_default_root_folder.restype = c_bool
 #  */
 # WEBUI_EXPORT size_t webui_interface_bind(size_t window, const char* element,
 #     void (*func)(size_t, size_t, char*, size_t, size_t));
+"""
+
+""" # TODO:
+
+
 #
 # /**
 #  * @brief When using `webui_interface_bind()`, you may need this function to easily set a response.
@@ -1205,6 +1722,11 @@ webui_set_default_root_folder.restype = c_bool
 #  * @example webui_interface_set_response(myWindow, e->event_number, "Response...");
 #  */
 # WEBUI_EXPORT void webui_interface_set_response(size_t window, size_t event_number, const char* response);
+"""
+
+""" # TODO:
+
+
 #
 # /**
 #  * @brief Check if the app still running.
@@ -1214,6 +1736,11 @@ webui_set_default_root_folder.restype = c_bool
 #  * @example bool status = webui_interface_is_app_running();
 #  */
 # WEBUI_EXPORT bool webui_interface_is_app_running(void);
+"""
+
+""" # TODO:
+
+
 #
 # /**
 #  * @brief Get a unique window ID.
@@ -1225,6 +1752,11 @@ webui_set_default_root_folder.restype = c_bool
 #  * @example size_t id = webui_interface_get_window_id(myWindow);
 #  */
 # WEBUI_EXPORT size_t webui_interface_get_window_id(size_t window);
+"""
+
+""" # TODO:
+
+
 #
 # /**
 #  * @brief Get an argument as string at a specific index.
@@ -1238,6 +1770,11 @@ webui_set_default_root_folder.restype = c_bool
 #  * @example const char* myStr = webui_interface_get_string_at(myWindow, e->event_number, 0);
 #  */
 # WEBUI_EXPORT const char* webui_interface_get_string_at(size_t window, size_t event_number, size_t index);
+"""
+
+""" # TODO:
+
+
 #
 # /**
 #  * @brief Get an argument as integer at a specific index.
@@ -1251,6 +1788,11 @@ webui_set_default_root_folder.restype = c_bool
 #  * @example long long int myNum = webui_interface_get_int_at(myWindow, e->event_number, 0);
 #  */
 # WEBUI_EXPORT long long int webui_interface_get_int_at(size_t window, size_t event_number, size_t index);
+"""
+
+""" # TODO:
+
+
 #
 # /**
 #  * @brief Get an argument as float at a specific index.
@@ -1264,6 +1806,11 @@ webui_set_default_root_folder.restype = c_bool
 #  * @example double myFloat = webui_interface_get_int_at(myWindow, e->event_number, 0);
 #  */
 # WEBUI_EXPORT double webui_interface_get_float_at(size_t window, size_t event_number, size_t index);
+"""
+
+""" # TODO:
+
+
 #
 # /**
 #  * @brief Get an argument as boolean at a specific index.
@@ -1277,6 +1824,11 @@ webui_set_default_root_folder.restype = c_bool
 #  * @example bool myBool = webui_interface_get_bool_at(myWindow, e->event_number, 0);
 #  */
 # WEBUI_EXPORT bool webui_interface_get_bool_at(size_t window, size_t event_number, size_t index);
+"""
+
+""" # TODO:
+
+
 #
 # /**
 #  * @brief Get the size in bytes of an argument at a specific index.
@@ -1290,6 +1842,11 @@ webui_set_default_root_folder.restype = c_bool
 #  * @example size_t argLen = webui_interface_get_size_at(myWindow, e->event_number, 0);
 #  */
 # WEBUI_EXPORT size_t webui_interface_get_size_at(size_t window, size_t event_number, size_t index);
+"""
+
+""" # TODO:
+
+
 #
 # /**
 #  * @brief Show a window using embedded HTML, or a file. If the window is already
@@ -1305,6 +1862,12 @@ webui_set_default_root_folder.restype = c_bool
 #  * webui_show_client(e, "index.html"); | webui_show_client(e, "http://...");
 #  */
 # WEBUI_EXPORT bool webui_interface_show_client(size_t window, size_t event_number, const char* content);
+"""
+
+""" # TODO:
+
+
+
 #
 # /**
 #  * @brief Close a specific client.
@@ -1315,6 +1878,11 @@ webui_set_default_root_folder.restype = c_bool
 #  * @example webui_close_client(e);
 #  */
 # WEBUI_EXPORT void webui_interface_close_client(size_t window, size_t event_number);
+"""
+
+""" # TODO:
+
+
 #
 # /**
 #  * @brief Safely send raw data to the UI. Single client.
@@ -1329,6 +1897,11 @@ webui_set_default_root_folder.restype = c_bool
 #  * @example webui_send_raw_client(e, "myJavaScriptFunc", myBuffer, 64);
 #  */
 # WEBUI_EXPORT void webui_interface_send_raw_client(size_t window, size_t event_number, const char* function, const void* raw, size_t size);
+"""
+
+""" # TODO:
+
+
 #
 # /**
 #  * @brief Navigate to a specific URL. Single client.
@@ -1340,6 +1913,11 @@ webui_set_default_root_folder.restype = c_bool
 #  * @example webui_navigate_client(e, "http://domain.com");
 #  */
 # WEBUI_EXPORT void webui_interface_navigate_client(size_t window, size_t event_number, const char* url);
+"""
+
+""" # TODO:
+
+
 #
 # /**
 #  * @brief Run JavaScript without waiting for the response. Single client.
@@ -1351,6 +1929,11 @@ webui_set_default_root_folder.restype = c_bool
 #  * @example webui_run_client(e, "alert('Hello');");
 #  */
 # WEBUI_EXPORT void webui_interface_run_client(size_t window, size_t event_number, const char* script);
+"""
+
+""" # TODO:
+
+
 #
 # /**
 #  * @brief Run JavaScript and get the response back. Single client.
@@ -1368,3 +1951,6 @@ webui_set_default_root_folder.restype = c_bool
 #  * @example bool err = webui_script_client(e, "return 4 + 6;", 0, myBuffer, myBufferSize);
 #  */
 # WEBUI_EXPORT bool webui_interface_script_client(size_t window, size_t event_number, const char* script, size_t timeout, char* buffer, size_t buffer_length);
+"""
+
+""" # TODO:
