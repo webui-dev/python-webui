@@ -1,10 +1,20 @@
-import ctypes
 import sys
 from ctypes import *
 import subprocess
 import os
 import platform
 import enum
+
+
+# /*
+#   WebUI Library
+#   https://webui.me
+#   https://github.com/webui-dev/webui
+#   Copyright (c) 2020-2024 Hassan Draga.
+#   Licensed under MIT License.
+#   All rights reserved.
+#   Canada.
+# */
 
 
 def _get_current_folder() -> str:
@@ -56,8 +66,8 @@ def _download_library():
 
 
 # Load WebUI Dynamic Library
-def _load_library() -> ctypes.CDLL | None:
-    library: ctypes.CDLL | None = None
+def _load_library() -> CDLL | None:
+    library: CDLL | None = None
     lib_path = _get_library_path()
     if not os.path.exists(lib_path):
         _download_library()
@@ -66,14 +76,14 @@ def _load_library() -> ctypes.CDLL | None:
         return library
 
     if platform.system() == 'Darwin':
-        library = ctypes.CDLL(lib_path)
+        library = CDLL(lib_path)
         if library is None:
             print("WebUI Dynamic Library not found.")
     elif platform.system() == 'Windows':
         if sys.version_info.major==3 and sys.version_info.minor<=8:
             os.chdir(os.getcwd())
             os.add_dll_directory(os.getcwd())
-            library = ctypes.CDLL(lib_path)
+            library = CDLL(lib_path)
         else:
             os.chdir(os.getcwd())
             os.add_dll_directory(os.getcwd())
@@ -81,7 +91,7 @@ def _load_library() -> ctypes.CDLL | None:
         if library is None:
             print("WebUI Dynamic Library not found.")
     elif platform.system() == 'Linux':
-        library = ctypes.CDLL(lib_path)
+        library = CDLL(lib_path)
         if library is None:
             print("WebUI Dynamic Library not found.")
     else:
@@ -92,7 +102,7 @@ def _load_library() -> ctypes.CDLL | None:
 
 
 
-# 1) Load the shared library
+# Loading the library in for bindings
 lib: CDLL | None = _load_library()
 if lib is None:
     print('WebUI Dynamic Library not found.')
@@ -100,6 +110,7 @@ if lib is None:
 else:
     webui_lib: CDLL = lib
 
+# == Enums ====================================================================
 
 class WebuiBrowser(enum.IntEnum):
     NoBrowser      = 0    # 0. No web browser
@@ -118,7 +129,78 @@ class WebuiBrowser(enum.IntEnum):
     Webview        = 13   # 13. WebView (Non-web-browser)
 
 
-# 2) Define the WebuiEventT struct
+class WebuiRuntime(enum.IntEnum):
+    NoRuntime = 0  # 0. Prevent WebUI from using any runtime for .js and .ts files
+    Deno      = 1  # 1. Use Deno runtime for .js and .ts files
+    NodeJS    = 2  # 2. Use Nodejs runtime for .js files
+    Bun       = 3  # 3. Use Bun runtime for .js and .ts files
+
+
+class WebuiEvent(enum.IntEnum):
+    DISCONNECTED = 0  # 0.Window disconnection event
+    CONNECTED    = 1  # 1. Window connection event
+    MOUSE_CLICK  = 2  # 2. Mouse click event
+    NAVIGATION   = 3  # 3. Window navigation event
+    CALLBACK     = 4  # 4. Function call event
+
+
+
+class WebuiConfig(enum.IntEnum):
+    """
+    Control if 'webui_show()', 'webui_show_browser()' and
+    'webui_show_wv()' should wait for the window to connect
+    before returns or not.
+
+    Default: True
+    """
+    show_wait_connection = 0
+    """
+    Control if WebUI should block and process the UI events
+    one a time in a single thread `True`, or process every
+    event in a new non-blocking thread `False`. This updates
+    all windows. You can use `webui_set_event_blocking()` for
+    a specific single window update.
+
+    Default: False
+    """
+    ui_event_blocking = 1
+    """
+    Automatically refresh the window UI when any file in the
+    root folder gets changed.
+    
+    Default: False
+    """
+    folder_monitor = 2
+    """
+    Allow multiple clients to connect to the same window,
+    This is helpful for web apps (non-desktop software),
+    Please see the documentation for more details.
+    
+    Default: False
+    """
+    multi_client = 3
+    """
+    Allow or prevent WebUI from adding `webui_auth` cookies.
+    WebUI uses these cookies to identify clients and block
+    unauthorized access to the window content using a URL.
+    Please keep this option to `True` if you want only a single
+    client to access the window content.
+    
+    Default: True
+    """
+    use_cookies = 4
+    """
+    If the backend uses asynchronous operations, set this
+    option to `True`. This will make webui wait until the
+    backend sets a response using `webui_return_x()`.
+    """
+    asynchronous_response = 5
+
+
+
+# == Structs ==================================================================
+
+
 class WebuiEventT(Structure):
     _fields_ = [
         ("window",        c_size_t),
@@ -131,430 +213,356 @@ class WebuiEventT(Structure):
         ("cookies",       c_char_p),
     ]
 
-# 3) (Optional) Define a function pointer type for callbacks
-#    In C: void (*func)(webui_event_t* e)
-WEBUI_CALLBACK = CFUNCTYPE(None, POINTER(WebuiEventT))
+
+# == Definitions ==============================================================
 
 
-# 4) Wrap each needed function:
+"""
+ @brief Create a new WebUI window object.
+ 
+ @return Returns the window number.
+ 
+ @example size_t myWindow = webui_new_window();
 
-# size_t webui_new_window(void);
+WEBUI_EXPORT size_t webui_new_window(void);
+"""
 webui_new_window = webui_lib.webui_new_window
 webui_new_window.argtypes = []
 webui_new_window.restype  = c_size_t
 
-# size_t webui_new_window_id(size_t window_number);
+
+"""
+ @brief Create a new webui window object using a specified window number.
+
+ @param window_number The window number (should be > 0, and < WEBUI_MAX_IDS)
+
+ @return Returns the same window number if success.
+
+ @example size_t myWindow = webui_new_window_id(123);
+
+ WEBUI_EXPORT size_t webui_new_window_id(size_t window_number);
+"""
 webui_new_window_id = webui_lib.webui_new_window_id
 webui_new_window_id.argtypes = [c_size_t]
 webui_new_window_id.restype  = c_size_t
 
-# size_t webui_get_new_window_id(void);
+
+"""
+ @brief Get a free window number that can be used with
+ `webui_new_window_id()`.
+
+ @return Returns the first available free window number. Starting from 1.
+
+ @example size_t myWindowNumber = webui_get_new_window_id();
+
+ WEBUI_EXPORT size_t webui_get_new_window_id(void);
+"""
 webui_get_new_window_id = webui_lib.webui_get_new_window_id
 webui_get_new_window_id.argtypes = []
 webui_get_new_window_id.restype  = c_size_t
 
-# size_t webui_bind(size_t window, const char* element, void (*func)(webui_event_t* e));
+
+"""
+ @brief Bind an HTML element and a JavaScript object with a backend function. Empty
+ element name means all events.
+
+ @param window The window number
+ @param element The HTML element / JavaScript object
+ @param func The callback function
+
+ @return Returns a unique bind ID.
+
+ @example webui_bind(myWindow, "myFunction", myFunction);
+
+ WEBUI_EXPORT size_t webui_bind(size_t window, const char* element, void (*func)(webui_event_t* e));
+"""
 webui_bind = webui_lib.webui_bind
-webui_bind.argtypes = [c_size_t, c_char_p, WEBUI_CALLBACK]
+webui_bind.argtypes = [c_size_t, c_char_p, CFUNCTYPE(None, POINTER(WebuiEventT))]
 webui_bind.restype  = c_size_t
 
-# size_t webui_get_best_browser(size_t window);
+
+"""
+ @brief Get the recommended web browser ID to use. If you
+ are already using one, this function will return the same ID.
+
+ @param window The window number
+
+ @return Returns a web browser ID.
+
+ @example size_t browserID = webui_get_best_browser(myWindow);
+
+ WEBUI_EXPORT size_t webui_get_best_browser(size_t window);
+"""
 webui_get_best_browser = webui_lib.webui_get_best_browser
 webui_get_best_browser.argtypes = [c_size_t]
 webui_get_best_browser.restype  = c_size_t
 
-# bool webui_show(size_t window, const char* content);
+
+"""
+ @brief Show a window using embedded HTML, or a file. If the window is already
+ open, it will be refreshed. This will refresh all windows in multi-client mode.
+
+ @param window The window number
+ @param content The HTML, URL, Or a local file
+
+ @return Returns True if showing the window is successed.
+
+ @example webui_show(myWindow, "<html>...</html>"); |
+ webui_show(myWindow, "index.html"); | webui_show(myWindow, "http://...");
+
+ WEBUI_EXPORT bool webui_show(size_t window, const char* content);
+"""
 webui_show = webui_lib.webui_show
 webui_show.argtypes = [c_size_t, c_char_p]
 webui_show.restype  = c_bool
 
-# bool webui_show_client(webui_event_t* e, const char* content);
+
+"""
+ @brief Show a window using embedded HTML, or a file. If the window is already
+ open, it will be refreshed. Single client.
+
+ @param e The event struct
+ @param content The HTML, URL, Or a local file
+
+ @return Returns True if showing the window is successed.
+
+ @example webui_show_client(e, "<html>...</html>"); |
+ webui_show_client(e, "index.html"); | webui_show_client(e, "http://...");
+
+ WEBUI_EXPORT bool webui_show_client(webui_event_t* e, const char* content);
+"""
 webui_show_client = webui_lib.webui_show_client
 webui_show_client.argtypes = [POINTER(WebuiEventT), c_char_p]
 webui_show_client.restype  = c_bool
 
-# bool webui_show_browser(size_t window, const char* content, size_t browser);
+
+"""
+ @brief Same as `webui_show()`. But using a specific web browser.
+
+ @param window The window number
+ @param content The HTML, Or a local file
+ @param browser The web browser to be used
+
+ @return Returns True if showing the window is successed.
+
+ @example webui_show_browser(myWindow, "<html>...</html>", Chrome); |
+ webui_show(myWindow, "index.html", Firefox);
+
+ WEBUI_EXPORT bool webui_show_browser(size_t window, const char* content, size_t browser);
+"""
 webui_show_browser = webui_lib.webui_show_browser
 webui_show_browser.argtypes = [c_size_t, c_char_p, c_size_t]
 webui_show_browser.restype  = c_bool
 
-# const char* webui_start_server(size_t window, const char* content);
+
+"""
+ @brief Same as `webui_show()`. But start only the web server and return the URL.
+ No window will be shown.
+
+ @param window The window number
+ @param content The HTML, Or a local file
+
+ @return Returns the url of this window server.
+
+ @example const char* url = webui_start_server(myWindow, "/full/root/path");
+
+ WEBUI_EXPORT const char* webui_start_server(size_t window, const char* content);
+"""
 webui_start_server = webui_lib.webui_start_server
 webui_start_server.argtypes = [c_size_t, c_char_p]
 webui_start_server.restype  = c_char_p
 
-# bool webui_show_wv(size_t window, const char* content);
+
+"""
+ @brief Show a WebView window using embedded HTML, or a file. If the window is already
+ open, it will be refreshed. Note: Win32 need `WebView2Loader.dll`.
+
+ @param window The window number
+ @param content The HTML, URL, Or a local file
+
+ @return Returns True if showing the WebView window is successed.
+
+ @example webui_show_wv(myWindow, "<html>...</html>"); | webui_show_wv(myWindow,
+ "index.html"); | webui_show_wv(myWindow, "http://...");
+
+ WEBUI_EXPORT bool webui_show_wv(size_t window, const char* content);
+"""
 webui_show_wv = webui_lib.webui_show_wv
 webui_show_wv.argtypes = [c_size_t, c_char_p]
 webui_show_wv.restype  = c_bool
 
-# void webui_set_kiosk(size_t window, bool status);
+
+"""
+ @brief Set the window in Kiosk mode (Full screen).
+
+ @param window The window number
+ @param status True or False
+
+ @example webui_set_kiosk(myWindow, true);
+
+ WEBUI_EXPORT void webui_set_kiosk(size_t window, bool status);
+"""
 webui_set_kiosk = webui_lib.webui_set_kiosk
 webui_set_kiosk.argtypes = [c_size_t, c_bool]
 webui_set_kiosk.restype  = None
 
-# void webui_set_custom_parameters(size_t window, char* params);
+
+"""
+ @brief Add a user-defined web browser's CLI parameters.
+
+ @param window The window number
+ @param params Command line parameters
+
+ @example webui_set_custom_parameters(myWindow, "--remote-debugging-port=9222");
+
+ WEBUI_EXPORT void webui_set_custom_parameters(size_t window, char *params);
+"""
 webui_set_custom_parameters = webui_lib.webui_set_custom_parameters
 webui_set_custom_parameters.argtypes = [c_size_t, c_char_p]
 webui_set_custom_parameters.restype  = None
 
-# bool webui_browser_exist(size_t browser);
+
+"""
+ @brief Set the window with high-contrast support. Useful when you want to
+ build a better high-contrast theme with CSS.
+
+ @param window The window number
+ @param status True or False
+
+ @example webui_set_high_contrast(myWindow, true);
+
+ WEBUI_EXPORT void webui_set_high_contrast(size_t window, bool status);
+"""
+webui_set_high_contrast = webui_lib.webui_set_high_contrast
+webui_set_high_contrast.argtypes = [c_size_t, c_bool]
+webui_set_high_contrast.restype  = None
+
+
+"""
+ @brief Get OS high contrast preference.
+
+ @return Returns True if OS is using high contrast theme
+
+ @example bool hc = webui_is_high_contrast();
+
+ WEBUI_EXPORT bool webui_is_high_contrast(void);
+"""
+webui_is_high_contrast = webui_lib.webui_is_high_contrast
+webui_is_high_contrast.argtypes = []
+webui_is_high_contrast.restype  = c_bool
+
+
+"""
+ @brief Check if a web browser is installed.
+
+ @return Returns True if the specified browser is available
+
+ @example bool status = webui_browser_exist(Chrome);
+
+ WEBUI_EXPORT bool webui_browser_exist(size_t browser);
+"""
 webui_browser_exist = webui_lib.webui_browser_exist
 webui_browser_exist.argtypes = [c_size_t]
 webui_browser_exist.restype  = c_bool
 
-# void webui_wait(void);
+
+"""
+ @brief Wait until all opened windows get closed.
+
+ @example webui_wait();
+
+ WEBUI_EXPORT void webui_wait(void);
+"""
 webui_wait = webui_lib.webui_wait
 webui_wait.argtypes = []
 webui_wait.restype  = None
 
-# void webui_close(size_t window);
+
+"""
+ @brief Close a specific window only. The window object will still exist.
+ All clients.
+
+ @param window The window number
+
+ @example webui_close(myWindow);
+
+ WEBUI_EXPORT void webui_close(size_t window);
+"""
 webui_close = webui_lib.webui_close
 webui_close.argtypes = [c_size_t]
 webui_close.restype  = None
 
+
+"""
+ @brief Close a specific client.
+
+ @param e The event struct
+
+ @example webui_close_client(e);
+
+ WEBUI_EXPORT void webui_close_client(webui_event_t* e);
+"""
+webui_close_client = webui_lib.webui_close_client
+webui_close_client.argtypes = [POINTER(WebuiEventT)]
+webui_close_client.restype = None
+
+
+"""
+ @brief Close a specific window and free all memory resources.
+
+ @param window The window number
+
+ @example webui_destroy(myWindow);
+
+ WEBUI_EXPORT void webui_destroy(size_t window);
+"""
+webui_destroy = webui_lib.webui_destroy
+webui_destroy.argtypes = [c_size_t]
+webui_destroy.restype = None
+
+
+"""
+ @brief Close all open windows. `webui_wait()` will return (Break).
+
+ @example webui_exit();
+
+ WEBUI_EXPORT void webui_exit(void);
+"""
 # void webui_exit(void);
 webui_exit = webui_lib.webui_exit
 webui_exit.argtypes = []
 webui_exit.restype = None
 
-# bool webui_is_high_contrast(void);
-webui_is_high_contrast = webui_lib.webui_is_high_contrast
-webui_is_high_contrast.argtypes = []
-webui_is_high_contrast.restype = c_bool
 
-# /*
-#   WebUI Library
-#   https://webui.me
-#   https://github.com/webui-dev/webui
-#   Copyright (c) 2020-2024 Hassan Draga.
-#   Licensed under MIT License.
-#   All rights reserved.
-#   Canada.
-# */
+"""
+ @brief Set the web-server root folder path for a specific window.
 
-# // -- Enums ---------------------------
-# enum webui_browser {
-#     NoBrowser = 0,  // 0. No web browser
-#     AnyBrowser = 1, // 1. Default recommended web browser
-#     Chrome,         // 2. Google Chrome
-#     Firefox,        // 3. Mozilla Firefox
-#     Edge,           // 4. Microsoft Edge
-#     Safari,         // 5. Apple Safari
-#     Chromium,       // 6. The Chromium Project
-#     Opera,          // 7. Opera Browser
-#     Brave,          // 8. The Brave Browser
-#     Vivaldi,        // 9. The Vivaldi Browser
-#     Epic,           // 10. The Epic Browser
-#     Yandex,         // 11. The Yandex Browser
-#     ChromiumBased,  // 12. Any Chromium based browser
-#     Webview,        // 13. WebView (Non-web-browser)
-# };
+ @param window The window number
+ @param path The local folder full path
+
+ @example webui_set_root_folder(myWindow, "/home/Foo/Bar/");
+
+ WEBUI_EXPORT bool webui_set_root_folder(size_t window, const char* path);
+"""
+webui_set_root_folder = webui_lib.webui_set_root_folder
+webui_set_root_folder.argtypes = [c_size_t, c_char_p]
+webui_set_root_folder.restype = c_bool
+
+
+"""
+ @brief Set the web-server root folder path for all windows. Should be used
+  before `webui_show()`.
+ 
+ @param path The local folder full path
+ @example webui_set_default_root_folder("/home/Foo/Bar/");
+ 
+ WEBUI_EXPORT bool webui_set_default_root_folder(const char* path);
+"""
+webui_set_default_root_folder = webui_lib.webui_set_default_root_folder
+webui_set_default_root_folder.argtypes = [c_char_p]
+webui_set_default_root_folder.restype = c_bool
+
 #
-# enum webui_runtime {
-#     None = 0, // 0. Prevent WebUI from using any runtime for .js and .ts files
-#     Deno,     // 1. Use Deno runtime for .js and .ts files
-#     NodeJS,   // 2. Use Nodejs runtime for .js files
-#     Bun,      // 3. Use Bun runtime for .js and .ts files
-# };
-#
-# enum webui_event {
-#     WEBUI_EVENT_DISCONNECTED = 0, // 0. Window disconnection event
-#     WEBUI_EVENT_CONNECTED,        // 1. Window connection event
-#     WEBUI_EVENT_MOUSE_CLICK,      // 2. Mouse click event
-#     WEBUI_EVENT_NAVIGATION,       // 3. Window navigation event
-#     WEBUI_EVENT_CALLBACK,         // 4. Function call event
-# };
-#
-# typedef enum {
-#     // Control if `webui_show()`, `webui_show_browser()` and
-#     // `webui_show_wv()` should wait for the window to connect
-#     // before returns or not.
-#     //
-#     // Default: True
-#     show_wait_connection = 0,
-#     // Control if WebUI should block and process the UI events
-#     // one a time in a single thread `True`, or process every
-#     // event in a new non-blocking thread `False`. This updates
-#     // all windows. You can use `webui_set_event_blocking()` for
-#     // a specific single window update.
-#     //
-#     // Default: False
-#     ui_event_blocking,
-#     // Automatically refresh the window UI when any file in the
-#     // root folder gets changed.
-#     //
-#     // Default: False
-#     folder_monitor,
-#     // Allow multiple clients to connect to the same window,
-#     // This is helpful for web apps (non-desktop software),
-#     // Please see the documentation for more details.
-#     //
-#     // Default: False
-#     multi_client,
-#     // Allow or prevent WebUI from adding `webui_auth` cookies.
-#     // WebUI uses these cookies to identify clients and block
-#     // unauthorized access to the window content using a URL.
-#     // Please keep this option to `True` if you want only a single
-#     // client to access the window content.
-#     //
-#     // Default: True
-#     use_cookies,
-#     // If the backend uses asynchronous operations, set this
-#     // option to `True`. This will make webui wait until the
-#     // backend sets a response using `webui_return_x()`.
-#     asynchronous_response
-# } webui_config;
-#
-# // -- Structs -------------------------
-# typedef struct webui_event_t {
-#     size_t window;          // The window object number
-#     size_t event_type;      // Event type
-#     char* element;          // HTML element ID
-#     size_t event_number;    // Internal WebUI
-#     size_t bind_id;         // Bind ID
-#     size_t client_id;       // Client's unique ID
-#     size_t connection_id;   // Client's connection ID
-#     char* cookies;          // Client's full cookies
-# } webui_event_t;
-#
-# // -- Definitions ---------------------
-#
-# /**
-#  * @brief Create a new WebUI window object.
-#  *
-#  * @return Returns the window number.
-#  *
-#  * @example size_t myWindow = webui_new_window();
-#  */
-# WEBUI_EXPORT size_t webui_new_window(void);
-#
-# /**
-#  * @brief Create a new webui window object using a specified window number.
-#  *
-#  * @param window_number The window number (should be > 0, and < WEBUI_MAX_IDS)
-#  *
-#  * @return Returns the same window number if success.
-#  *
-#  * @example size_t myWindow = webui_new_window_id(123);
-#  */
-# WEBUI_EXPORT size_t webui_new_window_id(size_t window_number);
-#
-# /**
-#  * @brief Get a free window number that can be used with
-#  * `webui_new_window_id()`.
-#  *
-#  * @return Returns the first available free window number. Starting from 1.
-#  *
-#  * @example size_t myWindowNumber = webui_get_new_window_id();
-#  */
-# WEBUI_EXPORT size_t webui_get_new_window_id(void);
-#
-# /**
-#  * @brief Bind an HTML element and a JavaScript object with a backend function. Empty
-#  * element name means all events.
-#  *
-#  * @param window The window number
-#  * @param element The HTML element / JavaScript object
-#  * @param func The callback function
-#  *
-#  * @return Returns a unique bind ID.
-#  *
-#  * @example webui_bind(myWindow, "myFunction", myFunction);
-#  */
-# WEBUI_EXPORT size_t webui_bind(size_t window, const char* element, void (*func)(webui_event_t* e));
-#
-# /**
-#  * @brief Get the recommended web browser ID to use. If you
-#  * are already using one, this function will return the same ID.
-#  *
-#  * @param window The window number
-#  *
-#  * @return Returns a web browser ID.
-#  *
-#  * @example size_t browserID = webui_get_best_browser(myWindow);
-#  */
-# WEBUI_EXPORT size_t webui_get_best_browser(size_t window);
-#
-# /**
-#  * @brief Show a window using embedded HTML, or a file. If the window is already
-#  * open, it will be refreshed. This will refresh all windows in multi-client mode.
-#  *
-#  * @param window The window number
-#  * @param content The HTML, URL, Or a local file
-#  *
-#  * @return Returns True if showing the window is successed.
-#  *
-#  * @example webui_show(myWindow, "<html>...</html>"); |
-#  * webui_show(myWindow, "index.html"); | webui_show(myWindow, "http://...");
-#  */
-# WEBUI_EXPORT bool webui_show(size_t window, const char* content);
-#
-# /**
-#  * @brief Show a window using embedded HTML, or a file. If the window is already
-#  * open, it will be refreshed. Single client.
-#  *
-#  * @param e The event struct
-#  * @param content The HTML, URL, Or a local file
-#  *
-#  * @return Returns True if showing the window is successed.
-#  *
-#  * @example webui_show_client(e, "<html>...</html>"); |
-#  * webui_show_client(e, "index.html"); | webui_show_client(e, "http://...");
-#  */
-# WEBUI_EXPORT bool webui_show_client(webui_event_t* e, const char* content);
-#
-# /**
-#  * @brief Same as `webui_show()`. But using a specific web browser.
-#  *
-#  * @param window The window number
-#  * @param content The HTML, Or a local file
-#  * @param browser The web browser to be used
-#  *
-#  * @return Returns True if showing the window is successed.
-#  *
-#  * @example webui_show_browser(myWindow, "<html>...</html>", Chrome); |
-#  * webui_show(myWindow, "index.html", Firefox);
-#  */
-# WEBUI_EXPORT bool webui_show_browser(size_t window, const char* content, size_t browser);
-#
-# /**
-#  * @brief Same as `webui_show()`. But start only the web server and return the URL.
-#  * No window will be shown.
-#  *
-#  * @param window The window number
-#  * @param content The HTML, Or a local file
-#  *
-#  * @return Returns the url of this window server.
-#  *
-#  * @example const char* url = webui_start_server(myWindow, "/full/root/path");
-#  */
-# WEBUI_EXPORT const char* webui_start_server(size_t window, const char* content);
-#
-# /**
-#  * @brief Show a WebView window using embedded HTML, or a file. If the window is already
-#  * open, it will be refreshed. Note: Win32 need `WebView2Loader.dll`.
-#  *
-#  * @param window The window number
-#  * @param content The HTML, URL, Or a local file
-#  *
-#  * @return Returns True if showing the WebView window is successed.
-#  *
-#  * @example webui_show_wv(myWindow, "<html>...</html>"); | webui_show_wv(myWindow,
-#  * "index.html"); | webui_show_wv(myWindow, "http://...");
-#  */
-# WEBUI_EXPORT bool webui_show_wv(size_t window, const char* content);
-#
-# /**
-#  * @brief Set the window in Kiosk mode (Full screen).
-#  *
-#  * @param window The window number
-#  * @param status True or False
-#  *
-#  * @example webui_set_kiosk(myWindow, true);
-#  */
-# WEBUI_EXPORT void webui_set_kiosk(size_t window, bool status);
-#
-# /**
-#  * @brief Add a user-defined web browser's CLI parameters.
-#  *
-#  * @param window The window number
-#  * @param params Command line parameters
-#  *
-#  * @example webui_set_custom_parameters(myWindow, "--remote-debugging-port=9222");
-#  */
-# WEBUI_EXPORT void webui_set_custom_parameters(size_t window, char *params);
-#
-# /**
-#  * @brief Set the window with high-contrast support. Useful when you want to
-#  * build a better high-contrast theme with CSS.
-#  *
-#  * @param window The window number
-#  * @param status True or False
-#  *
-#  * @example webui_set_high_contrast(myWindow, true);
-#  */
-# WEBUI_EXPORT void webui_set_high_contrast(size_t window, bool status);
-#
-# /**
-#  * @brief Get OS high contrast preference.
-#  *
-#  * @return Returns True if OS is using high contrast theme
-#  *
-#  * @example bool hc = webui_is_high_contrast();
-#  */
-# WEBUI_EXPORT bool webui_is_high_contrast(void);
-#
-# /**
-#  * @brief Check if a web browser is installed.
-#  *
-#  * @return Returns True if the specified browser is available
-#  *
-#  * @example bool status = webui_browser_exist(Chrome);
-#  */
-# WEBUI_EXPORT bool webui_browser_exist(size_t browser);
-#
-# /**
-#  * @brief Wait until all opened windows get closed.
-#  *
-#  * @example webui_wait();
-#  */
-# WEBUI_EXPORT void webui_wait(void);
-#
-# /**
-#  * @brief Close a specific window only. The window object will still exist.
-#  * All clients.
-#  *
-#  * @param window The window number
-#  *
-#  * @example webui_close(myWindow);
-#  */
-# WEBUI_EXPORT void webui_close(size_t window);
-#
-# /**
-#  * @brief Close a specific client.
-#  *
-#  * @param e The event struct
-#  *
-#  * @example webui_close_client(e);
-#  */
-# WEBUI_EXPORT void webui_close_client(webui_event_t* e);
-#
-# /**
-#  * @brief Close a specific window and free all memory resources.
-#  *
-#  * @param window The window number
-#  *
-#  * @example webui_destroy(myWindow);
-#  */
-# WEBUI_EXPORT void webui_destroy(size_t window);
-#
-# /**
-#  * @brief Close all open windows. `webui_wait()` will return (Break).
-#  *
-#  * @example webui_exit();
-#  */
-# WEBUI_EXPORT void webui_exit(void);
-#
-# /**
-#  * @brief Set the web-server root folder path for a specific window.
-#  *
-#  * @param window The window number
-#  * @param path The local folder full path
-#  *
-#  * @example webui_set_root_folder(myWindow, "/home/Foo/Bar/");
-#  */
-# WEBUI_EXPORT bool webui_set_root_folder(size_t window, const char* path);
-#
-# /**
-#  * @brief Set the web-server root folder path for all windows. Should be used
-#  * before `webui_show()`.
-#  *
-#  * @param path The local folder full path
-#  *
-#  * @example webui_set_default_root_folder("/home/Foo/Bar/");
-#  */
-# WEBUI_EXPORT bool webui_set_default_root_folder(const char* path);
 #
 # /**
 #  * @brief Set a custom handler to serve files. This custom handler should
