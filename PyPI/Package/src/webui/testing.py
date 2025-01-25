@@ -79,7 +79,6 @@ def check_the_password(e: webui.Event):
 
 	# Run JavaScript to get the password
 	res = e.window.script("return document.getElementById(\"MyInput\").value;")
-    e.window.sc
 
 	# Check for any error
 	if res.error is True:
@@ -108,7 +107,7 @@ def main():
 	MyWindow.bind('Exit', close_the_application)
 
 	# Show the window
-	MyWindow.show(login_html)
+	MyWindow.show_browser(login_html, webui.Browser.Firefox)
 
 	# Wait until all windows are closed
 	webui.wait()

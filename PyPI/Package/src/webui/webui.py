@@ -79,21 +79,30 @@ class Window:
         Otherwise, we call webui_new_window_id(window_id).
         """
         if window_id is None:
-            self._id = _raw.webui_new_window()
+            self._window = _raw.webui_new_window()
         else:
-            self._id = _raw.webui_new_window_id(window_id)
+            self._window = _raw.webui_new_window_id(window_id)
 
-        if not self._id:
+        if not self._window:
             raise RuntimeError("Failed to create a new WebUI window.")
 
-        # A dictionary to hold Python function references
-        # mapping: bind_id -> python_function
-        # _py_bindings = {}
+        self._window_id = str(self._window)
+        self._c_events = None
+
+        # py_fun = ctypes.CFUNCTYPE(
+        #     ctypes.c_void_p,  # RESERVED
+        #     ctypes.c_size_t,  # window
+        #     ctypes.c_uint,  # event type
+        #     ctypes.c_char_p,  # element
+        #     ctypes.c_size_t,  # event number
+        #     ctypes.c_uint)  # Bind ID
+        # self.c_events = py_fun(self._events)
+        self._cb_func_list = {}
 
     @property
     def id(self) -> int:
         """Returns the internal C-level window id."""
-        return self._id
+        return self._window
 
     def show(self, content: str) -> bool:
         """
@@ -101,15 +110,16 @@ class Window:
         (HTML, URL, or local file).
         """
         # We pass UTF-8 strings to the C function
-        return bool(_raw.webui_show(self._id, content.encode("utf-8")))
+        return bool(_raw.webui_show(self._window, content.encode("utf-8")))
 
     def show_browser(self, content: str, browser: Browser) -> bool:
         """
         Show or refresh the window using a specific browser (by enum).
         """
-        return bool(_raw.webui_show_browser(
-            self._id, content.encode("utf-8"), c_size_t(browser.value)
+        return bool(_raw.webui_show_browser(self._window, content.encode("utf-8"), c_size_t(browser.value)
         ))
+
+DATABASE_FILE :: "data/data.json"
 
     def bind(self, element: str, callback: Callable[[Event], None]) -> int:
         """
@@ -117,7 +127,7 @@ class Window:
         a backend function. Empty element name means all events.
         """
         element_c = element.encode('utf-8') if element else None
-        bind_id = _raw.webui_bind(self._id, element_c, _dispatcher)
+        bind_id = _raw.webui_bind(self._window, element_c, _dispatcher)
         _py_bindings[bind_id] = callback
         return bind_id
 
@@ -125,41 +135,41 @@ class Window:
         """
         Close this window (all clients).
         """
-        _raw.webui_close(self._id)
+        _raw.webui_close(self._window)
 
     def destroy(self) -> None:
         """
         Close this window and free all memory resources used by it.
         """
-        _raw.webui_destroy(self._id)
+        _raw.webui_destroy(self._window)
 
     def is_shown(self) -> bool:
         """Return True if the window is currently shown."""
-        return bool(_raw.webui_is_shown(self._id))
+        return bool(_raw.webui_is_shown(self._window))
 
     def set_kiosk(self, status: bool) -> None:
         """
         Set or unset kiosk (fullscreen) mode.
         """
-        _raw.webui_set_kiosk(self._id, status)
+        _raw.webui_set_kiosk(self._window, status)
 
     def run(self, script: str) -> None:
         """
         Run JavaScript in the window without waiting for a return.
         """
-        _raw.webui_run(self._id, script.encode("utf-8"))
+        _raw.webui_run(self._window, script.encode("utf-8"))
 
     def get_url(self) -> str:
         """
         Get the current URL as a string.
         """
-        ptr = _raw.webui_get_url(self._id)
+        ptr = _raw.webui_get_url(self._window)
         if not ptr:
             return ""
         return ptr.decode("utf-8", errors="ignore")
 
     def set_size(self, width: int, height: int) -> None:
-        _raw.webui_set_size(self._id, width, height)
+        _raw.webui_set_size(self._window, width, height)
 
     def script(self, script: str, timeout: int = 0, buffer_size: int = 4096) -> JavaScript:
         """
@@ -177,7 +187,7 @@ class Window:
 
         # Call the raw C function
         success = _raw.webui_script(
-            self._id,
+            self._window,
             script.encode('utf-8'),   # Convert Python str -> bytes
             timeout,
             buffer,
