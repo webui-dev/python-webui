@@ -1,8 +1,6 @@
 import sys
 from ctypes import *
-import subprocess
-import os
-import platform
+from load_library import _load_library
 import enum
 
 # WebUI Library
@@ -12,89 +10,6 @@ import enum
 # Licensed under MIT License.
 # All rights reserved.
 # Canada.
-
-
-def _get_current_folder() -> str:
-    return os.path.dirname(os.path.abspath(__file__))
-
-
-def _get_architecture() -> str:
-    arch = platform.machine()
-    if arch in ['x86_64', 'AMD64', 'amd64']:
-        return 'x64'
-    elif arch in ['aarch64', 'ARM64', 'arm64']:
-        return 'arm64'
-    elif arch in ['arm']:
-        return 'arm'
-    else:
-        return arch
-
-
-def _get_library_folder_name() -> str:
-    arch = _get_architecture()
-    if platform.system() == 'Darwin':
-        return f'/webui-macos-clang-{arch}/webui-2.dylib'
-    elif platform.system() == 'Windows':
-        return f'\\webui-windows-msvc-{arch}\\webui-2.dll'
-    elif platform.system() == 'Linux':
-        return f'/webui-linux-gcc-{arch}/webui-2.so'
-    else:
-        return ""
-
-
-def _get_library_path() -> str:
-    folderName = _get_library_folder_name()
-    return _get_current_folder() + folderName
-
-
-def run_cmd(command):
-    subprocess.run(command, shell=True)
-
-
-def _download_library():
-    script = 'sh bootstrap.sh'
-    cd = 'cd '
-    if platform.system() == 'Windows':
-        script = 'bootstrap.bat'
-        cd = 'cd /d '
-    # Run: `cd {folder} && bootstrap.sh minimal`
-    run_cmd(cd + _get_current_folder() +
-               ' && ' + script + ' minimal')
-
-
-# Load WebUI Dynamic Library
-def _load_library() -> CDLL | None:
-    library: CDLL | None = None
-    lib_path = _get_library_path()
-    if not os.path.exists(lib_path):
-        _download_library()
-
-    if not os.path.exists(lib_path):
-        return library
-
-    if platform.system() == 'Darwin':
-        library = CDLL(lib_path)
-        if library is None:
-            print("WebUI Dynamic Library not found.")
-    elif platform.system() == 'Windows':
-        if sys.version_info.major==3 and sys.version_info.minor<=8:
-            os.chdir(os.getcwd())
-            os.add_dll_directory(os.getcwd())
-            library = CDLL(lib_path)
-        else:
-            os.chdir(os.getcwd())
-            os.add_dll_directory(os.getcwd())
-            library = cdll.LoadLibrary(lib_path)
-        if library is None:
-            print("WebUI Dynamic Library not found.")
-    elif platform.system() == 'Linux':
-        library = CDLL(lib_path)
-        if library is None:
-            print("WebUI Dynamic Library not found.")
-    else:
-        print("Unsupported OS")
-
-    return library
 
 
 # Loading the library in for bindings
@@ -249,7 +164,7 @@ webui_new_window.argtypes = []
 webui_new_window.restype  = c_size_t
 
 
-# -- new_window_id ------------------------------
+# -- new_window_id ------------------------------ # TODO: python wrapper
 webui_new_window_id = webui_lib.webui_new_window_id
 """
 brief: 
@@ -272,7 +187,7 @@ webui_new_window_id.argtypes = [
 webui_new_window_id.restype  = c_size_t
 
 
-# -- get_new_window_id --------------------------
+# -- get_new_window_id -------------------------- # TODO: python wrapper
 webui_get_new_window_id = webui_lib.webui_get_new_window_id
 """
 brief: 
@@ -292,7 +207,7 @@ webui_get_new_window_id.argtypes = []
 webui_get_new_window_id.restype  = c_size_t
 
 
-# -- bind ---------------------------------------
+# -- bind --------------------------------------- # TODO: python wrapper
 webui_bind = webui_lib.webui_bind
 """
 brief:
@@ -320,7 +235,7 @@ webui_bind.argtypes = [
 webui_bind.restype  = c_size_t
 
 
-# -- get_best_browser ---------------------------
+# -- get_best_browser --------------------------- # TODO: python wrapper
 webui_get_best_browser = webui_lib.webui_get_best_browser
 """
 brief: 
@@ -344,7 +259,7 @@ webui_get_best_browser.argtypes = [
 webui_get_best_browser.restype  = c_size_t
 
 
-# -- show ---------------------------------------
+# -- show --------------------------------------- # TODO: python wrapper
 webui_show = webui_lib.webui_show
 """
 brief: 
@@ -372,7 +287,7 @@ webui_show.argtypes = [
 webui_show.restype  = c_bool
 
 
-# -- show_client --------------------------------
+# -- show_client -------------------------------- # TODO: python wrapper
 webui_show_client = webui_lib.webui_show_client
 """
 brief:
@@ -400,7 +315,7 @@ webui_show_client.argtypes = [
 webui_show_client.restype = c_bool
 
 
-# -- show_browser -------------------------------
+# -- show_browser ------------------------------- # TODO: python wrapper
 webui_show_browser = webui_lib.webui_show_browser
 """
 brief:
@@ -428,7 +343,7 @@ webui_show_browser.argtypes = [
 webui_show_browser.restype  = c_bool
 
 
-# -- start_server -------------------------------
+# -- start_server ------------------------------- # TODO: python wrapper
 webui_start_server = webui_lib.webui_start_server
 """
 brief: 
@@ -454,7 +369,7 @@ webui_start_server.argtypes = [
 webui_start_server.restype  = c_char_p
 
 
-# -- show_wv ------------------------------------
+# -- show_wv ------------------------------------ # TODO: python wrapper
 webui_show_wv = webui_lib.webui_show_wv
 """
 brief: 
@@ -482,7 +397,7 @@ webui_show_wv.argtypes = [
 webui_show_wv.restype  = c_bool
 
 
-# -- set_kiosk ----------------------------------
+# -- set_kiosk ---------------------------------- # TODO: python wrapper
 webui_set_kiosk = webui_lib.webui_set_kiosk
 """
 brief: 
@@ -504,8 +419,8 @@ webui_set_kiosk.argtypes = [
 webui_set_kiosk.restype  = None
 
 
-# -- set_custom_parameters ----------------------
-webui_set_custom_parameters = webui_lib.webui_set_custom_parameters
+# -- set_custom_parameters ---------------------- 2.5.0-beta.3
+# webui_set_custom_parameters = webui_lib.webui_set_custom_parameters
 """
 brief:
  Add a user-defined web browser's CLI parameters.
@@ -519,14 +434,14 @@ example:
 C Signature: 
  WEBUI_EXPORT void webui_set_custom_parameters(size_t window, char *params);
 """
-webui_set_custom_parameters.argtypes = [
-    c_size_t,  # size_t window
-    c_char_p   # char* params
-]
-webui_set_custom_parameters.restype  = None
+# webui_set_custom_parameters.argtypes = [
+#     c_size_t,  # size_t window
+#     c_char_p   # char* params
+# ]
+# webui_set_custom_parameters.restype  = None
 
 
-# -- set_high_contrast --------------------------
+# -- set_high_contrast -------------------------- # TODO: python wrapper
 webui_set_high_contrast = webui_lib.webui_set_high_contrast
 """
 brief: 
@@ -549,7 +464,7 @@ webui_set_high_contrast.argtypes = [
 webui_set_high_contrast.restype  = None
 
 
-# -- is_high_contrast ---------------------------
+# -- is_high_contrast --------------------------- # TODO: python wrapper
 webui_is_high_contrast = webui_lib.webui_is_high_contrast
 """
 brief: 
@@ -568,7 +483,7 @@ webui_is_high_contrast.argtypes = []
 webui_is_high_contrast.restype  = c_bool
 
 
-# -- browser_exist ------------------------------
+# -- browser_exist ------------------------------ # TODO: python wrapper
 webui_browser_exist = webui_lib.webui_browser_exist
 """
 brief:
@@ -589,7 +504,7 @@ webui_browser_exist.argtypes = [
 webui_browser_exist.restype  = c_bool
 
 
-# -- wait ---------------------------------------
+# -- wait --------------------------------------- # TODO: python wrapper
 webui_wait = webui_lib.webui_wait
 """
 brief:
@@ -605,7 +520,7 @@ webui_wait.argtypes = []
 webui_wait.restype  = None
 
 
-# -- close --------------------------------------
+# -- close -------------------------------------- # TODO: python wrapper
 webui_close = webui_lib.webui_close
 """
 brief: 
@@ -626,7 +541,7 @@ webui_close.argtypes = [
 webui_close.restype  = None
 
 
-# -- close_client -------------------------------
+# -- close_client ------------------------------- # TODO: python wrapper
 webui_close_client = webui_lib.webui_close_client
 """
 brief:
@@ -646,7 +561,7 @@ webui_close_client.argtypes = [
 webui_close_client.restype = None
 
 
-# -- destroy ------------------------------------
+# -- destroy ------------------------------------ # TODO: python wrapper
 webui_destroy = webui_lib.webui_destroy
 """
 brief: 
@@ -667,7 +582,7 @@ webui_destroy.restype = None
 
 
 
-# -- exit ---------------------------------------
+# -- exit --------------------------------------- # TODO: python wrapper
 webui_exit = webui_lib.webui_exit
 """
 brief:
@@ -683,7 +598,7 @@ webui_exit.argtypes = []
 webui_exit.restype = None
 
 
-# -- set_root_folder ----------------------------
+# -- set_root_folder ---------------------------- # TODO: python wrapper
 webui_set_root_folder = webui_lib.webui_set_root_folder
 """
 brief:
@@ -705,7 +620,7 @@ webui_set_root_folder.argtypes = [
 webui_set_root_folder.restype = c_bool
 
 
-# -- set_default_root_folder --------------------
+# -- set_default_root_folder -------------------- # TODO: python wrapper
 webui_set_default_root_folder = webui_lib.webui_set_default_root_folder
 """
 brief:
@@ -726,7 +641,7 @@ webui_set_default_root_folder.argtypes = [
 webui_set_default_root_folder.restype = c_bool
 
 
-# -- set_file_handler----------------------------
+# -- set_file_handler---------------------------- # TODO: python wrapper
 webui_set_file_handler = webui_lib.webui_set_file_handler
 """
 brief:
@@ -750,7 +665,7 @@ webui_set_file_handler.argtypes = [
 webui_set_file_handler.restype = None
 
 
-# -- set_file_handler_window --------------------
+# -- set_file_handler_window -------------------- # TODO: python wrapper
 webui_set_file_handler_window = webui_lib.webui_set_file_handler
 """
 brief:
@@ -774,7 +689,7 @@ webui_set_file_handler.argtypes = [
 webui_set_file_handler.restype = None
 
 
-# -- is_shown -----------------------------------
+# -- is_shown ----------------------------------- # TODO: python wrapper
 webui_is_shown = webui_lib.webui_is_shown
 """
 brief:
@@ -794,7 +709,7 @@ webui_is_shown.argtypes = [
 webui_is_shown.restype = c_bool
 
 
-# -- set_timeout --------------------------------
+# -- set_timeout -------------------------------- # TODO: python wrapper
 webui_set_timeout = webui_lib.webui_set_timeout
 """
 brief:
@@ -815,7 +730,7 @@ webui_set_timeout.argtypes = [
 webui_set_timeout.restype = None
 
 
-# -- set_icon -----------------------------------
+# -- set_icon ----------------------------------- # TODO: python wrapper
 webui_set_icon = webui_lib.webui_set_icon
 """
 brief:
@@ -839,7 +754,7 @@ webui_set_icon.argtypes = [
 webui_set_icon.restype = None
 
 
-# -- encode -------------------------------------
+# -- encode ------------------------------------- # TODO: python wrapper
 webui_encode = webui_lib.webui_encode
 """
 brief:
@@ -862,7 +777,7 @@ webui_encode.argtypes = [
 webui_encode.restype = c_char_p
 
 
-# -- decode -------------------------------------
+# -- decode ------------------------------------- # TODO: python wrapper
 webui_decode = webui_lib.webui_decode
 """
 brief:
@@ -885,7 +800,7 @@ webui_decode.argtypes = [
 webui_decode.restype = c_char_p
 
 
-# -- free ---------------------------------------
+# -- free --------------------------------------- # TODO: python wrapper
 webui_free = webui_lib.webui_free
 """
 brief:
@@ -905,7 +820,7 @@ webui_free.argtypes = [
 webui_free.restype = None
 
 
-# -- malloc -------------------------------------
+# -- malloc ------------------------------------- # TODO: python wrapper
 webui_malloc = webui_lib.webui_malloc
 """
 brief:
@@ -926,7 +841,7 @@ webui_malloc.argtypes = [
 webui_malloc.restype = c_void_p
 
 
-# -- send_raw -----------------------------------
+# -- send_raw ----------------------------------- # TODO: python wrapper
 webui_send_raw = webui_lib.webui_send_raw
 """
 brief:
@@ -951,7 +866,7 @@ webui_send_raw.argtypes = [
 ]
 
 
-# -- send_raw_client ----------------------------
+# -- send_raw_client ---------------------------- # TODO: python wrapper
 webui_send_raw_client = webui_lib.webui_send_raw_client
 """
 brief:
@@ -977,7 +892,7 @@ webui_send_raw_client.argtypes = [
 webui_send_raw_client.restype = None
 
 
-# -- set_hide -----------------------------------
+# -- set_hide ----------------------------------- # TODO: python wrapper
 webui_set_hide = webui_lib.webui_set_hide
 """
 brief:
@@ -1000,346 +915,487 @@ webui_set_hide.restype = None
 
 
 
-# /**
-#  * @brief Set the window size.
-#  *
-#  * @param window The window number
-#  * @param width The window width
-#  * @param height The window height
-#  *
-#  * @example webui_set_size(myWindow, 800, 600);
-#  */
-# WEBUI_EXPORT void webui_set_size(size_t window, unsigned int width, unsigned int height);
-#
+# -- set_size ----------------------------------- # TODO: python wrapper
+webui_set_size = webui_lib.webui_set_size
 """
+brief:
+ Set the window size.
 
-""" # TODO:
+param: window - The window number
+param: width - The window width
+param: height - The window height
 
+example:
+ webui_set_size(myWindow, 800, 600);
 
-# /**
-#  * @brief Set the window minimum size.
-#  *
-#  * @param window The window number
-#  * @param width The window width
-#  * @param height The window height
-#  *
-#  * @example webui_set_minimum_size(myWindow, 800, 600);
-#  */
-# WEBUI_EXPORT void webui_set_minimum_size(size_t window, unsigned int width, unsigned int height);
+C Signature:
+ WEBUI_EXPORT void webui_set_size(size_t window, unsigned int width, unsigned int height);
 """
+webui_set_size.argtypes = [
+    c_size_t,  # size_t window
+    c_uint,    # unsigned int width
+    c_uint,    # unsigned int height
+]
+webui_set_size.restype = None
 
-""" # TODO:
 
-
-#
-# /**
-#  * @brief Set the window position.
-#  *
-#  * @param window The window number
-#  * @param x The window X
-#  * @param y The window Y
-#  *
-#  * @example webui_set_position(myWindow, 100, 100);
-#  */
-# WEBUI_EXPORT void webui_set_position(size_t window, unsigned int x, unsigned int y);
+# -- set_minimum_size --------------------------- 2.5.0-beta.3
+# webui_set_minimum_size = webui_lib.webui_set_minimum_size
 """
+brief:
+ Set the window minimum size.
 
-""" # TODO:
+param: window - The window number
+param: width - The window width
+param: height - The window height
 
+example:
+ webui_set_minimum_size(myWindow, 800, 600);
 
-#
-# /**
-#  * @brief Set the web browser profile to use. An empty `name` and `path` means
-#  * the default user profile. Need to be called before `webui_show()`.
-#  *
-#  * @param window The window number
-#  * @param name The web browser profile name
-#  * @param path The web browser profile full path
-#  *
-#  * @example webui_set_profile(myWindow, "Bar", "/Home/Foo/Bar"); |
-#  * webui_set_profile(myWindow, "", "");
-#  */
-# WEBUI_EXPORT void webui_set_profile(size_t window, const char* name, const char* path);
+C Signature:
+ WEBUI_EXPORT void webui_set_minimum_size(size_t window, unsigned int width, unsigned int height);
 """
+# webui_set_minimum_size.argtypes = [
+#     c_size_t,  # size_t window
+#     c_uint,    # unsigned int width
+#     c_uint,    # unsigned int height
+# ]
+# webui_set_minimum_size.restype = None
 
-""" # TODO:
 
-
-#
-# /**
-#  * @brief Set the web browser proxy server to use. Need to be called before `webui_show()`.
-#  *
-#  * @param window The window number
-#  * @param proxy_server The web browser proxy_server
-#  *
-#  * @example webui_set_proxy(myWindow, "http://127.0.0.1:8888");
-#  */
-# WEBUI_EXPORT void webui_set_proxy(size_t window, const char* proxy_server);
+# -- set_position ------------------------------- # TODO: python wrapper
+webui_set_position = webui_lib.webui_set_position
 """
+brief:
+ Set the window position.
 
-""" # TODO:
+param: window - The window number
+param: x - The window X
+param: y - The window Y
 
+example:
+ webui_set_position(myWindow, 100, 100);
 
-#
-# /**
-#  * @brief Get current URL of a running window.
-#  *
-#  * @param window The window number
-#  *
-#  * @return Returns the full URL string
-#  *
-#  * @example const char* url = webui_get_url(myWindow);
-#  */
-# WEBUI_EXPORT const char* webui_get_url(size_t window);
+C Signature:
+ WEBUI_EXPORT void webui_set_position(size_t window, unsigned int x, unsigned int y);
 """
+webui_set_position.argtypes = [
+    c_size_t,  # size_t window
+    c_uint,    # unsigned int x
+    c_uint,    # unsigned int y
+]
+webui_set_position.restype = None
 
-""" # TODO:
 
-
-#
-# /**
-#  * @brief Open an URL in the native default web browser.
-#  *
-#  * @param url The URL to open
-#  *
-#  * @example webui_open_url("https://webui.me");
-#  */
-# WEBUI_EXPORT void webui_open_url(const char* url);
+# -- set_profile -------------------------------- # TODO: python wrapper
+webui_set_profile = webui_lib.webui_set_profile
 """
+brief:
+ Set the web browser profile to use. An empty `name` and `path` means
+ the default user profile. Need to be called before `webui_show()`.
 
-""" # TODO:
+param: window - The window number
+param: name - The web browser profile name
+param: path - The web browser profile full path
 
+example:
+ webui_set_profile(myWindow, "Bar", "/Home/Foo/Bar");
+ webui_set_profile(myWindow, "", "");
 
-#
-# /**
-#  * @brief Allow a specific window address to be accessible from a public network.
-#  *
-#  * @param window The window number
-#  * @param status True or False
-#  *
-#  * @example webui_set_public(myWindow, true);
-#  */
-# WEBUI_EXPORT void webui_set_public(size_t window, bool status);
+C Signature:
+ WEBUI_EXPORT void webui_set_profile(size_t window, const char* name, const char* path);
 """
+webui_set_profile.argtypes = [
+    c_size_t,  # size_t window
+    c_char_p,  # const char* name
+    c_char_p   # const char* path
+]
+webui_set_profile.restype = None
 
-""" # TODO:
 
-
-#
-# /**
-#  * @brief Navigate to a specific URL. All clients.
-#  *
-#  * @param window The window number
-#  * @param url Full HTTP URL
-#  *
-#  * @example webui_navigate(myWindow, "http://domain.com");
-#  */
-# WEBUI_EXPORT void webui_navigate(size_t window, const char* url);
+# -- set_proxy ---------------------------------- # TODO: python wrapper
+webui_set_proxy = webui_lib.webui_set_proxy
 """
+brief:
+ Set the web browser proxy server to use. Need to be called before `webui_show()`.
 
-""" # TODO:
+param: window - The window number
+param: proxy_server - The web browser proxy_server
 
+example:
+ webui_set_proxy(myWindow, "http://127.0.0.1:8888");
 
-#
-# /**
-#  * @brief Navigate to a specific URL. Single client.
-#  *
-#  * @param e The event struct
-#  * @param url Full HTTP URL
-#  *
-#  * @example webui_navigate_client(e, "http://domain.com");
-#  */
-# WEBUI_EXPORT void webui_navigate_client(webui_event_t* e, const char* url);
+C Signature:
+ WEBUI_EXPORT void webui_set_proxy(size_t window, const char* proxy_server);
 """
+webui_set_proxy.argtypes = [
+    c_size_t,  # size_t window
+    c_char_p   # const char* proxy_server
+]
+webui_set_proxy.restype = None
 
-""" # TODO:
 
-
-#
-# /**
-#  * @brief Free all memory resources. Should be called only at the end.
-#  *
-#  * @example
-#  * webui_wait();
-#  * webui_clean();
-#  */
-# WEBUI_EXPORT void webui_clean(void);
+# -- get_url ------------------------------------ # TODO: python wrapper
+webui_get_url = webui_lib.webui_get_url
 """
+brief:
+ Get current URL of a running window.
 
-""" # TODO:
+param: window - The window number
 
+return:
+ Returns the full URL string
 
-#
-# /**
-#  * @brief Delete all local web-browser profiles folder. It should be called at the
-#  * end.
-#  *
-#  * @example
-#  * webui_wait();
-#  * webui_delete_all_profiles();
-#  * webui_clean();
-#  */
-# WEBUI_EXPORT void webui_delete_all_profiles(void);
+example:
+ const char* url = webui_get_url(myWindow);
+
+C Signature:
+ WEBUI_EXPORT const char* webui_get_url(size_t window);
 """
+webui_get_url.argtypes = [
+    c_size_t  # size_t window
+]
+webui_get_url.restype = c_char_p
 
-""" # TODO:
 
-
-#
-# /**
-#  * @brief Delete a specific window web-browser local folder profile.
-#  *
-#  * @param window The window number
-#  *
-#  * @example
-#  * webui_wait();
-#  * webui_delete_profile(myWindow);
-#  * webui_clean();
-#  *
-#  * @note This can break functionality of other windows if using the same
-#  * web-browser.
-#  */
-# WEBUI_EXPORT void webui_delete_profile(size_t window);
+# -- open_url ----------------------------------- # TODO: python wrapper
+webui_open_url = webui_lib.webui_get_url
 """
+brief:
+ Open an URL in the native default web browser.
 
-""" # TODO:
+param: url - The URL to open
 
+example:
+ webui_open_url("https://webui.me");
 
-#
-# /**
-#  * @brief Get the ID of the parent process (The web browser may re-create
-#  * another new process).
-#  *
-#  * @param window The window number
-#  *
-#  * @return Returns the the parent process id as integer
-#  *
-#  * @example size_t id = webui_get_parent_process_id(myWindow);
-#  */
-# WEBUI_EXPORT size_t webui_get_parent_process_id(size_t window);
+C Signature:
+ WEBUI_EXPORT void webui_open_url(const char* url);
 """
+webui_open_url.argtypes = [
+    c_char_p  # const char* url
+]
+webui_open_url.restype = None
 
-""" # TODO:
 
-
-#
-# /**
-#  * @brief Get the ID of the last child process.
-#  *
-#  * @param window The window number
-#  *
-#  * @return Returns the the child process id as integer
-#  *
-#  * @example size_t id = webui_get_child_process_id(myWindow);
-#  */
-# WEBUI_EXPORT size_t webui_get_child_process_id(size_t window);
+# -- set_public --------------------------------- # TODO: python wrapper
+webui_set_public = webui_lib.webui_set_public
 """
+brief:
+ Allow a specific window address to be accessible from a public network.
 
-""" # TODO:
+param: window - The window number
+param: status - True or False
 
+example:
+ webui_set_public(myWindow, true);
 
-#
-# /**
-#  * @brief Get the network port of a running window.
-#  * This can be useful to determine the HTTP link of `webui.js`
-#  *
-#  * @param window The window number
-#  *
-#  * @return Returns the network port of the window
-#  *
-#  * @example size_t port = webui_get_port(myWindow);
-#  */
-# WEBUI_EXPORT size_t webui_get_port(size_t window);
+C Signature:
+ WEBUI_EXPORT void webui_set_public(size_t window, bool status);
 """
+webui_set_public.argtypes = [
+    c_size_t,  # size_t window
+    c_bool     # bool status
+]
+webui_set_public.restype = None
 
-""" # TODO:
 
-
-#
-# /**
-#  * @brief Set a custom web-server/websocket network port to be used by WebUI.
-#  * This can be useful to determine the HTTP link of `webui.js` in case
-#  * you are trying to use WebUI with an external web-server like NGNIX.
-#  *
-#  * @param window The window number
-#  * @param port The web-server network port WebUI should use
-#  *
-#  * @return Returns True if the port is free and usable by WebUI
-#  *
-#  * @example bool ret = webui_set_port(myWindow, 8080);
-#  */
-# WEBUI_EXPORT bool webui_set_port(size_t window, size_t port);
+# -- navigate ----------------------------------- # TODO: python wrapper
+webui_navigate = webui_lib.webui_navigate
 """
+brief:
+ Navigate to a specific URL. All clients.
 
-""" # TODO:
+param: window - The window number
+param: url - Full HTTP URL
 
+example:
+ webui_navigate(myWindow, "http://domain.com");
 
-#
-# /**
-#  * @brief Get an available usable free network port.
-#  *
-#  * @return Returns a free port
-#  *
-#  * @example size_t port = webui_get_free_port();
-#  */
-# WEBUI_EXPORT size_t webui_get_free_port(void);
+C Signature:
+ WEBUI_EXPORT void webui_navigate(size_t window, const char* url);
 """
+webui_navigate.argtypes = [
+    c_size_t,  # size_t window
+    c_char_p   # const char* url
+]
+webui_navigate.restype = None
 
-""" # TODO:
 
-
-#
-# /**
-#  * @brief Control the WebUI behaviour. It's recommended to be called at the beginning.
-#  *
-#  * @param option The desired option from `webui_config` enum
-#  * @param status The status of the option, `true` or `false`
-#  *
-#  * @example webui_set_config(show_wait_connection, false);
-#  */
-# WEBUI_EXPORT void webui_set_config(webui_config option, bool status);
+# -- navigate_client ---------------------------- # TODO: python wrapper
+webui_navigate_client = webui_lib.webui_navigate_client
 """
+brief:
+ Navigate to a specific URL. Single client.
 
-""" # TODO:
+param: e - The event struct
+param: url - Full HTTP URL
 
+example:
+ webui_navigate_client(e, "http://domain.com");
 
-#
-# /**
-#  * @brief Control if UI events comming from this window should be processed
-#  * one a time in a single blocking thread `True`, or process every event in
-#  * a new non-blocking thread `False`. This update single window. You can use
-#  * `webui_set_config(ui_event_blocking, ...)` to update all windows.
-#  *
-#  * @param window The window number
-#  * @param status The blocking status `true` or `false`
-#  *
-#  * @example webui_set_event_blocking(myWindow, true);
-#  */
-# WEBUI_EXPORT void webui_set_event_blocking(size_t window, bool status);
+C Signature:
+ WEBUI_EXPORT void webui_navigate_client(webui_event_t* e, const char* url);
 """
+webui_navigate_client.argtypes = [
+    POINTER(WebuiEventT),  # webui_event_t* e
+    c_char_p               # const char* url
+]
+webui_navigate_client.restype = None
 
-""" # TODO:
 
-
-#
-# /**
-#  * @brief Get the HTTP mime type of a file.
-#  *
-#  * @return Returns the HTTP mime string
-#  *
-#  * @example const char* mime = webui_get_mime_type("foo.png");
-#  */
-# WEBUI_EXPORT const char* webui_get_mime_type(const char* file);
+# -- clean -------------------------------------- # TODO: python wrapper
+webui_clean = webui_lib.webui_clean
 """
+brief:
+ Free all memory resources. Should be called only at the end.
 
-""" # TODO:
+example:
+ webui_wait();
+ webui_clean();
 
+C Signature:
+ WEBUI_EXPORT void webui_clean(void);
+"""
+webui_clean.argtypes = []
+webui_clean.restype = None
+
+
+# -- delete_all_profiles ------------------------ # TODO: python wrapper
+webui_delete_all_profiles = webui_lib.webui_delete_all_profiles
+"""
+brief:
+ Delete all local web-browser profiles folder. It should be called at the end.
+
+example:
+ webui_wait();
+ webui_delete_all_profiles();
+ webui_clean();
+
+C Signature:
+ WEBUI_EXPORT void webui_delete_all_profiles(void);
+"""
+webui_delete_all_profiles.argtypes = []
+webui_delete_all_profiles.restype = None
+
+
+# -- delete_profile ----------------------------- # TODO: python wrapper
+webui_delete_profile = webui_lib.webui_delete_profile
+"""
+brief:
+ Delete a specific window web-browser local folder profile.
+
+param: window The window number
+
+example:
+ webui_wait();
+ webui_delete_profile(myWindow);
+ webui_clean();
+
+note:
+ This can break functionality of other windows if using the same
+ web-browser.
+
+C Signature:
+ WEBUI_EXPORT void webui_delete_profile(size_t window);
+"""
+webui_delete_profile.argtypes = [
+    c_size_t  # size_t window
+]
+webui_delete_profile.restype = None
+
+
+# -- get_parent_process_id ---------------------- # TODO: python wrapper
+webui_get_parent_process_id = webui_lib.webui_get_parent_process_id
+"""
+brief:
+ Get the ID of the parent process (The web browser may re-create
+ another new process).
+
+param: window - The window number
+
+return:
+ Returns the parent process id as integer
+
+example:
+ size_t id = webui_get_parent_process_id(myWindow);
+
+C Signature:
+ WEBUI_EXPORT size_t webui_get_parent_process_id(size_t window);
+"""
+webui_get_parent_process_id.argtypes = [
+    c_size_t  # size_t window
+]
+webui_get_parent_process_id.restype = c_size_t
+
+
+# -- get_child_process_id ----------------------- # TODO: python wrapper
+webui_get_child_process_id = webui_lib.webui_get_child_process_id
+"""
+brief:
+ Get the ID of the last child process.
+
+param: window - The window number
+
+return:
+ Returns the child process id as integer
+
+example:
+ size_t id = webui_get_child_process_id(myWindow);
+
+C Signature:
+ WEBUI_EXPORT size_t webui_get_child_process_id(size_t window);
+"""
+webui_get_child_process_id.argtypes = [
+    c_size_t  # size_t window
+]
+webui_get_child_process_id.restype = c_size_t
+
+
+# -- get_port ----------------------------------- # TODO: python wrapper
+webui_get_port = webui_lib.webui_get_port
+"""
+brief:
+ Get the network port of a running window.
+ This can be useful to determine the HTTP link of `webui.js`
+
+param: window - The window number
+
+return:
+  Returns the network port of the window
+
+example:
+ size_t port = webui_get_port(myWindow);
+
+C Signature:
+ WEBUI_EXPORT size_t webui_get_port(size_t window);
+"""
+webui_get_port.argtypes = [
+    c_size_t  # size_t window
+]
+webui_get_port.restype = c_size_t
+
+
+# -- set_port ----------------------------------- # TODO: python wrapper
+webui_set_port = webui_lib.webui_set_port
+"""
+brief:
+ Set a custom web-server/websocket network port to be used by WebUI.
+ This can be useful to determine the HTTP link of `webui.js` in case
+ you are trying to use WebUI with an external web-server like NGNIX.
+
+param: window - The window number
+param: port - The web-server network port WebUI should use
+
+return:
+ Returns True if the port is free and usable by WebUI
+
+example:
+ bool ret = webui_set_port(myWindow, 8080);
+
+C Signature:
+ WEBUI_EXPORT bool webui_set_port(size_t window, size_t port);
+"""
+webui_set_port.argtypes = [
+    c_size_t,  # size_t window
+    c_size_t   # size_t port
+]
+webui_set_port.restype = c_bool
+
+
+# -- get_free_port ------------------------------ # TODO: python wrapper
+webui_get_free_port = webui_lib.webui_get_free_port
+"""
+brief:
+ Get an available usable free network port.
+
+return:
+ Returns a free port
+
+example:
+ size_t port = webui_get_free_port();
+
+C Signature:
+ WEBUI_EXPORT size_t webui_get_free_port(void);
+"""
+webui_get_port.argtypes = []
+webui_get_port.restype = c_size_t
+
+
+# -- set_config --------------------------------- # TODO: python wrapper
+webui_set_config = webui_lib.webui_set_config
+"""
+brief:
+ Control the WebUI behaviour. It's recommended to be called at the beginning.
+
+param: option - The desired option from `webui_config` enum
+param: status - The status of the option, `true` or `false`
+
+example:
+ webui_set_config(show_wait_connection, false);
+
+C Signature:
+ WEBUI_EXPORT void webui_set_config(webui_config option, bool status);
+"""
+webui_set_config.argtypes = [
+    c_int,
+    c_bool,
+]
+webui_set_config.restype = None
+
+
+# -- set_event_blocking ------------------------- # TODO: python wrapper
+webui_set_event_blocking = webui_lib.webui_set_event_blocking
+"""
+brief:
+ Control if UI events comming from this window should be processed
+ one a time in a single blocking thread `True`, or process every event in
+ a new non-blocking thread `False`. This update single window. You can use
+ `webui_set_config(ui_event_blocking, ...)` to update all windows.
+
+param: window - The window number
+param: status - The blocking status `true` or `false`
+
+example:
+ webui_set_event_blocking(myWindow, true);
+
+C Signature:
+ WEBUI_EXPORT void webui_set_event_blocking(size_t window, bool status);
+"""
+webui_set_event_blocking.argtypes = [
+    c_size_t,  # size_t window
+    c_bool     # bool status
+]
+webui_set_event_blocking.restype = None
+
+
+# -- get_mime_type ------------------------------ # TODO: python wrapper
+webui_get_mime_type = webui_lib.webui_get_mime_type
+"""
+brief:
+ Get the HTTP mime type of a file.
+
+return:
+ Returns the HTTP mime string
+
+example:
+ const char* mime = webui_get_mime_type("foo.png");
+
+C Signature:
+ WEBUI_EXPORT const char* webui_get_mime_type(const char* file);
+"""
+webui_get_mime_type.argtypes = [
+    c_char_p  # const char* file
+]
+webui_get_mime_type.restype = c_char_p
 
 
 # == SSL/TLS ==================================================================
 
 
-# /**
+# -- set_tls_certificate ------------------------ # TODO: python wrapper
+webui_set_tls_certificate = webui_lib.webui_set_tls_certificate
+"""
 #  * @brief Set the SSL/TLS certificate and the private key content, both in PEM
 #  * format. This works only with `webui-2-secure` library. If set empty WebUI
 #  * will generate a self-signed certificate.
@@ -1354,185 +1410,264 @@ webui_set_hide.restype = None
 #  */
 # WEBUI_EXPORT bool webui_set_tls_certificate(const char* certificate_pem, const char* private_key_pem);
 """
+webui_set_tls_certificate.argtypes = [
+    c_char_p,  # const char* certificate_pem
+    c_char_p   # const char* private_key_pem
+]
+webui_set_tls_certificate.restype = c_bool
 
-""" # TODO:
 
-
-#
 # == JavaScript ===============================================================
-#
-# /**
-#  * @brief Run JavaScript without waiting for the response. All clients.
-#  *
-#  * @param window The window number
-#  * @param script The JavaScript to be run
-#  *
-#  * @example webui_run(myWindow, "alert('Hello');");
-#  */
-# WEBUI_EXPORT void webui_run(size_t window, const char* script);
+
+
+# -- run ---------------------------------------- # TODO: python wrapper
+webui_run = webui_lib.webui_run
 """
+brief:
+ Run JavaScript without waiting for the response. All clients.
 
-""" # TODO:
+param: window - The window number
+param: script - The JavaScript to be run
 
+example:
+ webui_run(myWindow, "alert('Hello');");
 
-#
-# /**
-#  * @brief Run JavaScript without waiting for the response. Single client.
-#  *
-#  * @param e The event struct
-#  * @param script The JavaScript to be run
-#  *
-#  * @example webui_run_client(e, "alert('Hello');");
-#  */
-# WEBUI_EXPORT void webui_run_client(webui_event_t* e, const char* script);
+C Signature:
+ WEBUI_EXPORT void webui_run(size_t window, const char* script);
 """
+webui_run.argtypes = [
+    c_size_t,  # size_t window
+    c_char_p   # const char* script
+]
+webui_run.restype = None
 
-""" # TODO:
 
-
-#
-# /**
-#  * @brief Run JavaScript and get the response back. Work only in single client mode.
-#  * Make sure your local buffer can hold the response.
-#  *
-#  * @param window The window number
-#  * @param script The JavaScript to be run
-#  * @param timeout The execution timeout in seconds
-#  * @param buffer The local buffer to hold the response
-#  * @param buffer_length The local buffer size
-#  *
-#  * @return Returns True if there is no execution error
-#  *
-#  * @example bool err = webui_script(myWindow, "return 4 + 6;", 0, myBuffer, myBufferSize);
-#  */
-# WEBUI_EXPORT bool webui_script(size_t window, const char* script, size_t timeout,
-#     char* buffer, size_t buffer_length);
+# -- run_client --------------------------------- # TODO: python wrapper
+webui_run_client = webui_lib.webui_run_client
 """
+brief:
+ Run JavaScript without waiting for the response. Single client.
 
-""" # TODO:
+param: e - The event struct
+param: script - The JavaScript to be run
 
+example:
+ webui_run_client(e, "alert('Hello');");
 
-#
-# /**
-#  * @brief Run JavaScript and get the response back. Single client.
-#  * Make sure your local buffer can hold the response.
-#  *
-#  * @param e The event struct
-#  * @param script The JavaScript to be run
-#  * @param timeout The execution timeout in seconds
-#  * @param buffer The local buffer to hold the response
-#  * @param buffer_length The local buffer size
-#  *
-#  * @return Returns True if there is no execution error
-#  *
-#  * @example bool err = webui_script_client(e, "return 4 + 6;", 0, myBuffer, myBufferSize);
-#  */
-# WEBUI_EXPORT bool webui_script_client(webui_event_t* e, const char* script, size_t timeout,
-#     char* buffer, size_t buffer_length);
+C Signature:
+ WEBUI_EXPORT void webui_run_client(webui_event_t* e, const char* script);
 """
+webui_run_client.argtypes = [
+    POINTER(WebuiEventT),  # webui_event_t* e
+    c_char_p               # const char* script
+]
+webui_run_client.restype = None
 
-""" # TODO:
 
-
-#
-# /**
-#  * @brief Chose between Deno and Nodejs as runtime for .js and .ts files.
-#  *
-#  * @param window The window number
-#  * @param runtime Deno | Bun | Nodejs | None
-#  *
-#  * @example webui_set_runtime(myWindow, Deno);
-#  */
-# WEBUI_EXPORT void webui_set_runtime(size_t window, size_t runtime);
+# -- script ------------------------------------- # TODO: python wrapper
+webui_script = webui_lib.webui_script
 """
+brief:
+ Run JavaScript and get the response back. Work only in single client mode.
+ Make sure your local buffer can hold the response.
 
-""" # TODO:
+param: window - The window number
+param: script - The JavaScript to be run
+param: timeout - The execution timeout in seconds
+param: buffer - The local buffer to hold the response
+param: buffer_length - The local buffer size
 
+return:
+ Returns True if there is no execution error
 
-#
-# /**
-#  * @brief Get how many arguments there are in an event.
-#  *
-#  * @param e The event struct
-#  *
-#  * @return Returns the arguments count.
-#  *
-#  * @example size_t count = webui_get_count(e);
-#  */
-# WEBUI_EXPORT size_t webui_get_count(webui_event_t* e);
+example:
+ bool err = webui_script(myWindow, "return 4 + 6;", 0, myBuffer, myBufferSize);
+
+C Signature:
+ WEBUI_EXPORT bool webui_script(size_t window, const char* script, size_t timeout, char* buffer, size_t buffer_length);
 """
+webui_script.argtypes = [
+    c_size_t,  # size_t window
+    c_char_p,  # const char* script
+    c_size_t,  # size_t timeout
+    c_char_p,  # char* buffer
+    c_size_t   # size_t buffer_length
+]
+webui_script.restype = c_bool
 
-""" # TODO:
 
-
-#
-# /**
-#  * @brief Get an argument as integer at a specific index.
-#  *
-#  * @param e The event struct
-#  * @param index The argument position starting from 0
-#  *
-#  * @return Returns argument as integer
-#  *
-#  * @example long long int myNum = webui_get_int_at(e, 0);
-#  */
-# WEBUI_EXPORT long long int webui_get_int_at(webui_event_t* e, size_t index);
+# -- script_client ------------------------------ # TODO: python wrapper
+webui_script_client = webui_lib.webui_script_client
 """
+brief:
+ Run JavaScript and get the response back. Single client.
+ Make sure your local buffer can hold the response.
 
-""" # TODO:
+param: e - The event struct
+param: script - The JavaScript to be run
+param: timeout - The execution timeout in seconds
+param: buffer - The local buffer to hold the response
+param: buffer_length - The local buffer size
 
+return:
+ Returns True if there is no execution error
 
-#
-# /**
-#  * @brief Get the first argument as integer.
-#  *
-#  * @param e The event struct
-#  *
-#  * @return Returns argument as integer
-#  *
-#  * @example long long int myNum = webui_get_int(e);
-#  */
-# WEBUI_EXPORT long long int webui_get_int(webui_event_t* e);
+example:
+ bool err = webui_script_client(e, "return 4 + 6;", 0, myBuffer, myBufferSize);
+
+C Signature:
+  WEBUI_EXPORT bool webui_script_client(webui_event_t* e, const char* script, size_t timeout, char* buffer, size_t buffer_length);
 """
+webui_script_client.argtypes = [
+    POINTER(WebuiEventT),  # webui_event_t* e
+    c_char_p,              # const char* script
+    c_size_t,              # size_t timeout
+    c_char_p,              # char* buffer
+    c_size_t               # size_t buffer_length
+]
+webui_script_client.restype = c_bool
 
-""" # TODO:
 
-
-#
-# /**
-#  * @brief Get an argument as float at a specific index.
-#  *
-#  * @param e The event struct
-#  * @param index The argument position starting from 0
-#  *
-#  * @return Returns argument as float
-#  *
-#  * @example double myNum = webui_get_float_at(e, 0);
-#  */
-# WEBUI_EXPORT double webui_get_float_at(webui_event_t* e, size_t index);
+# -- set_runtime -------------------------------- # TODO: python wrapper
+webui_set_runtime = webui_lib.webui_set_runtime
 """
+brief:
+ Chose between Deno and Nodejs as runtime for .js and .ts files.
 
-""" # TODO:
+param: window - The window number
+param: runtime - Deno | Bun | Nodejs | None
 
+ @example webui_set_runtime(myWindow, Deno);
 
-#
-# /**
-#  * @brief Get the first argument as float.
-#  *
-#  * @param e The event struct
-#  *
-#  * @return Returns argument as float
-#  *
-#  * @example double myNum = webui_get_float(e);
-#  */
-# WEBUI_EXPORT double webui_get_float(webui_event_t* e);
+C Signature:
+ WEBUI_EXPORT void webui_set_runtime(size_t window, size_t runtime);
 """
+webui_set_runtime.argtypes = [
+    c_size_t,  # size_t window
+    c_size_t   # size_t runtime
+]
+webui_set_runtime.restype = None
 
-""" # TODO:
+
+# -- get_count ---------------------------------- # TODO: python wrapper
+webui_get_count = webui_lib.webui_get_count
+"""
+brief:
+ Get how many arguments there are in an event.
+
+param: e - The event struct
+
+return:
+ Returns the arguments count.
+
+example:
+ size_t count = webui_get_count(e);
+
+C Signature:
+ WEBUI_EXPORT size_t webui_get_count(webui_event_t* e);
+"""
+webui_get_count.argtypes = [
+    POINTER(WebuiEventT)  # webui_event_t* e
+]
+webui_get_count.restype = c_size_t
 
 
-#
-# /**
+# -- get_int_at --------------------------------- # TODO: python wrapper
+webui_get_int_at = webui_lib.webui_get_int_at
+"""
+brief:
+ Get an argument as integer at a specific index.
+
+param: e - The event struct
+param: index - The argument position starting from 0
+
+return:
+ Returns argument as integer
+
+example:
+ long long int myNum = webui_get_int_at(e, 0);
+
+C Signature:
+ WEBUI_EXPORT long long int webui_get_int_at(webui_event_t* e, size_t index);
+"""
+webui_get_int_at.argtypes = [
+    POINTER(WebuiEventT),  # webui_event_t* e
+    c_size_t               # size_t index
+]
+webui_get_int_at.restype = c_longlong
+
+
+# -- get_int ------------------------------------ # TODO: python wrapper
+webui_get_int = webui_lib.webui_get_int
+"""
+brief:
+ Get the first argument as integer.
+
+param: e - The event struct
+
+return:
+ Returns argument as integer
+
+example:
+ long long int myNum = webui_get_int(e);
+
+C Signature:
+ WEBUI_EXPORT long long int webui_get_int(webui_event_t* e);
+"""
+webui_get_int.argtypes = [
+    POINTER(WebuiEventT)  # webui_event_t* e
+]
+webui_get_int.restype = c_longlong
+
+
+# -- get_float_at ------------------------------- # TODO: python wrapper
+webui_get_float_at = webui_lib.webui_get_float_at
+"""
+brief:
+ Get an argument as float at a specific index.
+
+param: e - The event struct
+param: index - The argument position starting from 0
+
+return:
+ Returns argument as float
+
+example:
+ double myNum = webui_get_float_at(e, 0);
+
+C Signature:
+ WEBUI_EXPORT double webui_get_float_at(webui_event_t* e, size_t index);
+"""
+webui_get_float_at.argtypes = [
+    POINTER(WebuiEventT),  # webui_event_t*
+    c_size_t               # size_t index
+]
+webui_get_float_at.restype = c_double
+
+
+# -- get_float ---------------------------------- # TODO: python wrapper
+webui_get_float = webui_lib.webui_get_float
+"""
+brief Get the first argument as float.
+
+param e The event struct
+
+return Returns argument as float
+
+example double myNum = webui_get_float(e);
+
+C Signature:
+ WEBUI_EXPORT double webui_get_float(webui_event_t* e);
+"""
+webui_get_float.argtypes = [
+    POINTER(WebuiEventT)  # webui_event_t* e
+]
+webui_get_float.restype = c_double
+
+
+# -- get_string_at ------------------------------ # TODO: python wrapper
+webui_get_string_at = webui_lib.webui_get_string_at
+"""
 #  * @brief Get an argument as string at a specific index.
 #  *
 #  * @param e The event struct
@@ -1544,155 +1679,225 @@ webui_set_hide.restype = None
 #  */
 # WEBUI_EXPORT const char* webui_get_string_at(webui_event_t* e, size_t index);
 """
+webui_get_string_at.argtypes = [
+    POINTER(WebuiEventT),  # webui_event_t* e
+    c_size_t               # size_t index
+]
+webui_get_string_at.restype = c_char_p
 
-""" # TODO:
 
-
-#
-# /**
-#  * @brief Get the first argument as string.
-#  *
-#  * @param e The event struct
-#  *
-#  * @return Returns argument as string
-#  *
-#  * @example const char* myStr = webui_get_string(e);
-#  */
-# WEBUI_EXPORT const char* webui_get_string(webui_event_t* e);
+# -- get_string --------------------------------- # TODO: python wrapper
+webui_get_string = webui_lib.webui_get_string
 """
+brief:
+ Get the first argument as string.
 
-""" # TODO:
+param: e - The event struct
 
+return:
+ Returns argument as string
 
-#
-# /**
-#  * @brief Get an argument as boolean at a specific index.
-#  *
-#  * @param e The event struct
-#  * @param index The argument position starting from 0
-#  *
-#  * @return Returns argument as boolean
-#  *
-#  * @example bool myBool = webui_get_bool_at(e, 0);
-#  */
-# WEBUI_EXPORT bool webui_get_bool_at(webui_event_t* e, size_t index);
+example:
+ const char* myStr = webui_get_string(e);
+
+C Signature:
+ WEBUI_EXPORT const char* webui_get_string(webui_event_t* e);
 """
+webui_get_string.argtypes = [
+    POINTER(WebuiEventT)  # webui_event_t* e
+]
+webui_get_string.restype = c_char_p
 
-""" # TODO:
 
-
-#
-# /**
-#  * @brief Get the first argument as boolean.
-#  *
-#  * @param e The event struct
-#  *
-#  * @return Returns argument as boolean
-#  *
-#  * @example bool myBool = webui_get_bool(e);
-#  */
-# WEBUI_EXPORT bool webui_get_bool(webui_event_t* e);
+# -- get_bool_at -------------------------------- # TODO: python wrapper
+webui_get_bool_at = webui_lib.webui_get_bool_at
 """
+brief:
+ Get an argument as boolean at a specific index.
 
-""" # TODO:
+param: e - The event struct
+param: index - The argument position starting from 0
 
+return:
+ Returns argument as boolean
 
-#
-# /**
-#  * @brief Get the size in bytes of an argument at a specific index.
-#  *
-#  * @param e The event struct
-#  * @param index The argument position starting from 0
-#  *
-#  * @return Returns size in bytes
-#  *
-#  * @example size_t argLen = webui_get_size_at(e, 0);
-#  */
-# WEBUI_EXPORT size_t webui_get_size_at(webui_event_t* e, size_t index);
+example:
+ bool myBool = webui_get_bool_at(e, 0);
+
+C Signature:
+ WEBUI_EXPORT bool webui_get_bool_at(webui_event_t* e, size_t index);
 """
+webui_get_bool_at.argtypes = [
+    POINTER(WebuiEventT),  # webui_event_t* e
+    c_size_t               # size_t index
+]
+webui_get_bool_at.restype = c_bool
 
-""" # TODO:
 
-
-#
-# /**
-#  * @brief Get size in bytes of the first argument.
-#  *
-#  * @param e The event struct
-#  *
-#  * @return Returns size in bytes
-#  *
-#  * @example size_t argLen = webui_get_size(e);
-#  */
-# WEBUI_EXPORT size_t webui_get_size(webui_event_t* e);
+# -- get_bool ----------------------------------- # TODO: python wrapper
+webui_get_bool = webui_lib.webui_get_bool
 """
+brief:
+ Get the first argument as boolean.
 
-""" # TODO:
+param: e - The event struct
 
+return:
+ Returns argument as boolean
 
-#
-# /**
-#  * @brief Return the response to JavaScript as integer.
-#  *
-#  * @param e The event struct
-#  * @param n The integer to be send to JavaScript
-#  *
-#  * @example webui_return_int(e, 123);
-#  */
-# WEBUI_EXPORT void webui_return_int(webui_event_t* e, long long int n);
+example:
+ bool myBool = webui_get_bool(e);
+
+C Signature:
+ WEBUI_EXPORT bool webui_get_bool(webui_event_t* e);
 """
+webui_get_bool.argtypes = [
+    POINTER(WebuiEventT)  # webui_event_t* e
+]
+webui_get_bool.restype = c_bool
 
-""" # TODO:
 
-
-#
-# /**
-#  * @brief Return the response to JavaScript as float.
-#  *
-#  * @param e The event struct
-#  * @param f The float number to be send to JavaScript
-#  *
-#  * @example webui_return_float(e, 123.456);
-#  */
-# WEBUI_EXPORT void webui_return_float(webui_event_t* e, double f);
+# -- get_size_at -------------------------------- # TODO: python wrapper
+webui_get_size_at = webui_lib.webui_get_size_at
 """
+brief:
+ Get the size in bytes of an argument at a specific index.
 
-""" # TODO:
+param: e - The event struct
+param: index - The argument position starting from 0
 
+return:
+ Returns size in bytes
 
-#
-# /**
-#  * @brief Return the response to JavaScript as string.
-#  *
-#  * @param e The event struct
-#  * @param n The string to be send to JavaScript
-#  *
-#  * @example webui_return_string(e, "Response...");
-#  */
-# WEBUI_EXPORT void webui_return_string(webui_event_t* e, const char* s);
+example:
+ size_t argLen = webui_get_size_at(e, 0);
+
+C Signature:
+ WEBUI_EXPORT size_t webui_get_size_at(webui_event_t* e, size_t index);
 """
+webui_get_size_at.argtypes = [
+    POINTER(WebuiEventT),  # webui_event_t* e
+    c_size_t               # size_t index
+]
+webui_get_size_at.restype = c_size_t
 
-""" # TODO:
 
-
-#
-# /**
-#  * @brief Return the response to JavaScript as boolean.
-#  *
-#  * @param e The event struct
-#  * @param n The boolean to be send to JavaScript
-#  *
-#  * @example webui_return_bool(e, true);
-#  */
-# WEBUI_EXPORT void webui_return_bool(webui_event_t* e, bool b);
+# -- get_size ----------------------------------- # TODO: python wrapper
+webui_get_size = webui_lib.webui_get_size
 """
+brief:
+ Get size in bytes of the first argument.
 
-""" # TODO:
+param: e - The event struct
 
+return:
+ Returns size in bytes
+
+example:
+ size_t argLen = webui_get_size(e);
+
+C Signature:
+ WEBUI_EXPORT size_t webui_get_size(webui_event_t* e);
+"""
+webui_get_size.argtypes = [
+    POINTER(WebuiEventT)  # webui_event_t* e
+]
+webui_get_size.restype = c_size_t
+
+
+# -- return_int --------------------------------- # TODO: python wrapper
+webui_return_int = webui_lib.webui_return_int
+"""
+brief:
+ Return the response to JavaScript as integer.
+
+param: e - The event struct
+param: n - The integer to be send to JavaScript
+
+example:
+ webui_return_int(e, 123);
+
+C Signature:
+ WEBUI_EXPORT void webui_return_int(webui_event_t* e, long long int n);
+"""
+webui_return_int.argtypes = [
+    POINTER(WebuiEventT),  # webui_event_t* e
+    c_longlong             # long long int n
+]
+webui_return_int.restype = None
+
+
+# -- return_float ------------------------------- # TODO: python wrapper
+webui_return_float = webui_lib.webui_return_float
+"""
+brief:
+ Return the response to JavaScript as float.
+
+param: e - The event struct
+param: f - The float number to be send to JavaScript
+
+example:
+ webui_return_float(e, 123.456);
+
+C Signature:
+ WEBUI_EXPORT void webui_return_float(webui_event_t* e, double f);
+"""
+webui_return_float.argtypes = [
+    POINTER(WebuiEventT),   # webui_event_t* e
+    c_double                # double f
+]
+webui_return_float.restype = None
+
+
+# -- return_string ------------------------------ # TODO: python wrapper
+webui_return_string = webui_lib.webui_return_string
+"""
+brief:
+ Return the response to JavaScript as string.
+
+param: e - The event struct
+param: n - The string to be send to JavaScript
+
+example:
+ webui_return_string(e, "Response...");
+
+C Signature:
+ WEBUI_EXPORT void webui_return_string(webui_event_t* e, const char* s);
+"""
+webui_return_string.argtypes = [
+    POINTER(WebuiEventT),   # webui_event_t* e
+    c_char_p                # const char* s
+]
+webui_return_string.restype = None
+
+
+# -- return_bool -------------------------------- # TODO: python wrapper
+webui_return_bool = webui_lib.webui_return_bool
+"""
+brief:
+ Return the response to JavaScript as boolean.
+
+param: e - The event struct
+param: n - The boolean to be send to JavaScript
+
+example:
+ webui_return_bool(e, true);
+
+C Signature:
+ WEBUI_EXPORT void webui_return_bool(webui_event_t* e, bool b);
+"""
+webui_return_bool.argtypes = [
+    POINTER(WebuiEventT),   # webui_event_t* e
+    c_bool                  # bool b
+]
+webui_return_bool.restype = None
 
 
 # == Wrapper's Interface ======================================================
 
+
+# -- interface_bind -----------------------------
+"""
 # /**
 #  * @brief Bind a specific HTML element click event with a function. Empty element means all events.
 #  *
@@ -1706,12 +1911,11 @@ webui_set_hide.restype = None
 #  */
 # WEBUI_EXPORT size_t webui_interface_bind(size_t window, const char* element,
 #     void (*func)(size_t, size_t, char*, size_t, size_t));
-"""
-
 """ # TODO:
 
 
-#
+# -- interface_set_response ---------------------
+"""
 # /**
 #  * @brief When using `webui_interface_bind()`, you may need this function to easily set a response.
 #  *
@@ -1722,12 +1926,11 @@ webui_set_hide.restype = None
 #  * @example webui_interface_set_response(myWindow, e->event_number, "Response...");
 #  */
 # WEBUI_EXPORT void webui_interface_set_response(size_t window, size_t event_number, const char* response);
-"""
-
 """ # TODO:
 
 
-#
+# -- interface_is_app_running -------------------
+"""
 # /**
 #  * @brief Check if the app still running.
 #  *
@@ -1736,12 +1939,12 @@ webui_set_hide.restype = None
 #  * @example bool status = webui_interface_is_app_running();
 #  */
 # WEBUI_EXPORT bool webui_interface_is_app_running(void);
-"""
-
 """ # TODO:
 
 
-#
+# -- interface_get_window_id --------------------
+
+"""
 # /**
 #  * @brief Get a unique window ID.
 #  *
@@ -1752,12 +1955,12 @@ webui_set_hide.restype = None
 #  * @example size_t id = webui_interface_get_window_id(myWindow);
 #  */
 # WEBUI_EXPORT size_t webui_interface_get_window_id(size_t window);
-"""
-
 """ # TODO:
 
 
-#
+# -- interface_get_string_at --------------------
+
+"""
 # /**
 #  * @brief Get an argument as string at a specific index.
 #  *
@@ -1770,12 +1973,12 @@ webui_set_hide.restype = None
 #  * @example const char* myStr = webui_interface_get_string_at(myWindow, e->event_number, 0);
 #  */
 # WEBUI_EXPORT const char* webui_interface_get_string_at(size_t window, size_t event_number, size_t index);
-"""
-
 """ # TODO:
 
 
-#
+# -- interface_get_int_at -----------------------
+
+"""
 # /**
 #  * @brief Get an argument as integer at a specific index.
 #  *
@@ -1788,12 +1991,11 @@ webui_set_hide.restype = None
 #  * @example long long int myNum = webui_interface_get_int_at(myWindow, e->event_number, 0);
 #  */
 # WEBUI_EXPORT long long int webui_interface_get_int_at(size_t window, size_t event_number, size_t index);
-"""
-
 """ # TODO:
 
 
-#
+# -- interface_get_float_at ---------------------
+"""
 # /**
 #  * @brief Get an argument as float at a specific index.
 #  *
@@ -1806,12 +2008,11 @@ webui_set_hide.restype = None
 #  * @example double myFloat = webui_interface_get_int_at(myWindow, e->event_number, 0);
 #  */
 # WEBUI_EXPORT double webui_interface_get_float_at(size_t window, size_t event_number, size_t index);
-"""
-
 """ # TODO:
 
 
-#
+# -- interface_get_bool_at ----------------------
+"""
 # /**
 #  * @brief Get an argument as boolean at a specific index.
 #  *
@@ -1824,12 +2025,12 @@ webui_set_hide.restype = None
 #  * @example bool myBool = webui_interface_get_bool_at(myWindow, e->event_number, 0);
 #  */
 # WEBUI_EXPORT bool webui_interface_get_bool_at(size_t window, size_t event_number, size_t index);
-"""
-
 """ # TODO:
 
 
-#
+# -- interface_get_size_at ----------------------
+
+"""
 # /**
 #  * @brief Get the size in bytes of an argument at a specific index.
 #  *
@@ -1842,12 +2043,12 @@ webui_set_hide.restype = None
 #  * @example size_t argLen = webui_interface_get_size_at(myWindow, e->event_number, 0);
 #  */
 # WEBUI_EXPORT size_t webui_interface_get_size_at(size_t window, size_t event_number, size_t index);
-"""
-
 """ # TODO:
 
 
-#
+# -- interface_show_client ----------------------
+
+"""
 # /**
 #  * @brief Show a window using embedded HTML, or a file. If the window is already
 #  * open, it will be refreshed. Single client.
@@ -1862,13 +2063,13 @@ webui_set_hide.restype = None
 #  * webui_show_client(e, "index.html"); | webui_show_client(e, "http://...");
 #  */
 # WEBUI_EXPORT bool webui_interface_show_client(size_t window, size_t event_number, const char* content);
-"""
-
 """ # TODO:
 
 
 
-#
+# -- interface_close_client ---------------------
+
+"""
 # /**
 #  * @brief Close a specific client.
 #  *
@@ -1878,12 +2079,11 @@ webui_set_hide.restype = None
 #  * @example webui_close_client(e);
 #  */
 # WEBUI_EXPORT void webui_interface_close_client(size_t window, size_t event_number);
-"""
-
 """ # TODO:
 
 
-#
+# -- interface_send_raw_client ------------------
+"""
 # /**
 #  * @brief Safely send raw data to the UI. Single client.
 #  *
@@ -1897,12 +2097,11 @@ webui_set_hide.restype = None
 #  * @example webui_send_raw_client(e, "myJavaScriptFunc", myBuffer, 64);
 #  */
 # WEBUI_EXPORT void webui_interface_send_raw_client(size_t window, size_t event_number, const char* function, const void* raw, size_t size);
-"""
-
 """ # TODO:
 
 
-#
+# -- interface_navigate_client ------------------
+"""
 # /**
 #  * @brief Navigate to a specific URL. Single client.
 #  *
@@ -1913,12 +2112,11 @@ webui_set_hide.restype = None
 #  * @example webui_navigate_client(e, "http://domain.com");
 #  */
 # WEBUI_EXPORT void webui_interface_navigate_client(size_t window, size_t event_number, const char* url);
-"""
-
 """ # TODO:
 
 
-#
+# -- interface_run_client -----------------------
+"""
 # /**
 #  * @brief Run JavaScript without waiting for the response. Single client.
 #  *
@@ -1929,12 +2127,11 @@ webui_set_hide.restype = None
 #  * @example webui_run_client(e, "alert('Hello');");
 #  */
 # WEBUI_EXPORT void webui_interface_run_client(size_t window, size_t event_number, const char* script);
-"""
-
 """ # TODO:
 
 
-#
+# -- interface_script_client --------------------
+"""
 # /**
 #  * @brief Run JavaScript and get the response back. Single client.
 #  * Make sure your local buffer can hold the response.
@@ -1951,6 +2148,8 @@ webui_set_hide.restype = None
 #  * @example bool err = webui_script_client(e, "return 4 + 6;", 0, myBuffer, myBufferSize);
 #  */
 # WEBUI_EXPORT bool webui_interface_script_client(size_t window, size_t event_number, const char* script, size_t timeout, char* buffer, size_t buffer_length);
-"""
-
 """ # TODO:
+
+
+
+
