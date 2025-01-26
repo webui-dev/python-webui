@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import sys
 from ctypes import *
 from load_library import _load_library
@@ -164,7 +166,7 @@ webui_new_window.argtypes = []
 webui_new_window.restype  = c_size_t
 
 
-# -- new_window_id ------------------------------ # TODO: python wrapper
+# -- new_window_id ------------------------------
 webui_new_window_id = webui_lib.webui_new_window_id
 """
 brief: 
@@ -187,7 +189,7 @@ webui_new_window_id.argtypes = [
 webui_new_window_id.restype  = c_size_t
 
 
-# -- get_new_window_id -------------------------- # TODO: python wrapper
+# -- get_new_window_id --------------------------
 webui_get_new_window_id = webui_lib.webui_get_new_window_id
 """
 brief: 
@@ -207,7 +209,7 @@ webui_get_new_window_id.argtypes = []
 webui_get_new_window_id.restype  = c_size_t
 
 
-# -- bind --------------------------------------- # TODO: python wrapper
+# -- bind ---------------------------------------
 webui_bind = webui_lib.webui_bind
 """
 brief:
@@ -235,7 +237,7 @@ webui_bind.argtypes = [
 webui_bind.restype  = c_size_t
 
 
-# -- get_best_browser --------------------------- # TODO: python wrapper
+# -- get_best_browser ---------------------------
 webui_get_best_browser = webui_lib.webui_get_best_browser
 """
 brief: 
@@ -259,7 +261,7 @@ webui_get_best_browser.argtypes = [
 webui_get_best_browser.restype  = c_size_t
 
 
-# -- show --------------------------------------- # TODO: python wrapper
+# -- show ---------------------------------------
 webui_show = webui_lib.webui_show
 """
 brief: 
@@ -287,7 +289,7 @@ webui_show.argtypes = [
 webui_show.restype  = c_bool
 
 
-# -- show_client -------------------------------- # TODO: python wrapper
+# -- show_client --------------------------------
 webui_show_client = webui_lib.webui_show_client
 """
 brief:
@@ -315,7 +317,7 @@ webui_show_client.argtypes = [
 webui_show_client.restype = c_bool
 
 
-# -- show_browser ------------------------------- # TODO: python wrapper
+# -- show_browser -------------------------------
 webui_show_browser = webui_lib.webui_show_browser
 """
 brief:
@@ -343,7 +345,7 @@ webui_show_browser.argtypes = [
 webui_show_browser.restype  = c_bool
 
 
-# -- start_server ------------------------------- # TODO: python wrapper
+# -- start_server -------------------------------
 webui_start_server = webui_lib.webui_start_server
 """
 brief: 
@@ -369,7 +371,7 @@ webui_start_server.argtypes = [
 webui_start_server.restype  = c_char_p
 
 
-# -- show_wv ------------------------------------ # TODO: python wrapper
+# -- show_wv ------------------------------------
 webui_show_wv = webui_lib.webui_show_wv
 """
 brief: 
@@ -397,7 +399,7 @@ webui_show_wv.argtypes = [
 webui_show_wv.restype  = c_bool
 
 
-# -- set_kiosk ---------------------------------- # TODO: python wrapper
+# -- set_kiosk ----------------------------------
 webui_set_kiosk = webui_lib.webui_set_kiosk
 """
 brief: 
@@ -441,7 +443,7 @@ C Signature:
 # webui_set_custom_parameters.restype  = None
 
 
-# -- set_high_contrast -------------------------- # TODO: python wrapper
+# -- set_high_contrast --------------------------
 webui_set_high_contrast = webui_lib.webui_set_high_contrast
 """
 brief: 
@@ -461,10 +463,10 @@ webui_set_high_contrast.argtypes = [
     c_size_t,  # size_t window
     c_bool     # bool status
 ]
-webui_set_high_contrast.restype  = None
+webui_set_high_contrast.restype = None
 
 
-# -- is_high_contrast --------------------------- # TODO: python wrapper
+# -- is_high_contrast ---------------------------
 webui_is_high_contrast = webui_lib.webui_is_high_contrast
 """
 brief: 
@@ -483,7 +485,7 @@ webui_is_high_contrast.argtypes = []
 webui_is_high_contrast.restype  = c_bool
 
 
-# -- browser_exist ------------------------------ # TODO: python wrapper
+# -- browser_exist ------------------------------
 webui_browser_exist = webui_lib.webui_browser_exist
 """
 brief:
@@ -504,7 +506,7 @@ webui_browser_exist.argtypes = [
 webui_browser_exist.restype  = c_bool
 
 
-# -- wait --------------------------------------- # TODO: python wrapper
+# -- wait ---------------------------------------
 webui_wait = webui_lib.webui_wait
 """
 brief:
@@ -520,7 +522,7 @@ webui_wait.argtypes = []
 webui_wait.restype  = None
 
 
-# -- close -------------------------------------- # TODO: python wrapper
+# -- close --------------------------------------
 webui_close = webui_lib.webui_close
 """
 brief: 
@@ -541,7 +543,7 @@ webui_close.argtypes = [
 webui_close.restype  = None
 
 
-# -- close_client ------------------------------- # TODO: python wrapper
+# -- close_client -------------------------------
 webui_close_client = webui_lib.webui_close_client
 """
 brief:
@@ -561,7 +563,7 @@ webui_close_client.argtypes = [
 webui_close_client.restype = None
 
 
-# -- destroy ------------------------------------ # TODO: python wrapper
+# -- destroy ------------------------------------
 webui_destroy = webui_lib.webui_destroy
 """
 brief: 
@@ -582,7 +584,7 @@ webui_destroy.restype = None
 
 
 
-# -- exit --------------------------------------- # TODO: python wrapper
+# -- exit ---------------------------------------
 webui_exit = webui_lib.webui_exit
 """
 brief:
@@ -598,7 +600,7 @@ webui_exit.argtypes = []
 webui_exit.restype = None
 
 
-# -- set_root_folder ---------------------------- # TODO: python wrapper
+# -- set_root_folder ----------------------------
 webui_set_root_folder = webui_lib.webui_set_root_folder
 """
 brief:
@@ -620,7 +622,7 @@ webui_set_root_folder.argtypes = [
 webui_set_root_folder.restype = c_bool
 
 
-# -- set_default_root_folder -------------------- # TODO: python wrapper
+# -- set_default_root_folder --------------------
 webui_set_default_root_folder = webui_lib.webui_set_default_root_folder
 """
 brief:
@@ -641,7 +643,7 @@ webui_set_default_root_folder.argtypes = [
 webui_set_default_root_folder.restype = c_bool
 
 
-# -- set_file_handler---------------------------- # TODO: python wrapper
+# -- set_file_handler---------------------------- # TODO: testing required
 webui_set_file_handler = webui_lib.webui_set_file_handler
 """
 brief:
@@ -689,7 +691,7 @@ webui_set_file_handler.argtypes = [
 webui_set_file_handler.restype = None
 
 
-# -- is_shown ----------------------------------- # TODO: python wrapper
+# -- is_shown -----------------------------------
 webui_is_shown = webui_lib.webui_is_shown
 """
 brief:
@@ -709,7 +711,7 @@ webui_is_shown.argtypes = [
 webui_is_shown.restype = c_bool
 
 
-# -- set_timeout -------------------------------- # TODO: python wrapper
+# -- set_timeout --------------------------------
 webui_set_timeout = webui_lib.webui_set_timeout
 """
 brief:
@@ -730,7 +732,7 @@ webui_set_timeout.argtypes = [
 webui_set_timeout.restype = None
 
 
-# -- set_icon ----------------------------------- # TODO: python wrapper
+# -- set_icon -----------------------------------
 webui_set_icon = webui_lib.webui_set_icon
 """
 brief:
@@ -1668,16 +1670,20 @@ webui_get_float.restype = c_double
 # -- get_string_at ------------------------------ # TODO: python wrapper
 webui_get_string_at = webui_lib.webui_get_string_at
 """
-#  * @brief Get an argument as string at a specific index.
-#  *
-#  * @param e The event struct
-#  * @param index The argument position starting from 0
-#  *
-#  * @return Returns argument as string
-#  *
-#  * @example const char* myStr = webui_get_string_at(e, 0);
-#  */
-# WEBUI_EXPORT const char* webui_get_string_at(webui_event_t* e, size_t index);
+brief:
+ Get an argument as string at a specific index.
+
+param: e - The event struct
+param: index - The argument position starting from 0
+
+return:
+ Returns argument as string
+
+example:
+ const char* myStr = webui_get_string_at(e, 0);
+
+C Signature:
+ WEBUI_EXPORT const char* webui_get_string_at(webui_event_t* e, size_t index);
 """
 webui_get_string_at.argtypes = [
     POINTER(WebuiEventT),  # webui_event_t* e

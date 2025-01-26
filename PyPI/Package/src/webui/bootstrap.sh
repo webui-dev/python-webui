@@ -97,6 +97,9 @@ if [[ "$1" == "minimal" ]]; then
     elif [ "$ARCH" = "aarch64" ]; then
         # ARM 64Bit
         FILENAME="webui-${OS}-${CC}-arm64"
+    elif [ "$ARCH" = "arm64" ]; then
+        # ARM 64bit - apple
+        FILENAME="webui-${OS}-${CC}-arm64"
     else
         echo "Error: Unknown architecture '$ARCH'"
         exit 1
@@ -106,7 +109,11 @@ if [[ "$1" == "minimal" ]]; then
     mkdir -p "cache/$FILENAME" 2>/dev/null
 
     # Download the archive using wget
-    wget -q "$BASE_URL$FILENAME.zip" -O "cache/$FILENAME.zip"
+    if [ "$ARCH" = "arm64" ]; then
+        curl -sL "$BASE_URL$FILENAME.zip" -o "cache/$FILENAME.zip"
+    else
+        wget -q "$BASE_URL$FILENAME.zip" -O "cache/$FILENAME.zip"
+    fi
 
     # Extract archive
     unzip -q "cache/$FILENAME.zip" -d "cache"

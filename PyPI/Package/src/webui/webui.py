@@ -6,6 +6,13 @@ from ctypes import *
 # Import all the raw bindings
 import webui_bindings as _raw
 
+# Define the C function type for the file handler
+filehandler_callback = CFUNCTYPE(
+    c_void_p,               # Return type: pointer to the HTTP response bytes
+    c_char_p,               # filename: const char*
+    POINTER(c_int)          # length: int*
+)
+
 # == Enums ====================================================================
 
 
@@ -17,22 +24,11 @@ Config      = _raw.WebuiConfig
 
 # == Definitions ==============================================================
 
-# Global to hold Python callbacks
-_py_bindings = {}
 
 # -- JavaScript responses -----------------------
 class JavaScript:
     error = False
     response = ""
-
-# -- dispatcher for function bindings -----------
-@_raw.CFUNCTYPE(None, _raw.POINTER(_raw.WebuiEventT))
-def _dispatcher(c_event_ptr):
-    """Global dispatcher for events."""
-    event = c_event_ptr.contents
-    if event.bind_id in _py_bindings:
-        pyfunc = _py_bindings[event.bind_id]
-        pyfunc(Event(event))
 
 
 # -- Event Object -------------------------------
@@ -41,8 +37,8 @@ class Event:
     __slots__ = ("window", "event_type", "element", "event_number", "bind_id",
                  "client_id", "connection_id", "cookies")
 
-    def __init__(self, c_event: _raw.WebuiEventT):
-        self.window        = c_event.window
+    def __init__(self, win: Window, c_event: _raw.WebuiEventT):
+        self.window        = win
         self.event_type    = c_event.event_type
         self.element       = c_event.element.decode('utf-8') if c_event.element else ''
         self.event_number  = c_event.event_number
@@ -51,13 +47,10 @@ class Event:
         self.connection_id = c_event.connection_id
         self.cookies       = c_event.cookies.decode('utf-8') if c_event.cookies else ''
 
-    def get_string_at(self, index: int) -> str:
-        return _raw.webui_get_string_at(byref(self._c_event()), index).decode('utf-8')
-
     def _c_event(self) -> _raw.WebuiEventT:
         """Rebuild the underlying C struct if needed."""
         return _raw.WebuiEventT(
-            window=self.window,
+            window=c_size_t(self.window.get_window_id),
             event_type=self.event_type,
             element=self.element.encode('utf-8'),
             event_number=self.event_number,
@@ -66,6 +59,25 @@ class Event:
             connection_id=self.connection_id,
             cookies=self.cookies.encode('utf-8')
         )
+
+    def show_client(self, content: str) -> bool:
+        return bool(_raw.webui_show_client(self._c_event(), content.encode('utf-8')))
+
+    def close_client(self):
+        _raw.webui_close_client(self._c_event())
+
+    def get_string_at(self, index: int) -> str:
+        """
+        Retrieve a string argument from the underlying C event data at a given index.
+
+        Args:
+            index (int): The index of the string argument to retrieve.
+
+        Returns:
+            str: The UTF-8 decoded string corresponding to the specified index.
+        """
+        return _raw.webui_get_string_at(byref(self._c_event()), index).decode('utf-8')
+
 
 
 # -- Window Object ------------------------------
@@ -79,30 +91,54 @@ class Window:
         Otherwise, we call webui_new_window_id(window_id).
         """
         if window_id is None:
-            self._window = _raw.webui_new_window()
+            self._window: int = _raw.webui_new_window()
         else:
-            self._window = _raw.webui_new_window_id(window_id)
+            self._window: int = _raw.webui_new_window_id(window_id)
 
         if not self._window:
             raise RuntimeError("Failed to create a new WebUI window.")
 
-        self._window_id = str(self._window)
-        self._c_events = None
+        self._window_id: str = str(self._window)
 
-        # py_fun = ctypes.CFUNCTYPE(
-        #     ctypes.c_void_p,  # RESERVED
-        #     ctypes.c_size_t,  # window
-        #     ctypes.c_uint,  # event type
-        #     ctypes.c_char_p,  # element
-        #     ctypes.c_size_t,  # event number
-        #     ctypes.c_uint)  # Bind ID
-        # self.c_events = py_fun(self._events)
-        self._cb_func_list = {}
+        callback_function_type = _raw.CFUNCTYPE(None, _raw.POINTER(_raw.WebuiEventT))
+        self._dispatcher_cfunc = callback_function_type(self._make_dispatcher())
+        # Dict to keep track of binded functions: {bind_id: python_function}
+        self._cb_func_list: dict = {}
+
+        self._file_handler_cfunc = None
+
+    # -- dispatcher for function bindings -----------
+    def _make_dispatcher(self):
+        """Return a function that matches CFUNCTYPE signature but closes over `self`."""
+        def dispatcher(c_event_ptr):
+            event = c_event_ptr.contents
+            if event.bind_id in self._cb_func_list:
+                pyfunc = self._cb_func_list[event.bind_id]
+                pyfunc(Event(self, event))
+
+        return dispatcher
 
     @property
-    def id(self) -> int:
-        """Returns the internal C-level window id."""
+    def get_window_id(self) -> int:
+        """Returns the window id."""
         return self._window
+
+    def bind(self, element: str, func: Callable[[Event], None]) -> int:
+        """
+        Bind an HTML element and a JavaScript object with
+        a backend function. Empty element name means all events.
+        """
+        element_c = element.encode('utf-8') if element else None
+        bind_id = _raw.webui_bind(self._window, element_c, self._dispatcher_cfunc)
+        self._cb_func_list[bind_id] = func
+        return bind_id
+
+    def get_best_browser(self) -> Browser:
+        """
+        Get the recommended web browser to use. If you
+        are already using one, this function will return the same browser.
+        """
+        return Browser(int(_raw.webui_get_best_browser(self._window)))
 
     def show(self, content: str) -> bool:
         """
@@ -116,20 +152,22 @@ class Window:
         """
         Show or refresh the window using a specific browser (by enum).
         """
-        return bool(_raw.webui_show_browser(self._window, content.encode("utf-8"), c_size_t(browser.value)
-        ))
+        return bool(_raw.webui_show_browser(self._window, content.encode("utf-8"), c_size_t(browser.value)))
 
-DATABASE_FILE :: "data/data.json"
+    def start_server(self, content: str) -> str:
+        return _raw.webui_start_server(self._window, content.encode("utf-8")).decode("utf-8")
 
-    def bind(self, element: str, callback: Callable[[Event], None]) -> int:
+    def show_wv(self, content: str) -> bool:
+        return bool(_raw.webui_show_wv(self._window, content.encode("utf-8")))
+
+    def set_kiosk(self, status: bool) -> None:
         """
-        Bind an HTML element and a JavaScript object with
-        a backend function. Empty element name means all events.
+        Set or unset kiosk (fullscreen) mode.
         """
-        element_c = element.encode('utf-8') if element else None
-        bind_id = _raw.webui_bind(self._window, element_c, _dispatcher)
-        _py_bindings[bind_id] = callback
-        return bind_id
+        _raw.webui_set_kiosk(self._window, c_bool(status))
+
+    def set_high_contrast(self, status: bool) -> None:
+        _raw.webui_set_high_contrast(self._window, c_bool(status))
 
     def close(self) -> None:
         """
@@ -143,15 +181,57 @@ DATABASE_FILE :: "data/data.json"
         """
         _raw.webui_destroy(self._window)
 
+    def set_root_folder(self, path: str) -> bool:
+        return bool(_raw.webui_set_root_folder(self._window, path.encode("utf-8")))
+
+    def set_file_handler(self, handler: Callable[[str], bytes]) -> None:
+        """
+        Set a custom file handler to serve files for this window.
+
+        The custom handler must return a complete HTTP response (header + body)
+        as bytes. This disables any previously set file handler for this window.
+
+        Args:
+            handler (Callable[[str], bytes]): A Python function that takes the
+            requested filename as a string and returns the full HTTP response
+            (including headers) as bytes.
+
+        Returns:
+            None
+        """
+        def _internal_file_handler(filename_ptr: c_char_p, length_ptr: POINTER(c_int)) -> c_void_p:
+            """
+            Internal C callback that matches the signature required by webui_set_file_handler.
+            """
+            # Decode the incoming filename from C
+            filename = filename_ptr.decode('utf-8') if filename_ptr else ""
+
+            # Call the Python-level handler to get the HTTP response
+            response_bytes = handler(filename)
+
+            # Create a ctypes buffer from the Python bytes; this buffer must remain alive
+            # at least until WebUI is done with it.
+            buf = create_string_buffer(response_bytes)
+
+            # Set the length (the int* that C expects)
+            length_ptr[0] = len(response_bytes)
+
+            # Return a pointer (void*) to the buffer
+            return cast(buf, c_void_p)
+
+        # Keep a reference so it doesnt get garbage collected
+        self._file_handler_cfunc = filehandler_callback(_internal_file_handler)
+
+        _raw.webui_set_file_handler(self._window, self._file_handler_cfunc)
+
+    # TODO: set_file_handler_window
+
     def is_shown(self) -> bool:
         """Return True if the window is currently shown."""
         return bool(_raw.webui_is_shown(self._window))
 
-    def set_kiosk(self, status: bool) -> None:
-        """
-        Set or unset kiosk (fullscreen) mode.
-        """
-        _raw.webui_set_kiosk(self._window, status)
+    def set_icon(self, icon: str, icon_type: str) -> None:
+        _raw.webui_set_icon(self._window, icon.encode("utf-8"), icon_type.encode("utf-8"))
 
     def run(self, script: str) -> None:
         """
@@ -200,12 +280,20 @@ DATABASE_FILE :: "data/data.json"
         res.data = buffer.value.decode('utf-8', errors='ignore')
         res.error = not success
         return res
-    # TODO: left off here - 'AttributeError: 'int' object has no attribute 'script''
-
 
 
 
 # -- Global functions below ---------------------
+def get_new_window_id() -> int:
+    return int(_raw.webui_get_new_window_id)
+
+def is_high_contrast() -> bool:
+    """Return True if the OS is using a high-contrast theme."""
+    return bool(_raw.webui_is_high_contrast())
+
+def browser_exist(browser: Browser) -> bool:
+    return bool(_raw.webui_browser_exist(c_size_t(browser.value)))
+
 def wait() -> None:
     """Wait until all opened windows get closed."""
     _raw.webui_wait()
@@ -214,9 +302,8 @@ def exit() -> None:
     """Close all open windows and break out of webui_wait()."""
     _raw.webui_exit()
 
-def is_high_contrast() -> bool:
-    """Return True if the OS is using a high-contrast theme."""
-    return bool(_raw.webui_is_high_contrast())
+def set_default_root_folder(path: str) -> bool:
+    return bool(_raw.webui_set_default_root_folder(path.encode("utf-8")))
 
-
-
+def set_timeout(seconds: int) -> None:
+    _raw.webui_set_timeout(c_size_t(seconds))

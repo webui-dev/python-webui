@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import subprocess
 import os
 import platform
@@ -54,7 +56,7 @@ def _download_library():
 
 
 # Load WebUI Dynamic Library
-def _load_library() -> CDLL | None:
+def _load_library() -> CDLL:
     library: CDLL | None = None
     lib_path = _get_library_path()
     if not os.path.exists(lib_path):

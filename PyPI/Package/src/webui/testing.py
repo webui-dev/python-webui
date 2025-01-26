@@ -100,14 +100,19 @@ def close_the_application(e: webui.Event):
 
 def main():
 	# Create a window object
-	MyWindow = webui.Window()
+	my_window = webui.Window()
 
 	# Bind am HTML element ID with a python function
-	MyWindow.bind('CheckPassword', check_the_password)
-	MyWindow.bind('Exit', close_the_application)
+	my_window.bind('CheckPassword', check_the_password)
+	my_window.bind('Exit', close_the_application)
+
+	my_browser = my_window.get_best_browser()
+	print(my_browser)
+
+	my_window.set_kiosk(False)
 
 	# Show the window
-	MyWindow.show_browser(login_html, webui.Browser.Firefox)
+	my_window.show_browser(login_html, my_browser)
 
 	# Wait until all windows are closed
 	webui.wait()
