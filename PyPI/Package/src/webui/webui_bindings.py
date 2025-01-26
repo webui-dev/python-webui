@@ -756,7 +756,7 @@ webui_set_icon.argtypes = [
 webui_set_icon.restype = None
 
 
-# -- encode ------------------------------------- # TODO: python wrapper
+# -- encode -------------------------------------
 webui_encode = webui_lib.webui_encode
 """
 brief:
@@ -779,7 +779,7 @@ webui_encode.argtypes = [
 webui_encode.restype = c_char_p
 
 
-# -- decode ------------------------------------- # TODO: python wrapper
+# -- decode -------------------------------------
 webui_decode = webui_lib.webui_decode
 """
 brief:
@@ -802,7 +802,7 @@ webui_decode.argtypes = [
 webui_decode.restype = c_char_p
 
 
-# -- free --------------------------------------- # TODO: python wrapper
+# -- free ---------------------------------------
 webui_free = webui_lib.webui_free
 """
 brief:
@@ -822,7 +822,7 @@ webui_free.argtypes = [
 webui_free.restype = None
 
 
-# -- malloc ------------------------------------- # TODO: python wrapper
+# -- malloc -------------------------------------
 webui_malloc = webui_lib.webui_malloc
 """
 brief:
@@ -843,7 +843,7 @@ webui_malloc.argtypes = [
 webui_malloc.restype = c_void_p
 
 
-# -- send_raw ----------------------------------- # TODO: python wrapper
+# -- send_raw -----------------------------------
 webui_send_raw = webui_lib.webui_send_raw
 """
 brief:
@@ -866,9 +866,10 @@ webui_send_raw.argtypes = [
     c_void_p,  # const void* raw
     c_size_t   # size_t size
 ]
+webui_send_raw.restype = None
 
 
-# -- send_raw_client ---------------------------- # TODO: python wrapper
+# -- send_raw_client ----------------------------
 webui_send_raw_client = webui_lib.webui_send_raw_client
 """
 brief:
@@ -894,7 +895,7 @@ webui_send_raw_client.argtypes = [
 webui_send_raw_client.restype = None
 
 
-# -- set_hide ----------------------------------- # TODO: python wrapper
+# -- set_hide -----------------------------------
 webui_set_hide = webui_lib.webui_set_hide
 """
 brief:
@@ -917,7 +918,7 @@ webui_set_hide.restype = None
 
 
 
-# -- set_size ----------------------------------- # TODO: python wrapper
+# -- set_size -----------------------------------
 webui_set_size = webui_lib.webui_set_size
 """
 brief:
@@ -1667,7 +1668,7 @@ webui_get_float.argtypes = [
 webui_get_float.restype = c_double
 
 
-# -- get_string_at ------------------------------ # TODO: python wrapper
+# -- get_string_at ------------------------------
 webui_get_string_at = webui_lib.webui_get_string_at
 """
 brief:

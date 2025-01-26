@@ -5,6 +5,7 @@ from ctypes import *
 
 # Import all the raw bindings
 import webui_bindings as _raw
+from webui.webui_bindings import WebuiEventT
 
 # Define the C function type for the file handler
 filehandler_callback = CFUNCTYPE(
@@ -60,12 +61,29 @@ class Event:
             cookies=self.cookies.encode('utf-8')
         )
 
+    # -- show_client --------------------------------
     def show_client(self, content: str) -> bool:
         return bool(_raw.webui_show_client(self._c_event(), content.encode('utf-8')))
 
+    # -- close_client -------------------------------
     def close_client(self):
         _raw.webui_close_client(self._c_event())
 
+    # -- send_raw_client ----------------------------
+    def send_raw_client(self, function: str, raw: Optional[c_void_p], size: int) -> None:
+        if raw is None:
+            raise ValueError("Invalid Pointer: Cannot send a null pointer.")
+        _raw.webui_send_raw_client(
+            self._c_event(),
+            c_char_p(function.encode("utf-8")),
+            c_void_p(raw),
+            c_size_t(size)
+        )
+
+
+
+
+    # -- get_string_at ------------------------------
     def get_string_at(self, index: int) -> str:
         """
         Retrieve a string argument from the underlying C event data at a given index.
@@ -91,8 +109,10 @@ class Window:
         Otherwise, we call webui_new_window_id(window_id).
         """
         if window_id is None:
+            # -- new_window ---------------------------------
             self._window: int = _raw.webui_new_window()
         else:
+            # -- new_window_id ------------------------------
             self._window: int = _raw.webui_new_window_id(window_id)
 
         if not self._window:
@@ -119,10 +139,12 @@ class Window:
         return dispatcher
 
     @property
+    # -- get_window_id --------------------------
     def get_window_id(self) -> int:
         """Returns the window id."""
         return self._window
 
+    # -- bind ---------------------------------------
     def bind(self, element: str, func: Callable[[Event], None]) -> int:
         """
         Bind an HTML element and a JavaScript object with
@@ -133,6 +155,7 @@ class Window:
         self._cb_func_list[bind_id] = func
         return bind_id
 
+    # -- get_best_browser ---------------------------
     def get_best_browser(self) -> Browser:
         """
         Get the recommended web browser to use. If you
@@ -140,6 +163,7 @@ class Window:
         """
         return Browser(int(_raw.webui_get_best_browser(self._window)))
 
+    # -- show ---------------------------------------
     def show(self, content: str) -> bool:
         """
         Show or refresh the window with the specified content
@@ -148,42 +172,51 @@ class Window:
         # We pass UTF-8 strings to the C function
         return bool(_raw.webui_show(self._window, content.encode("utf-8")))
 
+    # -- show_browser -------------------------------
     def show_browser(self, content: str, browser: Browser) -> bool:
         """
         Show or refresh the window using a specific browser (by enum).
         """
         return bool(_raw.webui_show_browser(self._window, content.encode("utf-8"), c_size_t(browser.value)))
 
+    # -- start_server -------------------------------
     def start_server(self, content: str) -> str:
         return _raw.webui_start_server(self._window, content.encode("utf-8")).decode("utf-8")
 
+    # -- show_wv ------------------------------------
     def show_wv(self, content: str) -> bool:
         return bool(_raw.webui_show_wv(self._window, content.encode("utf-8")))
 
+    # -- set_kiosk ----------------------------------
     def set_kiosk(self, status: bool) -> None:
         """
         Set or unset kiosk (fullscreen) mode.
         """
         _raw.webui_set_kiosk(self._window, c_bool(status))
 
+    # -- set_high_contrast --------------------------
     def set_high_contrast(self, status: bool) -> None:
         _raw.webui_set_high_contrast(self._window, c_bool(status))
 
+    # -- close --------------------------------------
     def close(self) -> None:
         """
         Close this window (all clients).
         """
         _raw.webui_close(self._window)
 
+    # -- destroy ------------------------------------
     def destroy(self) -> None:
         """
         Close this window and free all memory resources used by it.
         """
         _raw.webui_destroy(self._window)
 
+    # -- set_root_folder ----------------------------
     def set_root_folder(self, path: str) -> bool:
         return bool(_raw.webui_set_root_folder(self._window, path.encode("utf-8")))
 
+    # -- set_file_handler----------------------------
     def set_file_handler(self, handler: Callable[[str], bytes]) -> None:
         """
         Set a custom file handler to serve files for this window.
@@ -224,14 +257,44 @@ class Window:
 
         _raw.webui_set_file_handler(self._window, self._file_handler_cfunc)
 
+    # -- set_file_handler_window --------------------
     # TODO: set_file_handler_window
 
+    # -- is_shown -----------------------------------
     def is_shown(self) -> bool:
         """Return True if the window is currently shown."""
         return bool(_raw.webui_is_shown(self._window))
 
+    # -- set_icon -----------------------------------
     def set_icon(self, icon: str, icon_type: str) -> None:
         _raw.webui_set_icon(self._window, icon.encode("utf-8"), icon_type.encode("utf-8"))
+
+    # -- send_raw -----------------------------------
+    def send_raw(self, function: str, raw: Optional[c_void_p], size: int) -> None:
+        if raw is None:
+            raise ValueError("Invalid pointer: Cannot send a null pointer.")
+        _raw.webui_send_raw(
+            c_size_t(self._window),
+            c_char_p(function.encode("utf-8")),
+            c_void_p(raw),
+            c_size_t(size)
+        )
+
+    # -- set_hide -----------------------------------
+    def set_hide(self, status: bool) -> bool:
+        return bool(_raw.webui_set_hide(c_size_t(self._window), c_bool(status)))
+
+    # -- set_size -----------------------------------
+    def set_size(self, width: int, hight: int) -> None:
+        _raw.webui_set_size(c_size_t(self._window), c_uint(width), c_uint(hight))
+
+    # -- set_position -------------------------------
+    def set_postion(self, x: int, y: int) -> None:
+        _raw.webui_set_position(c_size_t(self._window), c_uint(x), c_uint(y))
+
+
+
+
 
     def run(self, script: str) -> None:
         """
@@ -282,28 +345,59 @@ class Window:
         return res
 
 
+# == Global functions below ===================================================
 
-# -- Global functions below ---------------------
+
+# -- get_new_window_id --------------------------
 def get_new_window_id() -> int:
     return int(_raw.webui_get_new_window_id)
 
+# -- is_high_contrast ---------------------------
 def is_high_contrast() -> bool:
     """Return True if the OS is using a high-contrast theme."""
     return bool(_raw.webui_is_high_contrast())
 
+# -- browser_exist ------------------------------
 def browser_exist(browser: Browser) -> bool:
     return bool(_raw.webui_browser_exist(c_size_t(browser.value)))
 
+# -- wait ---------------------------------------
 def wait() -> None:
     """Wait until all opened windows get closed."""
     _raw.webui_wait()
 
+# -- exit ---------------------------------------
 def exit() -> None:
     """Close all open windows and break out of webui_wait()."""
     _raw.webui_exit()
 
+# -- set_default_root_folder --------------------
 def set_default_root_folder(path: str) -> bool:
     return bool(_raw.webui_set_default_root_folder(path.encode("utf-8")))
 
+# -- set_timeout --------------------------------
 def set_timeout(seconds: int) -> None:
     _raw.webui_set_timeout(c_size_t(seconds))
+
+# -- encode -------------------------------------
+def ui_encode(string: str) -> str:
+    return _raw.webui_encode(string.encode("utf-8")).decode("utf-8")
+
+# -- decode -------------------------------------
+def ui_decode(string: str) -> str:
+    return _raw.webui_decode(string.encode("utf-8")).decode("utf-8")
+
+# -- free ---------------------------------------
+def free(ptr: Optional[c_void_p]) -> None:
+    if ptr is None:
+        raise ValueError("Invalid pointer: Cannot free a null pointer.")
+    _raw.webui_free(ptr)
+
+# -- malloc -------------------------------------
+def malloc(size: int) -> Optional[int]:
+    if size <= 0:
+        raise ValueError("Size must be a positive integer.")
+    ptr = _raw.webui_malloc(c_size_t(size))
+    if not ptr:
+        return None  # Allocation failed
+    return int(ptr)
