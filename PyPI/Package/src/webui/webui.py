@@ -197,10 +197,10 @@ class Window:
         """
         if window_id is None:
             # -- new_window ---------------------------------
-            self._window: int = _raw.webui_new_window()
+            self._window = int(_raw.webui_new_window())
         else:
             # -- new_window_id ------------------------------
-            self._window: int = _raw.webui_new_window_id(window_id)
+            self._window = int(_raw.webui_new_window_id(window_id))
 
         if not self._window:
             raise RuntimeError("Failed to create a new WebUI window.")
@@ -392,7 +392,7 @@ class Window:
         """
         Get the current URL as a string.
         """
-        return str(_raw.webui_get_url(self._window).decode("utf-8"))
+        return _raw.webui_get_url(c_size_t(self._window)).decode("utf-8")
 
     # -- set_public ---------------------------------
     def set_public(self, status: bool) -> None:

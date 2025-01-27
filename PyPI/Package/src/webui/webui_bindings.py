@@ -1062,7 +1062,7 @@ webui_get_url.restype = c_char_p
 
 
 # -- open_url -----------------------------------
-webui_open_url = webui_lib.webui_get_url
+webui_open_url = webui_lib.webui_open_url
 """
 brief:
  Open an URL in the native default web browser.
