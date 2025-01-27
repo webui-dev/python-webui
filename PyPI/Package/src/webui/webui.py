@@ -5,13 +5,19 @@ from ctypes import *
 
 # Import all the raw bindings
 import webui_bindings as _raw
-from webui.webui_bindings import WebuiEventT
 
 # Define the C function type for the file handler
 filehandler_callback = CFUNCTYPE(
     c_void_p,               # Return type: pointer to the HTTP response bytes
     c_char_p,               # filename: const char*
     POINTER(c_int)          # length: int*
+)
+
+filehandler_window_callback = CFUNCTYPE(
+    c_size_t,
+    c_void_p,
+    c_char_p,
+    POINTER(c_int)
 )
 
 # == Enums ====================================================================
@@ -63,25 +69,71 @@ class Event:
 
     # -- show_client --------------------------------
     def show_client(self, content: str) -> bool:
-        return bool(_raw.webui_show_client(self._c_event(), content.encode('utf-8')))
+        return bool(_raw.webui_show_client(byref(self._c_event()), content.encode('utf-8')))
 
     # -- close_client -------------------------------
     def close_client(self):
-        _raw.webui_close_client(self._c_event())
+        _raw.webui_close_client(byref(self._c_event()))
 
     # -- send_raw_client ----------------------------
     def send_raw_client(self, function: str, raw: Optional[c_void_p], size: int) -> None:
         if raw is None:
             raise ValueError("Invalid Pointer: Cannot send a null pointer.")
         _raw.webui_send_raw_client(
-            self._c_event(),
+            byref(self._c_event()),
             c_char_p(function.encode("utf-8")),
             c_void_p(raw),
             c_size_t(size)
         )
 
+    # -- navigate_client ----------------------------
+    def navigate_client(self, url: str) -> None:
+        _raw.webui_navigate_client(byref(self._c_event()), c_char_p(url.encode("utf-8")))
 
+    # -- run_client ---------------------------------
+    def run_client(self, script: str) -> None:
+        _raw.webui_run_client(byref(self._c_event()), c_char_p(script.encode("utf-8")))
 
+    # -- script_client ------------------------------
+    def script_client(self, script: str, timeout: int = 0, buffer_size: int = 4096) -> JavaScript:
+        # Create a mutable buffer in which the C function can store the result
+        buffer = create_string_buffer(buffer_size)
+
+        # Call the raw C function
+        success = _raw.webui_script_client(
+            byref(self._c_event()),
+            script.encode('utf-8'),
+            timeout,
+            buffer,
+            buffer_size
+        )
+
+        # Initializing Result
+        res = JavaScript()
+
+        res.data = buffer.value.decode('utf-8', errors='ignore')
+        res.error = not success
+        return res
+
+    # -- get_count ----------------------------------
+    def get_count(self) -> int:
+        return int(_raw.webui_get_count(byref(self._c_event())))
+
+    # -- get_int_at ---------------------------------
+    def get_int_at(self, index: int) -> int:
+        return int(_raw.webui_get_int_at(byref(self._c_event()), c_size_t(index)))
+
+    # -- get_int ------------------------------------
+    def get_int(self) -> int:
+        return int(_raw.webui_get_int(byref(self._c_event())))
+
+    # -- get_float_at -------------------------------
+    def get_float_at(self, index: int) -> float:
+        return float(_raw.webui_get_float_at(byref(self._c_event()), c_size_t(index)))
+
+    # -- get_float ----------------------------------
+    def get_float(self) -> float:
+        return float(_raw.webui_get_float(byref(self._c_event())))
 
     # -- get_string_at ------------------------------
     def get_string_at(self, index: int) -> str:
@@ -94,8 +146,43 @@ class Event:
         Returns:
             str: The UTF-8 decoded string corresponding to the specified index.
         """
-        return _raw.webui_get_string_at(byref(self._c_event()), index).decode('utf-8')
+        return str(_raw.webui_get_string_at(byref(self._c_event()), c_size_t(index)).decode('utf-8'))
 
+    # -- get_string ---------------------------------
+    def get_string(self) -> str:
+        return str(_raw.webui_get_string(byref(self._c_event())).decode('utf-8'))
+
+    # -- get_bool_at --------------------------------
+    def get_bool_at(self, index: int) -> bool:
+        return bool(_raw.webui_get_bool_at(byref(self._c_event()), c_size_t(index)))
+
+    # -- get_bool -----------------------------------
+    def get_bool(self) -> bool:
+        return bool(_raw.webui_get_bool(byref(self._c_event())))
+
+    # -- get_size_at --------------------------------
+    def get_size_at(self, index: int) -> int:
+        return int(_raw.webui_get_size_at(byref(self._c_event()), c_size_t(index)))
+
+    # -- get_size -----------------------------------
+    def get_size(self) -> int:
+        return int(_raw.webui_get_size(byref(self._c_event())))
+
+    # -- return_int ---------------------------------
+    def return_int(self, n: int) -> None:
+        _raw.webui_return_int(byref(self._c_event()), c_size_t(n))
+
+    # -- return_float -------------------------------
+    def return_float(self, f: float) -> None:
+        _raw.webui_return_float(byref(self._c_event()), c_double(f))
+
+    # -- return_string ------------------------------
+    def return_string(self, s: str) -> None:
+        _raw.webui_return_string(byref(self._c_event()), c_char_p(s.encode("utf-8")))
+
+    # -- return_bool --------------------------------
+    def return_bool(self, b: bool) -> None:
+        _raw.webui_return_bool(byref(self._c_event()), c_bool(b))
 
 
 # -- Window Object ------------------------------
@@ -285,35 +372,68 @@ class Window:
         return bool(_raw.webui_set_hide(c_size_t(self._window), c_bool(status)))
 
     # -- set_size -----------------------------------
-    def set_size(self, width: int, hight: int) -> None:
-        _raw.webui_set_size(c_size_t(self._window), c_uint(width), c_uint(hight))
+    def set_size(self, width: int, height: int) -> None:
+        _raw.webui_set_size(c_size_t(self._window), c_uint(width), c_uint(height))
 
     # -- set_position -------------------------------
-    def set_postion(self, x: int, y: int) -> None:
+    def set_position(self, x: int, y: int) -> None:
         _raw.webui_set_position(c_size_t(self._window), c_uint(x), c_uint(y))
 
+    # -- set_profile --------------------------------
+    def set_profile(self, name: str, path: str) -> None:
+        _raw.webui_set_profile(c_size_t(self._window), c_char_p(name.encode("utf-8")), c_char_p(path.encode("utf-8")))
 
+    # -- set_proxy ----------------------------------
+    def set_proxy(self, proxy_server: str) -> None:
+        _raw.webui_set_proxy(c_size_t(self._window), c_char_p(proxy_server.encode("utf-8")))
 
+    # -- get_url ------------------------------------
+    def get_url(self) -> str:
+        """
+        Get the current URL as a string.
+        """
+        return str(_raw.webui_get_url(self._window).decode("utf-8"))
 
+    # -- set_public ---------------------------------
+    def set_public(self, status: bool) -> None:
+        _raw.webui_set_public(c_size_t(self._window), c_bool(status))
 
+    # -- navigate -----------------------------------
+    def navigate(self, url: str) -> None:
+        _raw.webui_navigate(c_size_t(self._window), c_char_p(url.encode("utf-8")))
+
+    # -- delete_profile -----------------------------
+    def delete_profile(self) -> None:
+        _raw.webui_delete_profile(c_size_t(self._window))
+
+    # -- get_parent_process_id ----------------------
+    def get_parent_process_id(self) -> int:
+        return int(_raw.webui_get_parent_process_id(c_size_t(self._window)))
+
+    # -- get_child_process_id -----------------------
+    def get_child_process_id(self) -> int:
+        return int(_raw.webui_get_child_process_id(c_size_t(self._window)))
+
+    # -- get_port -----------------------------------
+    def get_port(self) -> int:
+        return int(_raw.webui_get_port(c_size_t(self._window)))
+
+    # -- set_port -----------------------------------
+    def set_port(self, port: int) -> bool:
+        return bool(_raw.webui_set_port(c_size_t(self._window), c_size_t(port)))
+
+    # -- set_event_blocking -------------------------
+    def set_event_blocking(self, status: bool) -> None:
+        _raw.webui_set_event_blocking(c_size_t(self._window), c_bool(status))
+
+    # -- run ----------------------------------------
     def run(self, script: str) -> None:
         """
         Run JavaScript in the window without waiting for a return.
         """
         _raw.webui_run(self._window, script.encode("utf-8"))
 
-    def get_url(self) -> str:
-        """
-        Get the current URL as a string.
-        """
-        ptr = _raw.webui_get_url(self._window)
-        if not ptr:
-            return ""
-        return ptr.decode("utf-8", errors="ignore")
-
-    def set_size(self, width: int, height: int) -> None:
-        _raw.webui_set_size(self._window, width, height)
-
+    # -- script -------------------------------------
     def script(self, script: str, timeout: int = 0, buffer_size: int = 4096) -> JavaScript:
         """
         Run JavaScript in single-client mode and return the result as a string.
@@ -343,6 +463,12 @@ class Window:
         res.data = buffer.value.decode('utf-8', errors='ignore')
         res.error = not success
         return res
+
+    # -- set_runtime --------------------------------
+    def set_runtime(self, runtime: Runtime) -> None:
+        _raw.webui_set_runtime(c_size_t(self._window), c_size_t(runtime.value))
+
+
 
 
 # == Global functions below ===================================================
@@ -401,3 +527,35 @@ def malloc(size: int) -> Optional[int]:
     if not ptr:
         return None  # Allocation failed
     return int(ptr)
+
+# -- open_url -----------------------------------
+def open_url(url: str) -> None:
+    _raw.webui_open_url(c_char_p(url.encode("utf-8")))
+
+# -- clean --------------------------------------
+def clean() -> None:
+    _raw.webui_clean()
+
+# -- delete_all_profiles ------------------------
+def delete_all_profiles() -> None:
+    _raw.webui_delete_all_profiles()
+
+# -- get_free_port ------------------------------
+def get_free_port() -> int:
+    return int(_raw.webui_get_free_port())
+
+# -- set_config ---------------------------------
+def set_config(option: Config, status: bool) -> None:
+    _raw.webui_set_config(c_int(option.value), c_bool(status))
+
+# -- get_mime_type ------------------------------
+def get_mime_type(file: str) -> str:
+    return str(_raw.webui_get_mime_type(c_char_p(file.encode("utf-8"))).decode("utf-8"))
+
+
+# == SSL/TLS ==================================================================
+
+
+# -- set_tls_certificate ------------------------
+def set_tls_certificate(certificate_pem: str, private_key_pem: str) -> bool:
+    return bool(_raw.webui_set_tls_certificate(c_char_p(certificate_pem.encode("utf-8")), c_char_p(private_key_pem.encode("utf-8"))))

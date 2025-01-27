@@ -966,7 +966,7 @@ C Signature:
 # webui_set_minimum_size.restype = None
 
 
-# -- set_position ------------------------------- # TODO: python wrapper
+# -- set_position -------------------------------
 webui_set_position = webui_lib.webui_set_position
 """
 brief:
@@ -990,7 +990,7 @@ webui_set_position.argtypes = [
 webui_set_position.restype = None
 
 
-# -- set_profile -------------------------------- # TODO: python wrapper
+# -- set_profile --------------------------------
 webui_set_profile = webui_lib.webui_set_profile
 """
 brief:
@@ -1016,7 +1016,7 @@ webui_set_profile.argtypes = [
 webui_set_profile.restype = None
 
 
-# -- set_proxy ---------------------------------- # TODO: python wrapper
+# -- set_proxy ----------------------------------
 webui_set_proxy = webui_lib.webui_set_proxy
 """
 brief:
@@ -1038,7 +1038,7 @@ webui_set_proxy.argtypes = [
 webui_set_proxy.restype = None
 
 
-# -- get_url ------------------------------------ # TODO: python wrapper
+# -- get_url ------------------------------------
 webui_get_url = webui_lib.webui_get_url
 """
 brief:
@@ -1061,7 +1061,7 @@ webui_get_url.argtypes = [
 webui_get_url.restype = c_char_p
 
 
-# -- open_url ----------------------------------- # TODO: python wrapper
+# -- open_url -----------------------------------
 webui_open_url = webui_lib.webui_get_url
 """
 brief:
@@ -1081,7 +1081,7 @@ webui_open_url.argtypes = [
 webui_open_url.restype = None
 
 
-# -- set_public --------------------------------- # TODO: python wrapper
+# -- set_public ---------------------------------
 webui_set_public = webui_lib.webui_set_public
 """
 brief:
@@ -1103,7 +1103,7 @@ webui_set_public.argtypes = [
 webui_set_public.restype = None
 
 
-# -- navigate ----------------------------------- # TODO: python wrapper
+# -- navigate -----------------------------------
 webui_navigate = webui_lib.webui_navigate
 """
 brief:
@@ -1125,7 +1125,7 @@ webui_navigate.argtypes = [
 webui_navigate.restype = None
 
 
-# -- navigate_client ---------------------------- # TODO: python wrapper
+# -- navigate_client ----------------------------
 webui_navigate_client = webui_lib.webui_navigate_client
 """
 brief:
@@ -1147,7 +1147,7 @@ webui_navigate_client.argtypes = [
 webui_navigate_client.restype = None
 
 
-# -- clean -------------------------------------- # TODO: python wrapper
+# -- clean --------------------------------------
 webui_clean = webui_lib.webui_clean
 """
 brief:
@@ -1164,7 +1164,7 @@ webui_clean.argtypes = []
 webui_clean.restype = None
 
 
-# -- delete_all_profiles ------------------------ # TODO: python wrapper
+# -- delete_all_profiles ------------------------
 webui_delete_all_profiles = webui_lib.webui_delete_all_profiles
 """
 brief:
@@ -1182,7 +1182,7 @@ webui_delete_all_profiles.argtypes = []
 webui_delete_all_profiles.restype = None
 
 
-# -- delete_profile ----------------------------- # TODO: python wrapper
+# -- delete_profile -----------------------------
 webui_delete_profile = webui_lib.webui_delete_profile
 """
 brief:
@@ -1208,7 +1208,7 @@ webui_delete_profile.argtypes = [
 webui_delete_profile.restype = None
 
 
-# -- get_parent_process_id ---------------------- # TODO: python wrapper
+# -- get_parent_process_id ----------------------
 webui_get_parent_process_id = webui_lib.webui_get_parent_process_id
 """
 brief:
@@ -1232,7 +1232,7 @@ webui_get_parent_process_id.argtypes = [
 webui_get_parent_process_id.restype = c_size_t
 
 
-# -- get_child_process_id ----------------------- # TODO: python wrapper
+# -- get_child_process_id -----------------------
 webui_get_child_process_id = webui_lib.webui_get_child_process_id
 """
 brief:
@@ -1255,7 +1255,7 @@ webui_get_child_process_id.argtypes = [
 webui_get_child_process_id.restype = c_size_t
 
 
-# -- get_port ----------------------------------- # TODO: python wrapper
+# -- get_port -----------------------------------
 webui_get_port = webui_lib.webui_get_port
 """
 brief:
@@ -1279,7 +1279,7 @@ webui_get_port.argtypes = [
 webui_get_port.restype = c_size_t
 
 
-# -- set_port ----------------------------------- # TODO: python wrapper
+# -- set_port -----------------------------------
 webui_set_port = webui_lib.webui_set_port
 """
 brief:
@@ -1306,7 +1306,7 @@ webui_set_port.argtypes = [
 webui_set_port.restype = c_bool
 
 
-# -- get_free_port ------------------------------ # TODO: python wrapper
+# -- get_free_port ------------------------------
 webui_get_free_port = webui_lib.webui_get_free_port
 """
 brief:
@@ -1325,7 +1325,7 @@ webui_get_port.argtypes = []
 webui_get_port.restype = c_size_t
 
 
-# -- set_config --------------------------------- # TODO: python wrapper
+# -- set_config --------------------------------- # TODO: testing required
 webui_set_config = webui_lib.webui_set_config
 """
 brief:
@@ -1341,13 +1341,13 @@ C Signature:
  WEBUI_EXPORT void webui_set_config(webui_config option, bool status);
 """
 webui_set_config.argtypes = [
-    c_int,
-    c_bool,
+    c_int,   # webui_config option
+    c_bool,  # bool status
 ]
 webui_set_config.restype = None
 
 
-# -- set_event_blocking ------------------------- # TODO: python wrapper
+# -- set_event_blocking -------------------------
 webui_set_event_blocking = webui_lib.webui_set_event_blocking
 """
 brief:
@@ -1372,7 +1372,7 @@ webui_set_event_blocking.argtypes = [
 webui_set_event_blocking.restype = None
 
 
-# -- get_mime_type ------------------------------ # TODO: python wrapper
+# -- get_mime_type ------------------------------
 webui_get_mime_type = webui_lib.webui_get_mime_type
 """
 brief:
@@ -1396,7 +1396,7 @@ webui_get_mime_type.restype = c_char_p
 # == SSL/TLS ==================================================================
 
 
-# -- set_tls_certificate ------------------------ # TODO: python wrapper
+# -- set_tls_certificate ------------------------
 webui_set_tls_certificate = webui_lib.webui_set_tls_certificate
 """
 #  * @brief Set the SSL/TLS certificate and the private key content, both in PEM
@@ -1423,7 +1423,7 @@ webui_set_tls_certificate.restype = c_bool
 # == JavaScript ===============================================================
 
 
-# -- run ---------------------------------------- # TODO: python wrapper
+# -- run ----------------------------------------
 webui_run = webui_lib.webui_run
 """
 brief:
@@ -1445,7 +1445,7 @@ webui_run.argtypes = [
 webui_run.restype = None
 
 
-# -- run_client --------------------------------- # TODO: python wrapper
+# -- run_client ---------------------------------
 webui_run_client = webui_lib.webui_run_client
 """
 brief:
@@ -1467,7 +1467,7 @@ webui_run_client.argtypes = [
 webui_run_client.restype = None
 
 
-# -- script ------------------------------------- # TODO: python wrapper
+# -- script -------------------------------------
 webui_script = webui_lib.webui_script
 """
 brief:
@@ -1499,7 +1499,7 @@ webui_script.argtypes = [
 webui_script.restype = c_bool
 
 
-# -- script_client ------------------------------ # TODO: python wrapper
+# -- script_client ------------------------------
 webui_script_client = webui_lib.webui_script_client
 """
 brief:
@@ -1531,7 +1531,7 @@ webui_script_client.argtypes = [
 webui_script_client.restype = c_bool
 
 
-# -- set_runtime -------------------------------- # TODO: python wrapper
+# -- set_runtime --------------------------------
 webui_set_runtime = webui_lib.webui_set_runtime
 """
 brief:
@@ -1552,7 +1552,7 @@ webui_set_runtime.argtypes = [
 webui_set_runtime.restype = None
 
 
-# -- get_count ---------------------------------- # TODO: python wrapper
+# -- get_count ----------------------------------
 webui_get_count = webui_lib.webui_get_count
 """
 brief:
@@ -1575,7 +1575,7 @@ webui_get_count.argtypes = [
 webui_get_count.restype = c_size_t
 
 
-# -- get_int_at --------------------------------- # TODO: python wrapper
+# -- get_int_at ---------------------------------
 webui_get_int_at = webui_lib.webui_get_int_at
 """
 brief:
@@ -1600,7 +1600,7 @@ webui_get_int_at.argtypes = [
 webui_get_int_at.restype = c_longlong
 
 
-# -- get_int ------------------------------------ # TODO: python wrapper
+# -- get_int ------------------------------------
 webui_get_int = webui_lib.webui_get_int
 """
 brief:
@@ -1623,7 +1623,7 @@ webui_get_int.argtypes = [
 webui_get_int.restype = c_longlong
 
 
-# -- get_float_at ------------------------------- # TODO: python wrapper
+# -- get_float_at -------------------------------
 webui_get_float_at = webui_lib.webui_get_float_at
 """
 brief:
@@ -1648,7 +1648,7 @@ webui_get_float_at.argtypes = [
 webui_get_float_at.restype = c_double
 
 
-# -- get_float ---------------------------------- # TODO: python wrapper
+# -- get_float ----------------------------------
 webui_get_float = webui_lib.webui_get_float
 """
 brief Get the first argument as float.
@@ -1693,7 +1693,7 @@ webui_get_string_at.argtypes = [
 webui_get_string_at.restype = c_char_p
 
 
-# -- get_string --------------------------------- # TODO: python wrapper
+# -- get_string ---------------------------------
 webui_get_string = webui_lib.webui_get_string
 """
 brief:
@@ -1716,7 +1716,7 @@ webui_get_string.argtypes = [
 webui_get_string.restype = c_char_p
 
 
-# -- get_bool_at -------------------------------- # TODO: python wrapper
+# -- get_bool_at --------------------------------
 webui_get_bool_at = webui_lib.webui_get_bool_at
 """
 brief:
@@ -1741,7 +1741,7 @@ webui_get_bool_at.argtypes = [
 webui_get_bool_at.restype = c_bool
 
 
-# -- get_bool ----------------------------------- # TODO: python wrapper
+# -- get_bool -----------------------------------
 webui_get_bool = webui_lib.webui_get_bool
 """
 brief:
@@ -1764,7 +1764,7 @@ webui_get_bool.argtypes = [
 webui_get_bool.restype = c_bool
 
 
-# -- get_size_at -------------------------------- # TODO: python wrapper
+# -- get_size_at --------------------------------
 webui_get_size_at = webui_lib.webui_get_size_at
 """
 brief:
@@ -1789,7 +1789,7 @@ webui_get_size_at.argtypes = [
 webui_get_size_at.restype = c_size_t
 
 
-# -- get_size ----------------------------------- # TODO: python wrapper
+# -- get_size -----------------------------------
 webui_get_size = webui_lib.webui_get_size
 """
 brief:
@@ -1812,7 +1812,7 @@ webui_get_size.argtypes = [
 webui_get_size.restype = c_size_t
 
 
-# -- return_int --------------------------------- # TODO: python wrapper
+# -- return_int ---------------------------------
 webui_return_int = webui_lib.webui_return_int
 """
 brief:
@@ -1834,7 +1834,7 @@ webui_return_int.argtypes = [
 webui_return_int.restype = None
 
 
-# -- return_float ------------------------------- # TODO: python wrapper
+# -- return_float -------------------------------
 webui_return_float = webui_lib.webui_return_float
 """
 brief:
@@ -1856,7 +1856,7 @@ webui_return_float.argtypes = [
 webui_return_float.restype = None
 
 
-# -- return_string ------------------------------ # TODO: python wrapper
+# -- return_string ------------------------------
 webui_return_string = webui_lib.webui_return_string
 """
 brief:
@@ -1878,7 +1878,7 @@ webui_return_string.argtypes = [
 webui_return_string.restype = None
 
 
-# -- return_bool -------------------------------- # TODO: python wrapper
+# -- return_bool --------------------------------
 webui_return_bool = webui_lib.webui_return_bool
 """
 brief:
