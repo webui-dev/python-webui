@@ -26,49 +26,68 @@ filehandler_window_callback = CFUNCTYPE(
 
 Browser     = _raw.WebuiBrowser
 """
-NoBrowser      = 0  - No web browser
-AnyBrowser     = 1  - Default recommended web browser
-Chrome         = 2  - Google Chrome
-Firefox        = 3  - Mozilla Firefox
-Edge           = 4  - Microsoft Edge
-Safari         = 5  - Apple Safari
-Chromium       = 6  - The Chromium Project
-Opera          = 7  - Opera Browser
-Brave          = 8  - The Brave Browser
-Vivaldi        = 9  - The Vivaldi Browser
-Epic           = 10 - The Epic Browser
-Yandex         = 11 - The Yandex Browser
-ChromiumBased  = 12 - Any Chromium based browser
-Webview        = 13 - WebView (Non-web-browser)
+NoBrowser: No web browser
+
+AnyBrowser: Default recommended web browser
+
+Chrome: Google Chrome
+
+Firefox: Mozilla Firefox
+
+Edge: Microsoft Edge
+
+Safari: Apple Safari
+
+Chromium: The Chromium Project
+
+Opera: Opera Browser
+
+Brave: The Brave Browser
+
+Vivaldi: The Vivaldi Browser
+
+Epic: The Epic Browser
+
+Yandex: The Yandex Browser
+
+ChromiumBased: Any Chromium based browser
+
+Webview: WebView (Non-web-browser)
 """
 
 Runtime     = _raw.WebuiRuntime
 """
-NoRuntime = 0 - Prevent WebUI from using any runtime for .js and .ts files
-Deno      = 1 - Use Deno runtime for .js and .ts files
-NodeJS    = 2 - Use Nodejs runtime for .js files
-Bun       = 3 - Use Bun runtime for .js and .ts files
+NoRuntime: Prevent WebUI from using any runtime for .js and .ts files
+
+Deno: Use Deno runtime for .js and .ts files
+
+NodeJS: Use Nodejs runtime for .js files
+
+Bun: Use Bun runtime for .js and .ts files
 """
 
 EventType   = _raw.WebuiEvent
 """
-DISCONNECTED = 0 - Window disconnection event
-CONNECTED    = 1 - Window connection event
-MOUSE_CLICK  = 2 - Mouse click event
-NAVIGATION   = 3 - Window navigation event
-CALLBACK     = 4 - Function call event
+DISCONNECTED: Window disconnection event
+
+CONNECTED: Window connection event
+
+MOUSE_CLICK: Mouse click event
+
+NAVIGATION: Window navigation event
+
+CALLBACK: Function call event
 """
 
 Config      = _raw.WebuiConfig
 """
-show_wait_connection = 0:
+show_wait_connection:
     Control if 'webui_show()', 'webui_show_browser()' and
     'webui_show_wv()' should wait for the window to connect
     before returns or not.
     Default: True
     
-
-ui_event_blocking = 1:
+ui_event_blocking:
     Control if WebUI should block and process the UI events
     one a time in a single thread `True`, or process every
     event in a new non-blocking thread `False`. This updates
@@ -76,21 +95,18 @@ ui_event_blocking = 1:
     a specific single window update.
     Default: False
 
-
-folder_monitor = 2:
+folder_monitor:
     Automatically refresh the window UI when any file in the
     root folder gets changed.
     Default: False
 
-
-multi_client = 3:   
+multi_client:
     Allow multiple clients to connect to the same window,
     This is helpful for web apps (non-desktop software),
     Please see the documentation for more details.
     Default: False
     
-
-use_cookies = 4:
+use_cookies:
     Allow or prevent WebUI from adding `webui_auth` cookies.
     WebUI uses these cookies to identify clients and block
     unauthorized access to the window content using a URL.
@@ -98,8 +114,7 @@ use_cookies = 4:
     client to access the window content.
     Default: True
     
-
-asynchronous_response = 5:
+asynchronous_response:
     If the backend uses asynchronous operations, set this
     option to `True`. This will make webui wait until the
     backend sets a response using `webui_return_x()`.
@@ -123,7 +138,7 @@ class Event:
     """
     WebUI Event Object
 
-    Caries most of the client-side functions but also caries has reference to
+    Caries most of the client-side functions but also has reference to
     the Window object to be able to call Window related functions if needed.
     """
     __slots__ = ("window", "event_type", "element", "event_number", "bind_id",
@@ -141,7 +156,8 @@ class Event:
 
     def _c_event(self) -> _raw.WebuiEventT:
         """
-        Rebuild of the underlying C struct for interacting with the C API
+        Rebuild of the underlying C struct for interacting with the C API.
+        For internal use.
         """
         return _raw.WebuiEventT(
             window=c_size_t(self.window.get_window_id),
@@ -156,44 +172,57 @@ class Event:
 
     # -- show_client --------------------------------
     def show_client(self, content: str) -> bool:
-        """
-        Display content in the client interface.
+        """Show a window using embedded HTML, a file, or a URL.
+
+        If the window is already open, it will be refreshed. This function handles a single client.
 
         Args:
-            content (str): The content to be displayed in the client, encoded in UTF-8.
+            content (str): The HTML, URL, or path to a local file to display in the client.
 
         Returns:
-            bool: True if the content was successfully displayed, False otherwise.
+            bool: True if the window was successfully displayed, False otherwise.
+
+        Examples:
+            e.show_client("<html>...</html>")
+
+            e.show_client("index.html")
+
+            e.show_client("http://example.com")
         """
         return bool(_raw.webui_show_client(byref(self._c_event()), content.encode('utf-8')))
 
     # -- close_client -------------------------------
     def close_client(self) -> None:
-        """
-        Close the client interface.
+        """Close a specific client.
 
-        This method closes the currently active client interface associated with the event.
+        Args:
+            self: This function uses the event struct internally to identify the client.
 
         Returns:
             None
+
+        Example:
+            e.close_client()
         """
         _raw.webui_close_client(byref(self._c_event()))
 
     # -- send_raw_client ----------------------------
     def send_raw_client(self, function: str, raw: Optional[int], size: int) -> None:
-        """
-        Send raw data to the client for processing.
+        """Safely send raw data to the UI for a single client.
+
+        This function sends raw data to a JavaScript function in the UI. The JavaScript function must
+        be defined to accept the raw data, such as: `function myFunc(myData) {}`.
 
         Args:
-            function (str): The name of the function to invoke on the client, encoded in UTF-8.
-            raw (Optional[int]): A pointer to the raw data. Must not be `None`.
-            size (int): The size of the raw data in bytes.
+            function (str): The name of the JavaScript function to receive the raw data, encoded in UTF-8.
+            raw (Optional[int]): The pointer to the raw data buffer. Must not be `None`.
+            size (int): The size of the raw data buffer in bytes.
 
         Raises:
             ValueError: If `raw` is `None`.
 
-        Returns:
-            None
+        Example:
+            e.send_raw_client("myJavaScriptFunc", my_buffer, 64)
         """
         if raw is None:
             raise ValueError("Invalid Pointer: Cannot send a null pointer.")
@@ -206,43 +235,60 @@ class Event:
 
     # -- navigate_client ----------------------------
     def navigate_client(self, url: str) -> None:
-        """
-        Navigate the client to a specified URL.
+        """Navigate the client to a specific URL.
+
+        This function directs the client to load the specified HTTP URL. It supports a single client.
 
         Args:
-            url (str): The URL to navigate the client to, encoded in UTF-8.
+            url (str): The full HTTP URL to navigate to, encoded in UTF-8.
 
         Returns:
             None
+
+        Example:
+            e.navigate_client("http://domain.com")
         """
         _raw.webui_navigate_client(byref(self._c_event()), c_char_p(url.encode("utf-8")))
 
     # -- run_client ---------------------------------
     def run_client(self, script: str) -> None:
-        """
-        Execute a script in the client.
+        """Run a JavaScript script on the client without waiting for a response.
+
+        This function executes the specified JavaScript code in the client's environment. It does not wait for a response
+        or return any result. It supports a single client.
 
         Args:
-            script (str): The script to be executed in the client, encoded in UTF-8.
+            script (str): The JavaScript code to be executed, encoded in UTF-8.
 
         Returns:
             None
+
+        Example:
+            e.run_client("alert('Hello');")
         """
         _raw.webui_run_client(byref(self._c_event()), c_char_p(script.encode("utf-8")))
 
     # -- script_client ------------------------------
     def script_client(self, script: str, timeout: int = 0, buffer_size: int = 4096) -> JavaScript:
-        """
-        Execute a JavaScript script in the client and retrieve the result.
+        """Run a JavaScript script on the client and retrieve the response.
+
+        This function executes the specified JavaScript code in the client's environment and retrieves the response.
+        Ensure that the buffer size is sufficient to hold the response data. It supports a single client.
 
         Args:
-            script (str): The JavaScript code to execute in the client, encoded in UTF-8.
-            timeout (int, optional): The maximum time in milliseconds to wait for the script to execute. Defaults to 0 (no timeout).
-            buffer_size (int, optional): The size of the buffer to store the result. Defaults to 4096.
+            script (str): The JavaScript code to execute, encoded in UTF-8.
+            timeout (int, optional): The maximum time in seconds to wait for the script execution. Defaults to 0 (no timeout).
+            buffer_size (int, optional): The size of the buffer to store the response. Defaults to 4096.
 
         Returns:
-            JavaScript: An object containing the result of the script execution. The `data` attribute contains the script output,
-            and the `error` attribute indicates whether an error occurred (True if there was an error, False otherwise).
+            JavaScript: An object containing the response data and the error status.
+            - `data` (str): The response data from the executed script.
+            - `error` (bool): True if an execution error occurred, False otherwise.
+
+        Example:
+            result = e.script_client("return 4 + 6;", timeout=2)
+            print(result.data)  # Output: "10"
+            print(result.error)  # Output: False if successful, True otherwise
         """
         # Create a mutable buffer in which the C function can store the result
         buffer = create_string_buffer(buffer_size)
@@ -265,40 +311,108 @@ class Event:
 
     # -- get_count ----------------------------------
     def get_count(self) -> int:
-        """
-        Retrieve how many arguments there are in an event.
+        """Get the number of arguments in the current event.
+
+        This function retrieves the count of arguments available in the event structure
+        associated with this instance.
 
         Returns:
-            int: the number of arguments.
+            int: The number of arguments in the current event.
+
+        Example:
+            count = e.get_count()
+            print(f"The event has {count} arguments.")
         """
         return int(_raw.webui_get_count(byref(self._c_event())))
 
     # -- get_int_at ---------------------------------
     def get_int_at(self, index: int) -> int:
+        """Get an argument as an integer at a specific index.
+
+        This function retrieves the argument at the given index from the event structure
+        associated with this instance and returns it as an integer.
+
+        Args:
+            index (int): The position of the argument to retrieve, starting from 0.
+
+        Returns:
+            int: The argument at the specified index as an integer.
+
+        Example:
+            value = e.get_int_at(0)
+            print(f"The integer at index 0 is {value}.")
+        """
         return int(_raw.webui_get_int_at(byref(self._c_event()), c_size_t(index)))
 
     # -- get_int ------------------------------------
     def get_int(self) -> int:
+        """Get the first argument as an integer.
+
+        This function retrieves the first argument from the event structure
+        associated with this instance and returns it as an integer.
+
+        Returns:
+            int: The first argument as an integer.
+
+        Example:
+            value = e.get_int()
+            print(f"The first argument is {value}.")
+        """
         return int(_raw.webui_get_int(byref(self._c_event())))
 
     # -- get_float_at -------------------------------
     def get_float_at(self, index: int) -> float:
+        """Get an argument as a float at a specific index.
+
+        This function retrieves the argument at the given index from the event structure
+        associated with this instance and returns it as a float.
+
+        Args:
+            index (int): The position of the argument to retrieve, starting from 0.
+
+        Returns:
+            float: The argument at the specified index as a float.
+
+        Example:
+            value = e.get_float_at(0)
+            print(f"The float at index 0 is {value}.")
+        """
         return float(_raw.webui_get_float_at(byref(self._c_event()), c_size_t(index)))
 
     # -- get_float ----------------------------------
     def get_float(self) -> float:
+        """Get the first argument as a float.
+
+        This function retrieves the first argument from the event structure
+        associated with this instance and returns it as a float.
+
+        Returns:
+            float: The first argument as a float.
+
+        Example:
+            value = e.get_float()
+            print(f"The first argument as a float is {value}.")
+        """
         return float(_raw.webui_get_float(byref(self._c_event())))
 
     # -- get_string_at ------------------------------
     def get_string_at(self, index: int) -> str:
-        """
-        Retrieve a string argument from the underlying C event data at a given index.
+        """Get an argument as a string at a specific index.
+
+        This function retrieves the argument at the given index from the event structure
+        associated with this instance and returns it as a UTF-8 string. If the argument is
+        null, an empty string is returned.
 
         Args:
-            index (int): The index of the string argument to retrieve.
+            index (int): The position of the argument to retrieve, starting from 0.
 
         Returns:
-            str: The UTF-8 decoded string corresponding to the specified index.
+            str: The argument at the specified index as a string. Returns an empty string if
+            the argument is null.
+
+        Example:
+            value = e.get_string_at(0)
+            print(f"The string at index 0 is '{value}'.")
         """
         char_ptr = _raw.webui_get_string_at(byref(self._c_event()), c_size_t(index))
         if char_ptr is None:
@@ -307,6 +421,20 @@ class Event:
 
     # -- get_string ---------------------------------
     def get_string(self) -> str:
+        """Get the first argument as a string.
+
+        This function retrieves the first argument from the event structure
+        associated with this instance and returns it as a UTF-8 string. If the
+        argument is null, an empty string is returned.
+
+        Returns:
+            str: The first argument as a string. Returns an empty string if the
+            argument is null.
+
+        Example:
+            value = e.get_string()
+            print(f"The first argument as a string is '{value}'.")
+        """
         char_ptr = _raw.webui_get_string(byref(self._c_event()))
         if char_ptr is None:
             return ""
@@ -314,39 +442,149 @@ class Event:
 
     # -- get_bool_at --------------------------------
     def get_bool_at(self, index: int) -> bool:
+        """Get an argument as a boolean at a specific index.
+
+        This function retrieves the argument at the given index from the event structure
+        associated with this instance and returns it as a boolean value.
+
+        Args:
+            index (int): The position of the argument to retrieve, starting from 0.
+
+        Returns:
+            bool: The argument at the specified index as a boolean.
+
+        Example:
+            is_valid = e.get_bool_at(0)
+            print(f"The boolean value at index 0 is {is_valid}.")
+        """
         return bool(_raw.webui_get_bool_at(byref(self._c_event()), c_size_t(index)))
 
     # -- get_bool -----------------------------------
     def get_bool(self) -> bool:
+        """Get the first argument as a boolean.
+
+        This function retrieves the first argument from the event structure
+        associated with this instance and returns it as a boolean value.
+
+        Returns:
+            bool: The first argument as a boolean.
+
+        Example:
+            is_valid = e.get_bool()
+            print(f"The first argument as a boolean is {is_valid}.")
+        """
         return bool(_raw.webui_get_bool(byref(self._c_event())))
 
     # -- get_size_at --------------------------------
     def get_size_at(self, index: int) -> int:
+        """Get the size in bytes of an argument at a specific index.
+
+        This function retrieves the size in bytes of the argument at the specified index
+        from the event structure associated with this instance.
+
+        Args:
+            index (int): The position of the argument to retrieve the size for, starting from 0.
+
+        Returns:
+            int: The size of the argument at the specified index in bytes.
+
+        Example:
+            arg_size = e.get_size_at(0)
+            print(f"The size of the argument at index 0 is {arg_size} bytes.")
+        """
         return int(_raw.webui_get_size_at(byref(self._c_event()), c_size_t(index)))
 
     # -- get_size -----------------------------------
     def get_size(self) -> int:
+        """Get the size in bytes of the first argument.
+
+        This function retrieves the size in bytes of the first argument from the event
+        structure associated with this instance.
+
+        Returns:
+            int: The size of the first argument in bytes.
+
+        Example:
+            arg_size = e.get_size()
+            print(f"The size of the first argument is {arg_size} bytes.")
+        """
         return int(_raw.webui_get_size(byref(self._c_event())))
 
     # -- return_int ---------------------------------
     def return_int(self, n: int) -> None:
+        """Return the response to JavaScript as an integer.
+
+        This function sends an integer response to JavaScript from the event structure
+        associated with this instance.
+
+        Args:
+            n (int): The integer value to send to JavaScript.
+
+        Returns:
+            None
+
+        Example:
+            e.return_int(123)
+        """
         _raw.webui_return_int(byref(self._c_event()), c_longlong(n))
 
     # -- return_float -------------------------------
     def return_float(self, f: float) -> None:
+        """Return the response to JavaScript as a float.
+
+        This function sends a floating-point response to JavaScript from the event structure
+        associated with this instance.
+
+        Args:
+            f (float): The floating-point number to send to JavaScript.
+
+        Returns:
+            None
+
+        Example:
+            e.return_float(123.456)
+        """
         _raw.webui_return_float(byref(self._c_event()), c_double(f))
 
     # -- return_string ------------------------------
     def return_string(self, s: str) -> None:
+        """Return the response to JavaScript as a string.
+
+        This function sends a string response to JavaScript from the event structure
+        associated with this instance. The string is encoded in UTF-8 before being sent.
+
+        Args:
+            s (str): The string to send to JavaScript.
+
+        Returns:
+            None
+
+        Example:
+            e.return_string("Response...")
+        """
         _raw.webui_return_string(byref(self._c_event()), c_char_p(s.encode("utf-8")))
 
     # -- return_bool --------------------------------
     def return_bool(self, b: bool) -> None:
+        """Return the response to JavaScript as a boolean.
+
+        This function sends a boolean response to JavaScript from the event structure
+        associated with this instance.
+
+        Args:
+            b (bool): The boolean value to send to JavaScript.
+
+        Returns:
+            None
+
+        Example:
+            e.return_bool(True)
+        """
         _raw.webui_return_bool(byref(self._c_event()), c_bool(b))
 
 
 # -- Window Object ------------------------------
-class Window:
+class Window:  # TODO: document
     """
     Pythonic wrapper around a WebUI window.
     """
@@ -387,12 +625,12 @@ class Window:
 
     @property
     # -- get_window_id --------------------------
-    def get_window_id(self) -> int:
+    def get_window_id(self) -> int:  # TODO: document
         """Returns the window id."""
         return self._window
 
     # -- bind ---------------------------------------
-    def bind(self, element: str, func: Callable[[Event], None]) -> int:
+    def bind(self, element: str, func: Callable[[Event], None]) -> int:  # TODO: document
         """
         Bind an HTML element and a JavaScript object with
         a backend function. Empty element name means all events.
@@ -403,7 +641,7 @@ class Window:
         return bind_id
 
     # -- get_best_browser ---------------------------
-    def get_best_browser(self) -> Browser:
+    def get_best_browser(self) -> Browser:  # TODO: document
         """
         Get the recommended web browser to use. If you
         are already using one, this function will return the same browser.
@@ -411,7 +649,7 @@ class Window:
         return Browser(int(_raw.webui_get_best_browser(self._window)))
 
     # -- show ---------------------------------------
-    def show(self, content: str) -> bool:
+    def show(self, content: str) -> bool:  # TODO: document
         """
         Show or refresh the window with the specified content
         (HTML, URL, or local file).
@@ -420,51 +658,51 @@ class Window:
         return bool(_raw.webui_show(self._window, content.encode("utf-8")))
 
     # -- show_browser -------------------------------
-    def show_browser(self, content: str, browser: Browser) -> bool:
+    def show_browser(self, content: str, browser: Browser) -> bool:  # TODO: document
         """
         Show or refresh the window using a specific browser (by enum).
         """
         return bool(_raw.webui_show_browser(self._window, content.encode("utf-8"), c_size_t(browser.value)))
 
     # -- start_server -------------------------------
-    def start_server(self, content: str) -> str:
+    def start_server(self, content: str) -> str:  # TODO: document
         return _raw.webui_start_server(self._window, content.encode("utf-8")).decode("utf-8")
 
     # -- show_wv ------------------------------------
-    def show_wv(self, content: str) -> bool:
+    def show_wv(self, content: str) -> bool:  # TODO: document
         return bool(_raw.webui_show_wv(self._window, content.encode("utf-8")))
 
     # -- set_kiosk ----------------------------------
-    def set_kiosk(self, status: bool) -> None:
+    def set_kiosk(self, status: bool) -> None:  # TODO: document
         """
         Set or unset kiosk (fullscreen) mode.
         """
         _raw.webui_set_kiosk(self._window, c_bool(status))
 
     # -- set_high_contrast --------------------------
-    def set_high_contrast(self, status: bool) -> None:
+    def set_high_contrast(self, status: bool) -> None:  # TODO: document
         _raw.webui_set_high_contrast(self._window, c_bool(status))
 
     # -- close --------------------------------------
-    def close(self) -> None:
+    def close(self) -> None:  # TODO: document
         """
         Close this window (all clients).
         """
         _raw.webui_close(self._window)
 
     # -- destroy ------------------------------------
-    def destroy(self) -> None:
+    def destroy(self) -> None:  # TODO: document
         """
         Close this window and free all memory resources used by it.
         """
         _raw.webui_destroy(self._window)
 
     # -- set_root_folder ----------------------------
-    def set_root_folder(self, path: str) -> bool:
+    def set_root_folder(self, path: str) -> bool:  # TODO: document
         return bool(_raw.webui_set_root_folder(self._window, path.encode("utf-8")))
 
     # -- set_file_handler----------------------------
-    def set_file_handler(self, handler: Callable[[str], bytes]) -> None:
+    def set_file_handler(self, handler: Callable[[str], bytes]) -> None:  # TODO: document
         """
         Set a custom file handler to serve files for this window.
 
@@ -508,16 +746,16 @@ class Window:
     # TODO: set_file_handler_window
 
     # -- is_shown -----------------------------------
-    def is_shown(self) -> bool:
+    def is_shown(self) -> bool:  # TODO: document
         """Return True if the window is currently shown."""
         return bool(_raw.webui_is_shown(self._window))
 
     # -- set_icon -----------------------------------
-    def set_icon(self, icon: str, icon_type: str) -> None:
+    def set_icon(self, icon: str, icon_type: str) -> None:  # TODO: document
         _raw.webui_set_icon(self._window, icon.encode("utf-8"), icon_type.encode("utf-8"))
 
     # -- send_raw -----------------------------------
-    def send_raw(self, function: str, raw: Optional[c_void_p], size: int) -> None:
+    def send_raw(self, function: str, raw: Optional[c_void_p], size: int) -> None:  # TODO: document
         if raw is None:
             raise ValueError("Invalid pointer: Cannot send a null pointer.")
         _raw.webui_send_raw(
@@ -528,73 +766,73 @@ class Window:
         )
 
     # -- set_hide -----------------------------------
-    def set_hide(self, status: bool) -> bool:
+    def set_hide(self, status: bool) -> bool:  # TODO: document
         return bool(_raw.webui_set_hide(c_size_t(self._window), c_bool(status)))
 
     # -- set_size -----------------------------------
-    def set_size(self, width: int, height: int) -> None:
+    def set_size(self, width: int, height: int) -> None:   # TODO: document
         _raw.webui_set_size(c_size_t(self._window), c_uint(width), c_uint(height))
 
     # -- set_position -------------------------------
-    def set_position(self, x: int, y: int) -> None:
+    def set_position(self, x: int, y: int) -> None:   # TODO: document
         _raw.webui_set_position(c_size_t(self._window), c_uint(x), c_uint(y))
 
     # -- set_profile --------------------------------
-    def set_profile(self, name: str, path: str) -> None:
+    def set_profile(self, name: str, path: str) -> None:  # TODO: document
         _raw.webui_set_profile(c_size_t(self._window), c_char_p(name.encode("utf-8")), c_char_p(path.encode("utf-8")))
 
     # -- set_proxy ----------------------------------
-    def set_proxy(self, proxy_server: str) -> None:
+    def set_proxy(self, proxy_server: str) -> None:  # TODO: document
         _raw.webui_set_proxy(c_size_t(self._window), c_char_p(proxy_server.encode("utf-8")))
 
     # -- get_url ------------------------------------
-    def get_url(self) -> str:
+    def get_url(self) -> str:  # TODO: document
         """
         Get the current URL as a string.
         """
         return _raw.webui_get_url(c_size_t(self._window)).decode("utf-8")
 
     # -- set_public ---------------------------------
-    def set_public(self, status: bool) -> None:
+    def set_public(self, status: bool) -> None:  # TODO: document
         _raw.webui_set_public(c_size_t(self._window), c_bool(status))
 
     # -- navigate -----------------------------------
-    def navigate(self, url: str) -> None:
+    def navigate(self, url: str) -> None:  # TODO: document
         _raw.webui_navigate(c_size_t(self._window), c_char_p(url.encode("utf-8")))
 
     # -- delete_profile -----------------------------
-    def delete_profile(self) -> None:
+    def delete_profile(self) -> None:  # TODO: document
         _raw.webui_delete_profile(c_size_t(self._window))
 
     # -- get_parent_process_id ----------------------
-    def get_parent_process_id(self) -> int:
+    def get_parent_process_id(self) -> int:  # TODO: document
         return int(_raw.webui_get_parent_process_id(c_size_t(self._window)))
 
     # -- get_child_process_id -----------------------
-    def get_child_process_id(self) -> int:
+    def get_child_process_id(self) -> int:  # TODO: document
         return int(_raw.webui_get_child_process_id(c_size_t(self._window)))
 
     # -- get_port -----------------------------------
-    def get_port(self) -> int:
+    def get_port(self) -> int:  # TODO: document
         return int(_raw.webui_get_port(c_size_t(self._window)))
 
     # -- set_port -----------------------------------
-    def set_port(self, port: int) -> bool:
+    def set_port(self, port: int) -> bool:  # TODO: document
         return bool(_raw.webui_set_port(c_size_t(self._window), c_size_t(port)))
 
     # -- set_event_blocking -------------------------
-    def set_event_blocking(self, status: bool) -> None:
+    def set_event_blocking(self, status: bool) -> None:  # TODO: document
         _raw.webui_set_event_blocking(c_size_t(self._window), c_bool(status))
 
     # -- run ----------------------------------------
-    def run(self, script: str) -> None:
+    def run(self, script: str) -> None:  # TODO: document
         """
         Run JavaScript in the window without waiting for a return.
         """
         _raw.webui_run(self._window, script.encode("utf-8"))
 
     # -- script -------------------------------------
-    def script(self, script: str, timeout: int = 0, buffer_size: int = 4096) -> JavaScript:
+    def script(self, script: str, timeout: int = 0, buffer_size: int = 4096) -> JavaScript:  # TODO: document
         """
         Run JavaScript in single-client mode and return the result as a string.
         If there's an execution error or an empty response, returns None.
@@ -625,7 +863,7 @@ class Window:
         return res
 
     # -- set_runtime --------------------------------
-    def set_runtime(self, runtime: Runtime) -> None:
+    def set_runtime(self, runtime: Runtime) -> None:  # TODO: document
         _raw.webui_set_runtime(c_size_t(self._window), c_size_t(runtime.value))
 
 
@@ -635,52 +873,52 @@ class Window:
 
 
 # -- get_new_window_id --------------------------
-def get_new_window_id() -> int:
+def get_new_window_id() -> int:  # TODO: document
     return int(_raw.webui_get_new_window_id)
 
 # -- is_high_contrast ---------------------------
-def is_high_contrast() -> bool:
+def is_high_contrast() -> bool:  # TODO: document
     """Return True if the OS is using a high-contrast theme."""
     return bool(_raw.webui_is_high_contrast())
 
 # -- browser_exist ------------------------------
-def browser_exist(browser: Browser) -> bool:
+def browser_exist(browser: Browser) -> bool:  # TODO: document
     return bool(_raw.webui_browser_exist(c_size_t(browser.value)))
 
 # -- wait ---------------------------------------
-def wait() -> None:
+def wait() -> None:  # TODO: document
     """Wait until all opened windows get closed."""
     _raw.webui_wait()
 
 # -- exit ---------------------------------------
-def exit() -> None:
+def exit() -> None:  # TODO: document
     """Close all open windows and break out of webui_wait()."""
     _raw.webui_exit()
 
 # -- set_default_root_folder --------------------
-def set_default_root_folder(path: str) -> bool:
+def set_default_root_folder(path: str) -> bool:  # TODO: document
     return bool(_raw.webui_set_default_root_folder(path.encode("utf-8")))
 
 # -- set_timeout --------------------------------
-def set_timeout(seconds: int) -> None:
+def set_timeout(seconds: int) -> None:  # TODO: document
     _raw.webui_set_timeout(c_size_t(seconds))
 
 # -- encode -------------------------------------
-def ui_encode(string: str) -> str:
+def ui_encode(string: str) -> str:  # TODO: document
     return _raw.webui_encode(string.encode("utf-8")).decode("utf-8")
 
 # -- decode -------------------------------------
-def ui_decode(string: str) -> str:
+def ui_decode(string: str) -> str:  # TODO: document
     return _raw.webui_decode(string.encode("utf-8")).decode("utf-8")
 
 # -- free ---------------------------------------
-def free(ptr: Optional[c_void_p]) -> None:
+def free(ptr: Optional[c_void_p]) -> None:  # TODO: document
     if ptr is None:
         raise ValueError("Invalid pointer: Cannot free a null pointer.")
     _raw.webui_free(ptr)
 
 # -- malloc -------------------------------------
-def malloc(size: int) -> Optional[int]:
+def malloc(size: int) -> Optional[int]:  # TODO: document
     if size <= 0:
         raise ValueError("Size must be a positive integer.")
     ptr = _raw.webui_malloc(c_size_t(size))
@@ -689,27 +927,27 @@ def malloc(size: int) -> Optional[int]:
     return int(ptr)
 
 # -- open_url -----------------------------------
-def open_url(url: str) -> None:
+def open_url(url: str) -> None:  # TODO: document
     _raw.webui_open_url(c_char_p(url.encode("utf-8")))
 
 # -- clean --------------------------------------
-def clean() -> None:
+def clean() -> None:  # TODO: document
     _raw.webui_clean()
 
 # -- delete_all_profiles ------------------------
-def delete_all_profiles() -> None:
+def delete_all_profiles() -> None:  # TODO: document
     _raw.webui_delete_all_profiles()
 
 # -- get_free_port ------------------------------
-def get_free_port() -> int:
+def get_free_port() -> int:  # TODO: document
     return int(_raw.webui_get_free_port())
 
 # -- set_config ---------------------------------
-def set_config(option: Config, status: bool) -> None:
+def set_config(option: Config, status: bool) -> None:  # TODO: document
     _raw.webui_set_config(c_int(option.value), c_bool(status))
 
 # -- get_mime_type ------------------------------
-def get_mime_type(file: str) -> str:
+def get_mime_type(file: str) -> str:   # TODO: document
     return str(_raw.webui_get_mime_type(c_char_p(file.encode("utf-8"))).decode("utf-8"))
 
 
@@ -717,5 +955,5 @@ def get_mime_type(file: str) -> str:
 
 
 # -- set_tls_certificate ------------------------
-def set_tls_certificate(certificate_pem: str, private_key_pem: str) -> bool:
+def set_tls_certificate(certificate_pem: str, private_key_pem: str) -> bool:  # TODO: document
     return bool(_raw.webui_set_tls_certificate(c_char_p(certificate_pem.encode("utf-8")), c_char_p(private_key_pem.encode("utf-8"))))
