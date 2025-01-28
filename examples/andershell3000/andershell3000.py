@@ -1,7 +1,10 @@
+import sys
+sys.path.append('../../PyPI/Package/src/webui')
+import webui
+
 # Install WebUI
 # pip install --upgrade webui2
-
-from webui import webui
+# from webui import webui
 import subprocess
 import time
 
@@ -36,20 +39,20 @@ class CommandExecutor:
         self.shell.terminate()
         self.shell.wait()
 
-def run_command(e : webui.event):
-    cmd = e.window.get_str(e, 0)
+def run_command(e : webui.Event):
+    cmd = e.get_string_at(0)
     if cmd == "exit":
         webui.exit()
     try:
         command_result = executor.execute(cmd)
-        return command_result
+        e.return_string(command_result)
     except FileNotFoundError:
-        return "Command not found '{cmd}'"
+        print(f"Command not found '{cmd}'")
 
 executor = CommandExecutor()
-MyWindow = webui.window()
+MyWindow = webui.Window()
 MyWindow.bind("Run", run_command)
 MyWindow.set_root_folder("ui/")
-MyWindow.show('index.html')
+MyWindow.show_browser('index.html', webui.Browser.Chrome)
 webui.wait()
 executor.close()

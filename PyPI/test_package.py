@@ -62,19 +62,19 @@ html = """
     </body></html>
 """
 
-def all_events(e : webui.event):
+def all_events(e : webui.Event):
 	print('Function: all_events()')
 	print('Element: ' + e.element)
 	print('Type: ' + str(e.event_type))
 	print(' ')
 
-def python_to_js(e : webui.event):
+def python_to_js(e : webui.Event):
 	print('Function: python_to_js()')
 	print('Element: ' + e.element)
 	print('Type: ' + str(e.event_type))
-	print('Data: ' + e.window.get_str(e))
+	print('Data: ' + e.get_string())
 	print(' ')
-	# Run JavaScript to get the password
+	# Run JavaScript to get the value
 	res = e.window.script("return document.getElementById('MyInput').value;")
 	# Check for any error
 	if res.error is True:
@@ -85,28 +85,29 @@ def python_to_js(e : webui.event):
 	# e.window.run("alert('Fast!')")
 	print(' ')
 
-def js_to_python(e : webui.event):
+def js_to_python(e : webui.Event):
 	print('Function: js_to_python()')
 	print('Element: ' + e.element)
 	print('Type: ' + str(e.event_type))
-	print('Data: ' + e.window.get_str(e, 0))
+	print('Data: ' + e.get_string_at(0))
 	print(' ')
-	v = int(e.window.get_str(e, 0))
+	v = e.get_int()
 	v = v * 2
-	return v
+	e.return_int(v)
 
-def exit(e : webui.event):
+
+def exit(e : webui.Event):
 	print('Function: exit()')
 	print('Element: ' + e.element)
 	print('Type: ' + str(e.event_type))
-	print('Data: ' + e.window.get_str(e, 0))
+	print('Data: ' + e.get_string_at(0))
 	print(' ')
 	webui.exit()
 
 def main():
 
 	# Create a window object
-	MyWindow = webui.window()
+	MyWindow = webui.Window()
 
 	# Bind am HTML element ID with a python function
 	MyWindow.bind('', all_events)
@@ -115,7 +116,7 @@ def main():
 	MyWindow.bind('Exit', exit)
 
 	# Show the window
-	MyWindow.show(html, webui.browser.any)
+	MyWindow.show_browser(html, webui.Browser.AnyBrowser)
 
 	# Wait until all windows are closed
 	webui.wait()

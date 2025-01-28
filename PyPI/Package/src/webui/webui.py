@@ -76,7 +76,7 @@ class Event:
         _raw.webui_close_client(byref(self._c_event()))
 
     # -- send_raw_client ----------------------------
-    def send_raw_client(self, function: str, raw: Optional[c_void_p], size: int) -> None:
+    def send_raw_client(self, function: str, raw: Optional[int], size: int) -> None:
         if raw is None:
             raise ValueError("Invalid Pointer: Cannot send a null pointer.")
         _raw.webui_send_raw_client(
@@ -146,11 +146,17 @@ class Event:
         Returns:
             str: The UTF-8 decoded string corresponding to the specified index.
         """
-        return str(_raw.webui_get_string_at(byref(self._c_event()), c_size_t(index)).decode('utf-8'))
+        char_ptr = _raw.webui_get_string_at(byref(self._c_event()), c_size_t(index))
+        if char_ptr is None:
+            return ""
+        return str(char_ptr.decode("utf-8"))
 
     # -- get_string ---------------------------------
     def get_string(self) -> str:
-        return str(_raw.webui_get_string(byref(self._c_event())).decode('utf-8'))
+        char_ptr = _raw.webui_get_string(byref(self._c_event()))
+        if char_ptr is None:
+            return ""
+        return str(char_ptr.decode("utf-8"))
 
     # -- get_bool_at --------------------------------
     def get_bool_at(self, index: int) -> bool:
@@ -170,7 +176,7 @@ class Event:
 
     # -- return_int ---------------------------------
     def return_int(self, n: int) -> None:
-        _raw.webui_return_int(byref(self._c_event()), c_size_t(n))
+        _raw.webui_return_int(byref(self._c_event()), c_longlong(n))
 
     # -- return_float -------------------------------
     def return_float(self, f: float) -> None:
