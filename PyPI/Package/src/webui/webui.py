@@ -6,13 +6,14 @@ from ctypes import *
 # Import all the raw bindings
 import webui_bindings as _raw
 
-# Define the C function type for the file handler
+# The C function type for the file handler
 filehandler_callback = CFUNCTYPE(
     c_void_p,               # Return type: pointer to the HTTP response bytes
     c_char_p,               # filename: const char*
     POINTER(c_int)          # length: int*
 )
 
+# C function type for the file handler window
 filehandler_window_callback = CFUNCTYPE(
     c_size_t,
     c_void_p,
@@ -24,9 +25,85 @@ filehandler_window_callback = CFUNCTYPE(
 
 
 Browser     = _raw.WebuiBrowser
+"""
+NoBrowser      = 0  - No web browser
+AnyBrowser     = 1  - Default recommended web browser
+Chrome         = 2  - Google Chrome
+Firefox        = 3  - Mozilla Firefox
+Edge           = 4  - Microsoft Edge
+Safari         = 5  - Apple Safari
+Chromium       = 6  - The Chromium Project
+Opera          = 7  - Opera Browser
+Brave          = 8  - The Brave Browser
+Vivaldi        = 9  - The Vivaldi Browser
+Epic           = 10 - The Epic Browser
+Yandex         = 11 - The Yandex Browser
+ChromiumBased  = 12 - Any Chromium based browser
+Webview        = 13 - WebView (Non-web-browser)
+"""
+
 Runtime     = _raw.WebuiRuntime
+"""
+NoRuntime = 0 - Prevent WebUI from using any runtime for .js and .ts files
+Deno      = 1 - Use Deno runtime for .js and .ts files
+NodeJS    = 2 - Use Nodejs runtime for .js files
+Bun       = 3 - Use Bun runtime for .js and .ts files
+"""
+
 EventType   = _raw.WebuiEvent
+"""
+DISCONNECTED = 0 - Window disconnection event
+CONNECTED    = 1 - Window connection event
+MOUSE_CLICK  = 2 - Mouse click event
+NAVIGATION   = 3 - Window navigation event
+CALLBACK     = 4 - Function call event
+"""
+
 Config      = _raw.WebuiConfig
+"""
+show_wait_connection = 0:
+    Control if 'webui_show()', 'webui_show_browser()' and
+    'webui_show_wv()' should wait for the window to connect
+    before returns or not.
+    Default: True
+    
+
+ui_event_blocking = 1:
+    Control if WebUI should block and process the UI events
+    one a time in a single thread `True`, or process every
+    event in a new non-blocking thread `False`. This updates
+    all windows. You can use `webui_set_event_blocking()` for
+    a specific single window update.
+    Default: False
+
+
+folder_monitor = 2:
+    Automatically refresh the window UI when any file in the
+    root folder gets changed.
+    Default: False
+
+
+multi_client = 3:   
+    Allow multiple clients to connect to the same window,
+    This is helpful for web apps (non-desktop software),
+    Please see the documentation for more details.
+    Default: False
+    
+
+use_cookies = 4:
+    Allow or prevent WebUI from adding `webui_auth` cookies.
+    WebUI uses these cookies to identify clients and block
+    unauthorized access to the window content using a URL.
+    Please keep this option to `True` if you want only a single
+    client to access the window content.
+    Default: True
+    
+
+asynchronous_response = 5:
+    If the backend uses asynchronous operations, set this
+    option to `True`. This will make webui wait until the
+    backend sets a response using `webui_return_x()`.
+"""
 
 
 # == Definitions ==============================================================
@@ -34,13 +111,21 @@ Config      = _raw.WebuiConfig
 
 # -- JavaScript responses -----------------------
 class JavaScript:
+    """
+    A return response type for functions dealing with JavaScript.
+    """
     error = False
     response = ""
 
 
 # -- Event Object -------------------------------
 class Event:
-    """Pythonic wrapper around webui_event_t."""
+    """
+    WebUI Event Object
+
+    Caries most of the client-side functions but also caries has reference to
+    the Window object to be able to call Window related functions if needed.
+    """
     __slots__ = ("window", "event_type", "element", "event_number", "bind_id",
                  "client_id", "connection_id", "cookies")
 
@@ -55,7 +140,9 @@ class Event:
         self.cookies       = c_event.cookies.decode('utf-8') if c_event.cookies else ''
 
     def _c_event(self) -> _raw.WebuiEventT:
-        """Rebuild the underlying C struct if needed."""
+        """
+        Rebuild of the underlying C struct for interacting with the C API
+        """
         return _raw.WebuiEventT(
             window=c_size_t(self.window.get_window_id),
             event_type=self.event_type,
@@ -69,14 +156,45 @@ class Event:
 
     # -- show_client --------------------------------
     def show_client(self, content: str) -> bool:
+        """
+        Display content in the client interface.
+
+        Args:
+            content (str): The content to be displayed in the client, encoded in UTF-8.
+
+        Returns:
+            bool: True if the content was successfully displayed, False otherwise.
+        """
         return bool(_raw.webui_show_client(byref(self._c_event()), content.encode('utf-8')))
 
     # -- close_client -------------------------------
-    def close_client(self):
+    def close_client(self) -> None:
+        """
+        Close the client interface.
+
+        This method closes the currently active client interface associated with the event.
+
+        Returns:
+            None
+        """
         _raw.webui_close_client(byref(self._c_event()))
 
     # -- send_raw_client ----------------------------
     def send_raw_client(self, function: str, raw: Optional[int], size: int) -> None:
+        """
+        Send raw data to the client for processing.
+
+        Args:
+            function (str): The name of the function to invoke on the client, encoded in UTF-8.
+            raw (Optional[int]): A pointer to the raw data. Must not be `None`.
+            size (int): The size of the raw data in bytes.
+
+        Raises:
+            ValueError: If `raw` is `None`.
+
+        Returns:
+            None
+        """
         if raw is None:
             raise ValueError("Invalid Pointer: Cannot send a null pointer.")
         _raw.webui_send_raw_client(
@@ -88,14 +206,44 @@ class Event:
 
     # -- navigate_client ----------------------------
     def navigate_client(self, url: str) -> None:
+        """
+        Navigate the client to a specified URL.
+
+        Args:
+            url (str): The URL to navigate the client to, encoded in UTF-8.
+
+        Returns:
+            None
+        """
         _raw.webui_navigate_client(byref(self._c_event()), c_char_p(url.encode("utf-8")))
 
     # -- run_client ---------------------------------
     def run_client(self, script: str) -> None:
+        """
+        Execute a script in the client.
+
+        Args:
+            script (str): The script to be executed in the client, encoded in UTF-8.
+
+        Returns:
+            None
+        """
         _raw.webui_run_client(byref(self._c_event()), c_char_p(script.encode("utf-8")))
 
     # -- script_client ------------------------------
     def script_client(self, script: str, timeout: int = 0, buffer_size: int = 4096) -> JavaScript:
+        """
+        Execute a JavaScript script in the client and retrieve the result.
+
+        Args:
+            script (str): The JavaScript code to execute in the client, encoded in UTF-8.
+            timeout (int, optional): The maximum time in milliseconds to wait for the script to execute. Defaults to 0 (no timeout).
+            buffer_size (int, optional): The size of the buffer to store the result. Defaults to 4096.
+
+        Returns:
+            JavaScript: An object containing the result of the script execution. The `data` attribute contains the script output,
+            and the `error` attribute indicates whether an error occurred (True if there was an error, False otherwise).
+        """
         # Create a mutable buffer in which the C function can store the result
         buffer = create_string_buffer(buffer_size)
 
@@ -117,6 +265,12 @@ class Event:
 
     # -- get_count ----------------------------------
     def get_count(self) -> int:
+        """
+        Retrieve how many arguments there are in an event.
+
+        Returns:
+            int: the number of arguments.
+        """
         return int(_raw.webui_get_count(byref(self._c_event())))
 
     # -- get_int_at ---------------------------------
