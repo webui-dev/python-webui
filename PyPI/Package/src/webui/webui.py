@@ -1,4 +1,3 @@
-
 # Python WebUI v2.5.0
 #
 # http://webui.me
@@ -407,6 +406,117 @@ class window:
         return int(lib.webui_get_child_process_id(self.window))
 
 
+    """Create a new webui window object using a specified window number.
+    @param window_number The window number (should be > 0, and < WEBUI_MAX_IDS)
+    @return Returns the same window number if success."""
+    def new_window_id(self, window_number: int) -> int:
+        global lib
+        if lib is None:
+            _err_library_not_found('new_window_id')
+            return 0
+        return int(lib.webui_new_window_id(ctypes.c_size_t(window_number)))
+
+
+    """Get a free window number that can be used with `webui_new_window_id()`.
+    @return Returns the first available free window number. Starting from 1."""
+    def get_new_window_id(self) -> int:
+        global lib
+        if lib is None:
+            _err_library_not_found('get_new_window_id')
+            return 0
+        return int(lib.webui_get_new_window_id())
+
+
+    """Get the recommended web browser ID to use. If you are already using one, 
+    this function will return the same ID.
+    @return Returns a web browser ID."""
+    def get_best_browser(self) -> int:
+        global lib
+        if lib is None:
+            _err_library_not_found('get_best_browser')
+            return 0
+        return int(lib.webui_get_best_browser(self.window))
+
+
+    """Same as `webui_show()`. But start only the web server and return the URL.
+    No window will be shown.
+    @param content The HTML, Or a local file
+    @return Returns the url of this window server."""
+    def start_server(self, content: str) -> str:
+        global lib
+        if lib is None:
+            _err_library_not_found('start_server')
+            return ""
+        c_res = lib.webui_start_server
+        c_res.restype = ctypes.c_char_p
+        url = c_res(self.window, content.encode('utf-8'))
+        return url.decode('utf-8') if url else ""
+
+
+    """Show a WebView window using embedded HTML, or a file. If the window is already
+    open, it will be refreshed. Note: Win32 need `WebView2Loader.dll`.
+    @param content The HTML, URL, Or a local file
+    @return Returns True if showing the WebView window is successed."""
+    def show_wv(self, content: str) -> bool:
+        global lib
+        if lib is None:
+            _err_library_not_found('show_wv')
+            return False
+        return bool(lib.webui_show_wv(self.window, content.encode('utf-8')))
+
+
+    """Add a user-defined web browser's CLI parameters.
+    @param params Command line parameters"""
+    def set_custom_parameters(self, params: str):
+        global lib
+        if lib is None:
+            _err_library_not_found('set_custom_parameters')
+            return
+        lib.webui_set_custom_parameters(self.window, params.encode('utf-8'))
+
+
+    """Set the window with high-contrast support. Useful when you want to 
+    build a better high-contrast theme with CSS.
+    @param status True or False"""
+    def set_high_contrast(self, status: bool):
+        global lib
+        if lib is None:
+            _err_library_not_found('set_high_contrast')
+            return
+        lib.webui_set_high_contrast(self.window, ctypes.c_bool(status))
+
+
+    """Set the window minimum size.
+    @param width The window width
+    @param height The window height"""
+    def set_minimum_size(self, width: int, height: int):
+        global lib
+        if lib is None:
+            _err_library_not_found('set_minimum_size')
+            return
+        lib.webui_set_minimum_size(self.window, ctypes.c_uint(width), ctypes.c_uint(height))
+
+
+    """Set the web browser proxy server to use. Need to be called before `webui_show()`.
+    @param proxy_server The web browser proxy_server"""
+    def set_proxy(self, proxy_server: str):
+        global lib
+        if lib is None:
+            _err_library_not_found('set_proxy')
+            return
+        lib.webui_set_proxy(self.window, proxy_server.encode('utf-8'))
+
+
+    """Navigate to a specific URL. All clients.
+    @param url Full HTTP URL"""
+    def navigate(self, url: str):
+        global lib
+        if lib is None:
+            _err_library_not_found('navigate')
+            return
+        lib.webui_navigate(self.window, url.encode('utf-8'))
+
+
 def _get_current_folder() -> str:
     return os.path.dirname(os.path.abspath(__file__))
 
@@ -588,3 +698,88 @@ def _err_library_not_found(f):
 #
 def _err_window_is_none(f):
     print('WebUI ' + f + '(): window is None.')
+
+
+"""Get OS high contrast preference.
+@return Returns True if OS is using high contrast theme"""
+def is_high_contrast() -> bool:
+    global lib
+    if lib is None:
+        _err_library_not_found('is_high_contrast')
+        return False
+    return bool(lib.webui_is_high_contrast())
+
+
+"""Check if a web browser is installed.
+@return Returns True if the specified browser is available"""
+def browser_exist(browser: int) -> bool:
+    global lib
+    if lib is None:
+        _err_library_not_found('browser_exist')
+        return False
+    return bool(lib.webui_browser_exist(ctypes.c_size_t(browser)))
+
+
+"""Open an URL in the native default web browser.
+@param url The URL to open"""
+def open_url(url: str):
+    global lib
+    if lib is None:
+        _err_library_not_found('open_url')
+        return
+    lib.webui_open_url(url.encode('utf-8'))
+
+
+"""Get an available usable free network port.
+@return Returns a free port"""
+def get_free_port() -> int:
+    global lib
+    if lib is None:
+        _err_library_not_found('get_free_port')
+        return 0
+    return int(lib.webui_get_free_port())
+
+
+"""Get the HTTP mime type of a file.
+@return Returns the HTTP mime string"""
+def get_mime_type(file: str) -> str:
+    global lib
+    if lib is None:
+        _err_library_not_found('get_mime_type')
+        return ""
+    c_res = lib.webui_get_mime_type
+    c_res.restype = ctypes.c_char_p
+    mime = c_res(file.encode('utf-8'))
+    return mime.decode('utf-8') if mime else ""
+
+
+"""Encode text to Base64. The returned buffer need to be freed.
+@param str The string to encode (Should be null terminated)
+@return Returns the base64 encoded string"""
+def encode(text: str) -> str:
+    global lib
+    if lib is None:
+        _err_library_not_found('encode')
+        return ""
+    c_res = lib.webui_encode
+    c_res.restype = ctypes.c_char_p
+    encoded = c_res(text.encode('utf-8'))
+    result = encoded.decode('utf-8') if encoded else ""
+    free(encoded)
+    return result
+
+
+"""Decode a Base64 encoded text. The returned buffer need to be freed.
+@param str The string to decode (Should be null terminated)
+@return Returns the base64 decoded string"""
+def decode(text: str) -> str:
+    global lib
+    if lib is None:
+        _err_library_not_found('decode')
+        return ""
+    c_res = lib.webui_decode
+    c_res.restype = ctypes.c_char_p
+    decoded = c_res(text.encode('utf-8'))
+    result = decoded.decode('utf-8') if decoded else ""
+    free(decoded)
+    return result
