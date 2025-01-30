@@ -92,6 +92,7 @@ class window:
                 sys.exit(1)
             # Create new window
             webui_wrapper = None
+            # size_t webui_new_window(void)
             webui_wrapper = lib.webui_new_window
             webui_wrapper.restype = c_size_t
             self.window = c_size_t(webui_wrapper())
@@ -161,7 +162,7 @@ class window:
         if lib is None:
             _err_library_not_found('bind')
             return
-        # Bind
+        # size_t webui_interface_bind(size_t window, const char* element, void (*func)(size_t, size_t, char*, size_t, size_t))
         bindId = lib.webui_interface_bind(
             self.window,
             element.encode('utf-8'),
@@ -190,7 +191,7 @@ class window:
         if lib is None:
             _err_library_not_found('show')
             return
-        # Show the window
+        # bool webui_show_browser(size_t window, const char* content, size_t browser)
         lib.webui_show_browser(self.window, content.encode('utf-8'), ctypes.c_uint(browser))
 
 
@@ -207,6 +208,7 @@ class window:
         if lib is None:
             _err_library_not_found('set_runtime')
             return
+        # void webui_set_runtime(size_t window, size_t runtime)
         lib.webui_set_runtime(self.window, 
                         ctypes.c_uint(rt))
 
@@ -220,6 +222,7 @@ class window:
         if lib is None:
             _err_library_not_found('close')
             return
+        # void webui_close(size_t window)
         lib.webui_close(self.window)
 
 
@@ -233,6 +236,7 @@ class window:
         if lib is None:
             _err_library_not_found('is_shown')
             return
+        # bool webui_is_shown(size_t window)
         r = bool(lib.webui_is_shown(self.window))
         return r
 
@@ -247,6 +251,7 @@ class window:
         if lib is None:
             _err_library_not_found('get_url')
             return
+        # const char* webui_get_url(size_t window)
         c_res = lib.webui_get_url
         c_res.restype = ctypes.c_char_p
         data = c_res(self.window)
@@ -268,6 +273,7 @@ class window:
         if lib is None:
             _err_library_not_found('get_str')
             return
+        # const char* webui_interface_get_string_at(size_t window, size_t event_number, size_t index)
         c_res = lib.webui_interface_get_string_at
         c_res.restype = ctypes.c_char_p
         data = c_res(self.window,
@@ -291,6 +297,7 @@ class window:
         if lib is None:
             _err_library_not_found('get_str')
             return
+        # long long int webui_interface_get_int_at(size_t window, size_t event_number, size_t index)
         c_res = lib.webui_interface_get_int_at
         c_res.restype = ctypes.c_longlong
         data = c_res(self.window,
@@ -313,6 +320,7 @@ class window:
         if lib is None:
             _err_library_not_found('get_str')
             return
+        # bool webui_interface_get_bool_at(size_t window, size_t event_number, size_t index)
         c_res = lib.webui_interface_get_bool_at
         c_res.restype = ctypes.c_bool
         data = c_res(self.window,
@@ -342,17 +350,14 @@ class window:
         if lib is None:
             _err_library_not_found('script')
             return
-        # Create Buffer
+        # bool webui_script(size_t window, const char* script, size_t timeout, char* buffer, size_t buffer_length)
         buffer = ctypes.create_string_buffer(response_size)
         buffer.value = b""
-        # Create a pointer to the buffer
         buffer_ptr = ctypes.pointer(buffer)
-        # Run JavaScript
         status = bool(lib.webui_script(self.window, 
             ctypes.c_char_p(script.encode('utf-8')), 
             ctypes.c_uint(timeout), buffer_ptr,
             ctypes.c_uint(response_size)))
-        # Initializing Result
         res = javascript()
         res.data = buffer.value.decode('utf-8')
         res.error = not status
@@ -372,7 +377,7 @@ class window:
         if lib is None:
             _err_library_not_found('run')
             return
-        # Run JavaScript
+        # void webui_run(size_t window, const char* script)
         lib.webui_run(self.window, 
             ctypes.c_char_p(script.encode('utf-8')))
 
@@ -390,7 +395,7 @@ class window:
         if lib is None:
             _err_library_not_found('set_root_folder')
             return
-        # Set path
+        # bool webui_set_root_folder(size_t window, const char* path)
         lib.webui_set_root_folder(self.window, 
             ctypes.c_char_p(path.encode('utf-8')))
 
@@ -408,7 +413,7 @@ class window:
         if lib is None:
             _err_library_not_found('set_public')
             return
-        # Set public
+        # void webui_set_public(size_t window, bool status)
         lib.webui_set_public(self.window, 
             ctypes.c_bool(status))
 
@@ -422,6 +427,7 @@ class window:
         if self.window == 0:
             _err_window_is_none('set_kiosk')
             return
+        # void webui_set_kiosk(size_t window, bool status)
         lib.webui_set_kiosk(self.window, ctypes.c_bool(status))
 
 
@@ -430,6 +436,7 @@ class window:
         if self.window == 0:
             _err_window_is_none('destroy')
             return
+        # void webui_destroy(size_t window)
         lib.webui_destroy(self.window)
 
 
@@ -443,6 +450,7 @@ class window:
         if self.window == 0:
             _err_window_is_none('set_icon')
             return
+        # void webui_set_icon(size_t window, const char* icon, const char* icon_type)
         lib.webui_set_icon(self.window, ctypes.c_char_p(icon_path.encode('utf-8')), ctypes.c_char_p(icon_type.encode('utf-8')))
 
 
@@ -458,6 +466,7 @@ class window:
         if self.window == 0:
             _err_window_is_none('set_hide')
             return
+        # void webui_set_hide(size_t window, bool status)
         lib.webui_set_hide(self.window, ctypes.c_bool(status))
 
 
@@ -471,6 +480,7 @@ class window:
         if self.window == 0:
             _err_window_is_none('set_size')
             return
+        # void webui_set_size(size_t window, unsigned int width, unsigned int height)
         lib.webui_set_size(self.window, ctypes.c_uint(width), ctypes.c_uint(height))
 
 
@@ -484,6 +494,7 @@ class window:
         if self.window == 0:
             _err_window_is_none('set_position')
             return
+        # void webui_set_position(size_t window, unsigned int x, unsigned int y)
         lib.webui_set_position(self.window, ctypes.c_uint(x), ctypes.c_uint(y))
 
 
@@ -500,6 +511,7 @@ class window:
         if self.window == 0:
             _err_window_is_none('set_profile')
             return
+        # void webui_set_profile(size_t window, const char* name, const char* path)
         lib.webui_set_profile(self.window, ctypes.c_char_p(name.encode('utf-8')), ctypes.c_char_p(path.encode('utf-8')))
 
 
@@ -512,6 +524,7 @@ class window:
         if self.window == 0:
             _err_window_is_none('set_port')
             return
+        # bool webui_set_port(size_t window, size_t port)
         lib.webui_set_port(self.window, ctypes.c_size_t(port))
 
 
@@ -524,6 +537,7 @@ class window:
         if self.window == 0:
             _err_window_is_none('get_parent_process_id')
             return
+        # size_t webui_get_parent_process_id(size_t window)
         return int(lib.webui_get_parent_process_id(self.window))
 
 
@@ -536,6 +550,7 @@ class window:
         if self.window == 0:
             _err_window_is_none('get_child_process_id')
             return
+        # size_t webui_get_child_process_id(size_t window)
         return int(lib.webui_get_child_process_id(self.window))
 
 
@@ -547,6 +562,7 @@ class window:
         if lib is None:
             _err_library_not_found('new_window_id')
             return 0
+        # size_t webui_new_window_id(size_t window_number)
         return int(lib.webui_new_window_id(ctypes.c_size_t(window_number)))
 
 
@@ -557,6 +573,7 @@ class window:
         if lib is None:
             _err_library_not_found('get_new_window_id')
             return 0
+        # size_t webui_get_new_window_id(void)
         return int(lib.webui_get_new_window_id())
 
 
@@ -568,6 +585,7 @@ class window:
         if lib is None:
             _err_library_not_found('get_best_browser')
             return 0
+        # size_t webui_get_best_browser(size_t window)
         return int(lib.webui_get_best_browser(self.window))
 
 
@@ -580,6 +598,7 @@ class window:
         if lib is None:
             _err_library_not_found('start_server')
             return ""
+        # const char* webui_start_server(size_t window, const char* content)
         c_res = lib.webui_start_server
         c_res.restype = ctypes.c_char_p
         url = c_res(self.window, content.encode('utf-8'))
@@ -595,6 +614,7 @@ class window:
         if lib is None:
             _err_library_not_found('show_wv')
             return False
+        # bool webui_show_wv(size_t window, const char* content)
         return bool(lib.webui_show_wv(self.window, content.encode('utf-8')))
 
 
@@ -605,6 +625,7 @@ class window:
         if lib is None:
             _err_library_not_found('set_custom_parameters')
             return
+        # void webui_set_custom_parameters(size_t window, char* params)
         lib.webui_set_custom_parameters(self.window, params.encode('utf-8'))
 
 
@@ -616,6 +637,7 @@ class window:
         if lib is None:
             _err_library_not_found('set_high_contrast')
             return
+        # void webui_set_high_contrast(size_t window, bool status)
         lib.webui_set_high_contrast(self.window, ctypes.c_bool(status))
 
 
@@ -627,6 +649,7 @@ class window:
         if lib is None:
             _err_library_not_found('set_minimum_size')
             return
+        # void webui_set_minimum_size(size_t window, unsigned int width, unsigned int height)
         lib.webui_set_minimum_size(self.window, ctypes.c_uint(width), ctypes.c_uint(height))
 
 
@@ -637,6 +660,7 @@ class window:
         if lib is None:
             _err_library_not_found('set_proxy')
             return
+        # void webui_set_proxy(size_t window, const char* proxy_server)
         lib.webui_set_proxy(self.window, proxy_server.encode('utf-8'))
 
 
@@ -647,6 +671,7 @@ class window:
         if lib is None:
             _err_library_not_found('navigate')
             return
+        # void webui_navigate(size_t window, const char* url)
         lib.webui_navigate(self.window, url.encode('utf-8'))
 
 
@@ -734,48 +759,56 @@ def _load_library():
 def exit():
     global lib
     if lib is not None:
+        # void webui_exit(void)
         lib.webui_exit()
 
 
 def free(ptr):
     global lib
     if lib is not None:
+        # void webui_free(void* ptr)
         lib.webui_free(ctypes.c_void_p(ptr))
 
 
 def malloc(size: int) -> int:
     global lib
     if lib is not None:
+        # void* webui_malloc(size_t size)
         return int(lib.webui_malloc(ctypes.c_size_t(size)))
 
 
 def send_raw(window, function, raw, size):
     global lib
     if lib is not None:
+        # void webui_send_raw(size_t window, const char* function, const void* raw, size_t size)
         lib.webui_send_raw(window, ctypes.c_char_p(function.encode('utf-8')), ctypes.c_void_p(raw), ctypes.c_size_t(size))
 
 
 def clean():
     global lib
     if lib is not None:
+        # void webui_clean(void)
         lib.webui_clean()
 
 
 def delete_all_profiles():
     global lib
     if lib is not None:
+        # void webui_delete_all_profiles(void)
         lib.webui_delete_all_profiles()
 
 
 def delete_profile(window):
     global lib
     if lib is not None:
+        # void webui_delete_profile(size_t window)
         lib.webui_delete_profile(ctypes.c_size_t(window))
 
 
 def set_tls_certificate(certificate_pem, private_key_pem):
     global lib
     if lib is not None:
+        # bool webui_set_tls_certificate(const char* certificate_pem, const char* private_key_pem)
         lib.webui_set_tls_certificate(ctypes.c_char_p(certificate_pem.encode('utf-8')), ctypes.c_char_p(private_key_pem.encode('utf-8')))
 
 
@@ -786,6 +819,7 @@ def set_timeout(second):
         if lib is None:
             _err_library_not_found('set_timeout')
             return
+    # void webui_set_timeout(size_t second)
     lib.webui_set_timeout(ctypes.c_uint(second))
 
 
@@ -796,6 +830,7 @@ def is_app_running():
         if lib is None:
             _err_library_not_found('is_app_running')
             return
+    # bool webui_interface_is_app_running(void)
     r = bool(lib.webui_interface_is_app_running())
     return r
 
@@ -807,6 +842,7 @@ def wait():
         if lib is None:
             _err_library_not_found('wait')
             return
+    # void webui_wait(void)
     lib.webui_wait()
     try:
         shutil.rmtree(os.getcwd() + '/__intcache__/')
@@ -829,6 +865,7 @@ def is_high_contrast() -> bool:
     if lib is None:
         _err_library_not_found('is_high_contrast')
         return False
+    # bool webui_is_high_contrast(void)
     return bool(lib.webui_is_high_contrast())
 
 
@@ -839,6 +876,7 @@ def browser_exist(browser: int) -> bool:
     if lib is None:
         _err_library_not_found('browser_exist')
         return False
+    # bool webui_browser_exist(size_t browser)
     return bool(lib.webui_browser_exist(ctypes.c_size_t(browser)))
 
 
@@ -849,6 +887,7 @@ def open_url(url: str):
     if lib is None:
         _err_library_not_found('open_url')
         return
+    # void webui_open_url(const char* url)
     lib.webui_open_url(url.encode('utf-8'))
 
 
@@ -859,6 +898,7 @@ def get_free_port() -> int:
     if lib is None:
         _err_library_not_found('get_free_port')
         return 0
+    # size_t webui_get_free_port(void)
     return int(lib.webui_get_free_port())
 
 
@@ -869,6 +909,7 @@ def get_mime_type(file: str) -> str:
     if lib is None:
         _err_library_not_found('get_mime_type')
         return ""
+    # const char* webui_get_mime_type(const char* file)
     c_res = lib.webui_get_mime_type
     c_res.restype = ctypes.c_char_p
     mime = c_res(file.encode('utf-8'))
@@ -883,6 +924,7 @@ def encode(text: str) -> str:
     if lib is None:
         _err_library_not_found('encode')
         return ""
+    # char* webui_encode(const char* str)
     c_res = lib.webui_encode
     c_res.restype = ctypes.c_char_p
     encoded = c_res(text.encode('utf-8'))
@@ -899,6 +941,7 @@ def decode(text: str) -> str:
     if lib is None:
         _err_library_not_found('decode')
         return ""
+    # char* webui_decode(const char* str)
     c_res = lib.webui_decode
     c_res.restype = ctypes.c_char_p
     decoded = c_res(text.encode('utf-8'))
