@@ -13,20 +13,20 @@ if [[ "$1" == "" ]]; then
     mkdir -p "cache" 2>/dev/null
 
     # Nightly Build
-    # LINUX_ARM="https://github.com/webui-dev/webui/releases/download/nightly/webui-linux-gcc-arm.zip"
-    # LINUX_ARM64="https://github.com/webui-dev/webui/releases/download/nightly/webui-linux-gcc-arm64.zip"
-    # LINUX_X64="https://github.com/webui-dev/webui/releases/download/nightly/webui-linux-gcc-x64.zip"
-    # MACOS_ARM64="https://github.com/webui-dev/webui/releases/download/nightly/webui-macos-clang-arm64.zip"
-    # MACOS_X64="https://github.com/webui-dev/webui/releases/download/nightly/webui-macos-clang-x64.zip"
-    # WINDOWS_MSVC_X64="https://github.com/webui-dev/webui/releases/download/nightly/webui-windows-msvc-x64.zip"
+    LINUX_ARM="https://github.com/webui-dev/webui/releases/download/nightly/webui-linux-gcc-arm.zip"
+    LINUX_ARM64="https://github.com/webui-dev/webui/releases/download/nightly/webui-linux-gcc-arm64.zip"
+    LINUX_X64="https://github.com/webui-dev/webui/releases/download/nightly/webui-linux-gcc-x64.zip"
+    MACOS_ARM64="https://github.com/webui-dev/webui/releases/download/nightly/webui-macos-clang-arm64.zip"
+    MACOS_X64="https://github.com/webui-dev/webui/releases/download/nightly/webui-macos-clang-x64.zip"
+    WINDOWS_MSVC_X64="https://github.com/webui-dev/webui/releases/download/nightly/webui-windows-msvc-x64.zip"
 
     # Release
-    LINUX_ARM="https://github.com/webui-dev/webui/releases/download/2.4.2/webui-linux-gcc-arm.zip"
-    LINUX_ARM64="https://github.com/webui-dev/webui/releases/download/2.4.2/webui-linux-gcc-arm64.zip"
-    LINUX_X64="https://github.com/webui-dev/webui/releases/download/2.4.2/webui-linux-gcc-x64.zip"
-    MACOS_ARM64="https://github.com/webui-dev/webui/releases/download/2.4.2/webui-macos-clang-arm64.zip"
-    MACOS_X64="https://github.com/webui-dev/webui/releases/download/2.4.2/webui-macos-clang-x64.zip"
-    WINDOWS_MSVC_X64="https://github.com/webui-dev/webui/releases/download/2.4.2/webui-windows-msvc-x64.zip"
+    # LINUX_ARM="https://github.com/webui-dev/webui/releases/download/2.4.2/webui-linux-gcc-arm.zip"
+    # LINUX_ARM64="https://github.com/webui-dev/webui/releases/download/2.4.2/webui-linux-gcc-arm64.zip"
+    # LINUX_X64="https://github.com/webui-dev/webui/releases/download/2.4.2/webui-linux-gcc-x64.zip"
+    # MACOS_ARM64="https://github.com/webui-dev/webui/releases/download/2.4.2/webui-macos-clang-arm64.zip"
+    # MACOS_X64="https://github.com/webui-dev/webui/releases/download/2.4.2/webui-macos-clang-x64.zip"
+    # WINDOWS_MSVC_X64="https://github.com/webui-dev/webui/releases/download/2.4.2/webui-windows-msvc-x64.zip"
 
     # Download and extract archives
     download_and_extract() {
