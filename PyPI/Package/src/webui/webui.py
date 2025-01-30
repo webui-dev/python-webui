@@ -144,7 +144,6 @@ class window:
             lib.webui_interface_set_response(window, event_number, cb_result_encode)
 
 
-    # Bind a specific html element click event with a function. Empty element means all events.
     def bind(self, element, func):
         """Bind a specific HTML element click event with a function.
         
@@ -171,7 +170,6 @@ class window:
         self.cb_fun_list[bindId] = func
 
 
-    # Show a window using a embedded HTML, or a file. If the window is already opened then it will be refreshed.
     def show(self, content="<html></html>", browser:int=browser.ChromiumBased):
         """Show a window using embedded HTML, or a file.
         
@@ -196,7 +194,6 @@ class window:
         lib.webui_show_browser(self.window, content.encode('utf-8'), ctypes.c_uint(browser))
 
 
-    # Chose between Deno and Nodejs runtime for .js and .ts files.
     def set_runtime(self, rt=runtime.deno):
         """Choose between Deno and Nodejs runtime for .js and .ts files.
         
@@ -214,7 +211,6 @@ class window:
                         ctypes.c_uint(rt))
 
 
-    # Close the window.
     def close(self):
         """Close the window.
         
@@ -325,7 +321,6 @@ class window:
         return data
     
 
-    # Run a JavaScript, and get the response back (Make sure your local buffer can hold the response).
     def script(self, script, timeout=0, response_size=(1024 * 8)) -> javascript:
         """Run JavaScript and get the response back.
         
@@ -364,7 +359,6 @@ class window:
         return res
 
 
-    # Run JavaScript quickly with no waiting for the response
     def run(self, script):
         """Run JavaScript quickly with no waiting for the response.
         
@@ -383,7 +377,6 @@ class window:
             ctypes.c_char_p(script.encode('utf-8')))
 
 
-    # Set the web-server root folder path for a specific window
     def set_root_folder(self, path):
         """Set the web-server root folder path for a specific window.
         
@@ -402,7 +395,6 @@ class window:
             ctypes.c_char_p(path.encode('utf-8')))
 
 
-    # Allow a specific window address to be accessible from a public network
     def set_public(self, status = True):
         """Allow a specific window address to be accessible from a public network.
         
@@ -421,7 +413,6 @@ class window:
             ctypes.c_bool(status))
 
 
-    #
     def set_kiosk(self, status: bool):
         """Set the window in Kiosk mode (Full screen).
         
@@ -434,7 +425,6 @@ class window:
         lib.webui_set_kiosk(self.window, ctypes.c_bool(status))
 
 
-    #
     def destroy(self):
         """Close the window and free all memory resources."""
         if self.window == 0:
@@ -443,7 +433,6 @@ class window:
         lib.webui_destroy(self.window)
 
 
-    #
     def set_icon(self, icon_path, icon_type):
         """Set the default embedded HTML favicon.
         
@@ -457,7 +446,6 @@ class window:
         lib.webui_set_icon(self.window, ctypes.c_char_p(icon_path.encode('utf-8')), ctypes.c_char_p(icon_type.encode('utf-8')))
 
 
-    #
     def set_hide(self, status: bool):
         """Set a window in hidden mode.
         
@@ -473,7 +461,6 @@ class window:
         lib.webui_set_hide(self.window, ctypes.c_bool(status))
 
 
-    #
     def set_size(self, width: int, height: int):
         """Set the window size.
         
@@ -487,7 +474,6 @@ class window:
         lib.webui_set_size(self.window, ctypes.c_uint(width), ctypes.c_uint(height))
 
 
-    #
     def set_position(self, x: int, y: int):
         """Set the window position.
         
@@ -501,7 +487,6 @@ class window:
         lib.webui_set_position(self.window, ctypes.c_uint(x), ctypes.c_uint(y))
 
 
-    #
     def set_profile(self, name, path):
         """Set the web browser profile to use.
         
@@ -518,7 +503,6 @@ class window:
         lib.webui_set_profile(self.window, ctypes.c_char_p(name.encode('utf-8')), ctypes.c_char_p(path.encode('utf-8')))
 
 
-    #
     def set_port(self, port: int):
         """Set a custom web-server/websocket network port to be used by WebUI.
         
@@ -531,7 +515,6 @@ class window:
         lib.webui_set_port(self.window, ctypes.c_size_t(port))
 
 
-    #
     def get_parent_process_id(self) -> int:
         """Get the ID of the parent process.
         
@@ -544,7 +527,6 @@ class window:
         return int(lib.webui_get_parent_process_id(self.window))
 
 
-    #
     def get_child_process_id(self) -> int:
         """Get the ID of the last child process.
         
@@ -716,7 +698,6 @@ def _download_library():
                ' && ' + script + ' minimal')
 
 
-# Load WebUI Dynamic Library
 def _load_library():
     global lib
     if lib is not None:
@@ -749,62 +730,55 @@ def _load_library():
     else:
         print("Unsupported OS")
 
-# Close all opened windows. webui_wait() will break.
+
 def exit():
     global lib
     if lib is not None:
         lib.webui_exit()
 
-# 
+
 def free(ptr):
     global lib
     if lib is not None:
         lib.webui_free(ctypes.c_void_p(ptr))
 
 
-# 
 def malloc(size: int) -> int:
     global lib
     if lib is not None:
         return int(lib.webui_malloc(ctypes.c_size_t(size)))
 
 
-# 
 def send_raw(window, function, raw, size):
     global lib
     if lib is not None:
         lib.webui_send_raw(window, ctypes.c_char_p(function.encode('utf-8')), ctypes.c_void_p(raw), ctypes.c_size_t(size))
 
 
-# 
 def clean():
     global lib
     if lib is not None:
         lib.webui_clean()
 
 
-# 
 def delete_all_profiles():
     global lib
     if lib is not None:
         lib.webui_delete_all_profiles()
 
 
-# 
 def delete_profile(window):
     global lib
     if lib is not None:
         lib.webui_delete_profile(ctypes.c_size_t(window))
 
 
-# 
 def set_tls_certificate(certificate_pem, private_key_pem):
     global lib
     if lib is not None:
         lib.webui_set_tls_certificate(ctypes.c_char_p(certificate_pem.encode('utf-8')), ctypes.c_char_p(private_key_pem.encode('utf-8')))
 
 
-# Set startup timeout
 def set_timeout(second):
     global lib
     if lib is None:
@@ -826,7 +800,6 @@ def is_app_running():
     return r
 
 
-# Wait until all opened windows get closed.
 def wait():
     global lib
     if lib is None:
@@ -841,12 +814,10 @@ def wait():
         pass
 
 
-# 
 def _err_library_not_found(f):
     print('WebUI ' + f + '(): Library Not Found.')
 
 
-#
 def _err_window_is_none(f):
     print('WebUI ' + f + '(): window is None.')
 
