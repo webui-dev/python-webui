@@ -146,6 +146,15 @@ class window:
 
     # Bind a specific html element click event with a function. Empty element means all events.
     def bind(self, element, func):
+        """Bind a specific HTML element click event with a function.
+        
+        Args:
+            element: The HTML element / JavaScript object. Empty element means all events.
+            func: The callback function to be called when the event occurs.
+            
+        Returns:
+            The unique bind ID for this event binding.
+        """
         global lib
         if self.window == 0:
             _err_window_is_none('bind')
@@ -164,6 +173,18 @@ class window:
 
     # Show a window using a embedded HTML, or a file. If the window is already opened then it will be refreshed.
     def show(self, content="<html></html>", browser:int=browser.ChromiumBased):
+        """Show a window using embedded HTML, or a file.
+        
+        If the window is already opened then it will be refreshed.
+        This will refresh all windows in multi-client mode.
+        
+        Args:
+            content: The HTML content, URL, or a local file path
+            browser: The web browser to be used (default: ChromiumBased)
+            
+        Returns:
+            True if showing the window succeeded.
+        """
         global lib
         if self.window == 0:
             _err_window_is_none('show')
@@ -177,6 +198,11 @@ class window:
 
     # Chose between Deno and Nodejs runtime for .js and .ts files.
     def set_runtime(self, rt=runtime.deno):
+        """Choose between Deno and Nodejs runtime for .js and .ts files.
+        
+        Args:
+            rt: The runtime to use (deno, nodejs, or none)
+        """
         global lib
         if self.window == 0:
             _err_window_is_none('set_runtime')
@@ -190,6 +216,10 @@ class window:
 
     # Close the window.
     def close(self):
+        """Close the window.
+        
+        The window object will still exist but the window will be closed.
+        """
         global lib
         if lib is None:
             _err_library_not_found('close')
@@ -198,6 +228,11 @@ class window:
 
 
     def is_shown(self):
+        """Check if the window is still running.
+        
+        Returns:
+            bool: True if window is running, False otherwise.
+        """
         global lib
         if lib is None:
             _err_library_not_found('is_shown')
@@ -207,6 +242,11 @@ class window:
 
 
     def get_url(self) -> str:
+        """Get current URL of a running window.
+        
+        Returns:
+            str: The full URL string of the window.
+        """
         global lib
         if lib is None:
             _err_library_not_found('get_url')
@@ -219,6 +259,15 @@ class window:
 
 
     def get_str(self, e: event, index: c_size_t = 0) -> str:
+        """Get an argument as string at a specific index.
+        
+        Args:
+            e: The event struct containing the arguments
+            index: The argument position starting from 0
+            
+        Returns:
+            str: The argument value as string.
+        """
         global lib
         if lib is None:
             _err_library_not_found('get_str')
@@ -233,6 +282,15 @@ class window:
 
 
     def get_int(self, e: event, index: c_size_t = 0) -> int:
+        """Get an argument as integer at a specific index.
+        
+        Args:
+            e: The event struct containing the arguments
+            index: The argument position starting from 0
+            
+        Returns:
+            int: The argument value as integer.
+        """
         global lib
         if lib is None:
             _err_library_not_found('get_str')
@@ -246,6 +304,15 @@ class window:
     
 
     def get_bool(self, e: event, index: c_size_t = 0) -> bool:
+        """Get an argument as boolean at a specific index.
+        
+        Args:
+            e: The event struct containing the arguments
+            index: The argument position starting from 0
+            
+        Returns:
+            bool: The argument value as boolean.
+        """
         global lib
         if lib is None:
             _err_library_not_found('get_str')
