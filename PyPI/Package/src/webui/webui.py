@@ -94,18 +94,18 @@ class window:
             webui_wrapper = None
             # size_t webui_new_window(void)
             webui_wrapper = lib.webui_new_window
-            webui_wrapper.restype = c_size_t
-            self.window = c_size_t(webui_wrapper())
+            webui_wrapper.restype = c_uint
+            self.window = c_uint(webui_wrapper())
             # Get the window unique ID
             self.window_id = str(self.window)
             # Initializing events() to be used by
             # WebUI library as a callback
             py_fun = ctypes.CFUNCTYPE(
                 ctypes.c_void_p, # RESERVED
-                ctypes.c_size_t, # window
+                ctypes.c_uint, # window
                 ctypes.c_uint, # event type
                 ctypes.c_char_p, # element
-                ctypes.c_size_t, # event number
+                ctypes.c_uint, # event number
                 ctypes.c_uint) # Bind ID
             self.c_events = py_fun(self._events)
         except OSError as e:
@@ -120,7 +120,7 @@ class window:
     #         lib.webui_close(self.window)
 
 
-    def _events(self, window: ctypes.c_size_t,
+    def _events(self, window: ctypes.c_uint,
                event_type: ctypes.c_uint,
                _element: ctypes.c_char_p,
                event_number: ctypes.c_longlong,
@@ -192,7 +192,10 @@ class window:
             _err_library_not_found('show')
             return
         # bool webui_show_browser(size_t window, const char* content, size_t browser)
-        lib.webui_show_browser(self.window, content.encode('utf-8'), ctypes.c_uint(browser))
+        lib.webui_show_browser(
+            self.window,
+            content.encode('utf-8'),
+            ctypes.c_uint(browser))
 
 
     def set_runtime(self, rt=runtime.deno):
@@ -209,8 +212,9 @@ class window:
             _err_library_not_found('set_runtime')
             return
         # void webui_set_runtime(size_t window, size_t runtime)
-        lib.webui_set_runtime(self.window, 
-                        ctypes.c_uint(rt))
+        lib.webui_set_runtime(
+            self.window,
+            ctypes.c_uint(rt))
 
 
     def close(self):
@@ -237,6 +241,7 @@ class window:
             _err_library_not_found('is_shown')
             return
         # bool webui_is_shown(size_t window)
+        lib.webui_is_shown.restype = ctypes.c_bool
         r = bool(lib.webui_is_shown(self.window))
         return r
 
@@ -259,7 +264,7 @@ class window:
         return decode
 
 
-    def get_str(self, e: event, index: c_size_t = 0) -> str:
+    def get_str(self, e: event, index: c_uint = 0) -> str:
         """Get an argument as string at a specific index.
         
         Args:
@@ -274,6 +279,7 @@ class window:
             _err_library_not_found('get_str')
             return
         # const char* webui_interface_get_string_at(size_t window, size_t event_number, size_t index)
+        # const char* webui_interface_get_string_at(size_t window, size_t event_number, size_t index)
         c_res = lib.webui_interface_get_string_at
         c_res.restype = ctypes.c_char_p
         data = c_res(self.window,
@@ -283,7 +289,7 @@ class window:
         return decode
 
 
-    def get_int(self, e: event, index: c_size_t = 0) -> int:
+    def get_int(self, e: event, index: c_uint = 0) -> int:
         """Get an argument as integer at a specific index.
         
         Args:
@@ -306,7 +312,7 @@ class window:
         return data
     
 
-    def get_bool(self, e: event, index: c_size_t = 0) -> bool:
+    def get_bool(self, e: event, index: c_uint = 0) -> bool:
         """Get an argument as boolean at a specific index.
         
         Args:
@@ -356,7 +362,8 @@ class window:
         buffer_ptr = ctypes.pointer(buffer)
         status = bool(lib.webui_script(self.window, 
             ctypes.c_char_p(script.encode('utf-8')), 
-            ctypes.c_uint(timeout), buffer_ptr,
+            ctypes.c_uint(timeout),
+            buffer_ptr,
             ctypes.c_uint(response_size)))
         res = javascript()
         res.data = buffer.value.decode('utf-8')
@@ -525,7 +532,7 @@ class window:
             _err_window_is_none('set_port')
             return
         # bool webui_set_port(size_t window, size_t port)
-        lib.webui_set_port(self.window, ctypes.c_size_t(port))
+        lib.webui_set_port(self.window, ctypes.c_uint(port))
 
 
     def get_parent_process_id(self) -> int:
@@ -563,7 +570,7 @@ class window:
             _err_library_not_found('new_window_id')
             return 0
         # size_t webui_new_window_id(size_t window_number)
-        return int(lib.webui_new_window_id(ctypes.c_size_t(window_number)))
+        return int(lib.webui_new_window_id(ctypes.c_uint(window_number)))
 
 
     def get_new_window_id(self) -> int:
@@ -774,14 +781,14 @@ def malloc(size: int) -> int:
     global lib
     if lib is not None:
         # void* webui_malloc(size_t size)
-        return int(lib.webui_malloc(ctypes.c_size_t(size)))
+        return int(lib.webui_malloc(ctypes.c_uint(size)))
 
 
 def send_raw(window, function, raw, size):
     global lib
     if lib is not None:
         # void webui_send_raw(size_t window, const char* function, const void* raw, size_t size)
-        lib.webui_send_raw(window, ctypes.c_char_p(function.encode('utf-8')), ctypes.c_void_p(raw), ctypes.c_size_t(size))
+        lib.webui_send_raw(window, ctypes.c_char_p(function.encode('utf-8')), ctypes.c_void_p(raw), ctypes.c_uint(size))
 
 
 def clean():
@@ -802,7 +809,7 @@ def delete_profile(window):
     global lib
     if lib is not None:
         # void webui_delete_profile(size_t window)
-        lib.webui_delete_profile(ctypes.c_size_t(window))
+        lib.webui_delete_profile(ctypes.c_uint(window))
 
 
 def set_tls_certificate(certificate_pem, private_key_pem):
@@ -877,7 +884,7 @@ def browser_exist(browser: int) -> bool:
         _err_library_not_found('browser_exist')
         return False
     # bool webui_browser_exist(size_t browser)
-    return bool(lib.webui_browser_exist(ctypes.c_size_t(browser)))
+    return bool(lib.webui_browser_exist(ctypes.c_uint(browser)))
 
 
 def open_url(url: str):
