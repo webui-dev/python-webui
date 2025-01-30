@@ -327,6 +327,19 @@ class window:
 
     # Run a JavaScript, and get the response back (Make sure your local buffer can hold the response).
     def script(self, script, timeout=0, response_size=(1024 * 8)) -> javascript:
+        """Run JavaScript and get the response back.
+        
+        Args:
+            script: The JavaScript code to be executed
+            timeout: The execution timeout in seconds (0 means no timeout)
+            response_size: The size of response buffer (default: 8KB)
+            
+        Returns:
+            javascript: Object containing response data and error status.
+            
+        Note:
+            Make sure your local buffer can hold the response.
+        """
         global lib
         if self.window == 0:
             _err_window_is_none('script')
@@ -353,6 +366,11 @@ class window:
 
     # Run JavaScript quickly with no waiting for the response
     def run(self, script):
+        """Run JavaScript quickly with no waiting for the response.
+        
+        Args:
+            script: The JavaScript code to be executed
+        """
         global lib
         if self.window == 0:
             _err_window_is_none('run')
@@ -367,6 +385,11 @@ class window:
 
     # Set the web-server root folder path for a specific window
     def set_root_folder(self, path):
+        """Set the web-server root folder path for a specific window.
+        
+        Args:
+            path: The local folder full path to be used as root
+        """
         global lib
         if self.window == 0:
             _err_window_is_none('set_root_folder')
@@ -381,6 +404,11 @@ class window:
 
     # Allow a specific window address to be accessible from a public network
     def set_public(self, status = True):
+        """Allow a specific window address to be accessible from a public network.
+        
+        Args:
+            status: True to make window public, False for private (default: True)
+        """
         global lib
         if self.window == 0:
             _err_window_is_none('set_public')
@@ -395,6 +423,11 @@ class window:
 
     #
     def set_kiosk(self, status: bool):
+        """Set the window in Kiosk mode (Full screen).
+        
+        Args:
+            status: True to enable kiosk mode, False to disable
+        """
         if self.window == 0:
             _err_window_is_none('set_kiosk')
             return
@@ -403,6 +436,7 @@ class window:
 
     #
     def destroy(self):
+        """Close the window and free all memory resources."""
         if self.window == 0:
             _err_window_is_none('destroy')
             return
@@ -411,6 +445,12 @@ class window:
 
     #
     def set_icon(self, icon_path, icon_type):
+        """Set the default embedded HTML favicon.
+        
+        Args:
+            icon_path: The icon file path or content
+            icon_type: The icon type (e.g., 'image/svg+xml')
+        """
         if self.window == 0:
             _err_window_is_none('set_icon')
             return
@@ -419,6 +459,14 @@ class window:
 
     #
     def set_hide(self, status: bool):
+        """Set a window in hidden mode.
+        
+        Args:
+            status: True to hide window, False to show
+            
+        Note:
+            Should be called before show().
+        """
         if self.window == 0:
             _err_window_is_none('set_hide')
             return
@@ -427,6 +475,12 @@ class window:
 
     #
     def set_size(self, width: int, height: int):
+        """Set the window size.
+        
+        Args:
+            width: The window width in pixels
+            height: The window height in pixels
+        """
         if self.window == 0:
             _err_window_is_none('set_size')
             return
@@ -435,6 +489,12 @@ class window:
 
     #
     def set_position(self, x: int, y: int):
+        """Set the window position.
+        
+        Args:
+            x: The window X coordinate
+            y: The window Y coordinate
+        """
         if self.window == 0:
             _err_window_is_none('set_position')
             return
@@ -443,6 +503,15 @@ class window:
 
     #
     def set_profile(self, name, path):
+        """Set the web browser profile to use.
+        
+        Args:
+            name: The web browser profile name
+            path: The web browser profile full path
+            
+        Note:
+            Empty name and path means default user profile.
+        """
         if self.window == 0:
             _err_window_is_none('set_profile')
             return
@@ -451,6 +520,11 @@ class window:
 
     #
     def set_port(self, port: int):
+        """Set a custom web-server/websocket network port to be used by WebUI.
+        
+        Args:
+            port: The web-server network port WebUI should use
+        """
         if self.window == 0:
             _err_window_is_none('set_port')
             return
@@ -459,6 +533,11 @@ class window:
 
     #
     def get_parent_process_id(self) -> int:
+        """Get the ID of the parent process.
+        
+        Returns:
+            int: The parent process id
+        """
         if self.window == 0:
             _err_window_is_none('get_parent_process_id')
             return
@@ -467,6 +546,11 @@ class window:
 
     #
     def get_child_process_id(self) -> int:
+        """Get the ID of the last child process.
+        
+        Returns:
+            int: The child process id
+        """
         if self.window == 0:
             _err_window_is_none('get_child_process_id')
             return
