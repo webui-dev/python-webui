@@ -1,3 +1,13 @@
+# Python WebUI v2.5.0
+#
+# http://webui.me
+# https://github.com/webui-dev/python-webui
+#
+# Copyright (c) 2020-2025 Hassan Draga.
+# Licensed under MIT License.
+# All rights reserved.
+# Canada.
+
 # webui.py
 from __future__ import annotations
 
