@@ -16,20 +16,20 @@ echo.
 mkdir "cache" 2>nul 1>nul
 
 :: Nightly Build
-:: SET "LINUX_ARM=https://github.com/webui-dev/webui/releases/download/nightly/webui-linux-gcc-arm.zip"
-:: SET "LINUX_ARM64=https://github.com/webui-dev/webui/releases/download/nightly/webui-linux-gcc-arm64.zip"
-:: SET "LINUX_X64=https://github.com/webui-dev/webui/releases/download/nightly/webui-linux-gcc-x64.zip"
-:: SET "MACOS_ARM64=https://github.com/webui-dev/webui/releases/download/nightly/webui-macos-clang-arm64.zip"
-:: SET "MACOS_X64=https://github.com/webui-dev/webui/releases/download/nightly/webui-macos-clang-x64.zip"
-:: SET "WINDOWS_MSVC_X64=https://github.com/webui-dev/webui/releases/download/nightly/webui-windows-msvc-x64.zip"
+SET "LINUX_ARM=https://github.com/webui-dev/webui/releases/download/nightly/webui-linux-gcc-arm.zip"
+SET "LINUX_ARM64=https://github.com/webui-dev/webui/releases/download/nightly/webui-linux-gcc-arm64.zip"
+SET "LINUX_X64=https://github.com/webui-dev/webui/releases/download/nightly/webui-linux-gcc-x64.zip"
+SET "MACOS_ARM64=https://github.com/webui-dev/webui/releases/download/nightly/webui-macos-clang-arm64.zip"
+SET "MACOS_X64=https://github.com/webui-dev/webui/releases/download/nightly/webui-macos-clang-x64.zip"
+SET "WINDOWS_MSVC_X64=https://github.com/webui-dev/webui/releases/download/nightly/webui-windows-msvc-x64.zip"
 
 :: Release
-SET "LINUX_ARM=https://github.com/webui-dev/webui/releases/download/2.5.0-beta.2/webui-linux-gcc-arm.zip"
-SET "LINUX_ARM64=https://github.com/webui-dev/webui/releases/download/2.5.0-beta.2/webui-linux-gcc-arm64.zip"
-SET "LINUX_X64=https://github.com/webui-dev/webui/releases/download/2.5.0-beta.2/webui-linux-gcc-x64.zip"
-SET "MACOS_ARM64=https://github.com/webui-dev/webui/releases/download/2.5.0-beta.2/webui-macos-clang-arm64.zip"
-SET "MACOS_X64=https://github.com/webui-dev/webui/releases/download/2.5.0-beta.2/webui-macos-clang-x64.zip"
-SET "WINDOWS_MSVC_X64=https://github.com/webui-dev/webui/releases/download/2.5.0-beta.2/webui-windows-msvc-x64.zip"
+:: SET "LINUX_ARM=https://github.com/webui-dev/webui/releases/download/2.5.0-beta.2/webui-linux-gcc-arm.zip"
+:: SET "LINUX_ARM64=https://github.com/webui-dev/webui/releases/download/2.5.0-beta.2/webui-linux-gcc-arm64.zip"
+:: SET "LINUX_X64=https://github.com/webui-dev/webui/releases/download/2.5.0-beta.2/webui-linux-gcc-x64.zip"
+:: SET "MACOS_ARM64=https://github.com/webui-dev/webui/releases/download/2.5.0-beta.2/webui-macos-clang-arm64.zip"
+:: SET "MACOS_X64=https://github.com/webui-dev/webui/releases/download/2.5.0-beta.2/webui-macos-clang-x64.zip"
+:: SET "WINDOWS_MSVC_X64=https://github.com/webui-dev/webui/releases/download/2.5.0-beta.2/webui-windows-msvc-x64.zip"
 
 :: Download and extract archives
 CALL :DOWNLOAD_AND_EXTRACT %LINUX_ARM% webui-linux-gcc-arm webui-2.so
