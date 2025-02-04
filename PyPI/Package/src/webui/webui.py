@@ -584,9 +584,11 @@ class Event:
 
 
 # -- Window Object ------------------------------
-class Window:  # TODO: document
+class Window:
     """
-    Pythonic wrapper around a WebUI window.
+    WebUI Window Object
+
+    Has all related functions that need a window reference to execute.
     """
     def __init__(self, window_id: Optional[int] = None):
         """
@@ -603,13 +605,17 @@ class Window:  # TODO: document
         if not self._window:
             raise RuntimeError("Failed to create a new WebUI window.")
 
+        # window id but in string format if needed. (currently not in use, legacy from previous wrapper)
         self._window_id: str = str(self._window)
 
+        # Dispatch function conversion to C bind for binding functions
         callback_function_type = _raw.CFUNCTYPE(None, _raw.POINTER(_raw.WebuiEventT))
         self._dispatcher_cfunc = callback_function_type(self._make_dispatcher())
-        # Dict to keep track of binded functions: {bind_id: python_function}
+
+        # Dict to keep track of bound functions: {bind_id: python_function}
         self._cb_func_list: dict = {}
 
+        #
         self._file_handler_cfunc = None
 
     # -- dispatcher for function bindings -----------
@@ -625,83 +631,223 @@ class Window:  # TODO: document
 
     @property
     # -- get_window_id --------------------------
-    def get_window_id(self) -> int:  # TODO: document
+    def get_window_id(self) -> int:
         """Returns the window id."""
         return self._window
 
     # -- bind ---------------------------------------
-    def bind(self, element: str, func: Callable[[Event], None]) -> int:  # TODO: document
-        """
-        Bind an HTML element and a JavaScript object with
-        a backend function. Empty element name means all events.
+    def bind(self, element: str, func: Callable[[Event], None]) -> int:
+        """Bind an HTML element or JavaScript object to a backend function.
+
+        This function binds a frontend HTML element or JavaScript object to a Python
+        callback function, allowing interaction between the frontend and backend.
+        If an empty string is passed as the element, the function will be bound to all events.
+
+        Args:
+            element (str): The name of the HTML element or JavaScript object to bind.
+                An empty string binds to all events.
+            func (Callable[[Event], None]): The Python callback function to execute when the event occurs.
+
+        Returns:
+            int: A unique bind ID that can be used to manage the binding.
+
+        Example:
+            def my_function(event: Event):
+                print("Event received:", event)
+
+            bind_id = my_window.bind("myFunction", my_function)
+            print(f"Function bound with ID: {bind_id}")
         """
         element_c = element.encode('utf-8') if element else None
-        bind_id = _raw.webui_bind(self._window, element_c, self._dispatcher_cfunc)
+        bind_id = _raw.webui_bind(c_size_t(self._window), element_c, self._dispatcher_cfunc)
         self._cb_func_list[bind_id] = func
         return bind_id
 
     # -- get_best_browser ---------------------------
-    def get_best_browser(self) -> Browser:  # TODO: document
+    def get_best_browser(self) -> Browser:
+        """Get the recommended web browser ID to use.
+
+        This function retrieves the recommended web browser ID for the current window.
+        If a browser is already in use, it returns the same browser ID.
+
+        Returns:
+            Browser: The ID of the recommended web browser.
+
+        Example:
+            browser_id = my_window.get_best_browser()
+            print(f"Recommended browser ID: {browser_id}")
         """
-        Get the recommended web browser to use. If you
-        are already using one, this function will return the same browser.
-        """
-        return Browser(int(_raw.webui_get_best_browser(self._window)))
+        return Browser(int(_raw.webui_get_best_browser(c_size_t(self._window))))
 
     # -- show ---------------------------------------
-    def show(self, content: str) -> bool:  # TODO: document
+    def show(self, content: str) -> bool:
+        """Show a window using embedded HTML, a file, or a URL.
+
+        This function displays a window with the provided content. The content can be
+        raw HTML, a local file path, or a URL. If the window is already open, it will be
+        refreshed. In multi-client mode, all windows will be refreshed.
+
+        Args:
+            content (str): The HTML content, a file path, or a URL to load in the window.
+
+        Returns:
+            bool: True if the window was successfully shown, False otherwise.
+
+        Example:
+            success = my_window.show("<html>...</html>")
+            success = my_window.show("index.html")
+            success = my_window.show("http://example.com")
         """
-        Show or refresh the window with the specified content
-        (HTML, URL, or local file).
-        """
-        # We pass UTF-8 strings to the C function
-        return bool(_raw.webui_show(self._window, content.encode("utf-8")))
+        return bool(_raw.webui_show(c_size_t(self._window), c_char_p(content.encode("utf-8"))))
 
     # -- show_browser -------------------------------
-    def show_browser(self, content: str, browser: Browser) -> bool:  # TODO: document
+    def show_browser(self, content: str, browser: Browser) -> bool:
+        """Show a window using embedded HTML or a file in a specific web browser.
+
+        This function displays a window with the provided content using a specified web browser.
+        The content can be raw HTML, a local file path, or a URL. If the window is already open,
+        it will be refreshed. In multi-client mode, all windows will be refreshed.
+
+        Args:
+            content (str): The HTML content, a file path, or a URL to load in the window.
+            browser (Browser): The web browser to be used.
+
+        Returns:
+            bool: True if the window was successfully shown, False otherwise.
+
+        Example:
+            success = my_window.show_browser("<html>...</html>", Browser.Chrome)
+            success = my_window.show_browser("index.html", Browser.Firefox)
         """
-        Show or refresh the window using a specific browser (by enum).
-        """
-        return bool(_raw.webui_show_browser(self._window, content.encode("utf-8"), c_size_t(browser.value)))
+        return bool(_raw.webui_show_browser(c_size_t(self._window), c_char_p(content.encode("utf-8")), c_size_t(browser.value)))
 
     # -- start_server -------------------------------
-    def start_server(self, content: str) -> str:  # TODO: document
-        return _raw.webui_start_server(self._window, content.encode("utf-8")).decode("utf-8")
+    def start_server(self, content: str) -> str:
+        """Start a web server and return the server URL.
+
+        This function starts a web server using the provided content but does not show
+        a window. The content can be raw HTML, a local file path, or a URL.
+
+        Args:
+            content (str): The HTML content, a file path, or a URL to serve.
+
+        Returns:
+            str: The URL of the web server.
+
+        Example:
+            url = my_window.start_server("/full/root/path")
+            print(f"Server started at: {url}")
+        """
+        return str(_raw.webui_start_server(c_size_t(self._window), c_char_p(content.encode("utf-8"))).decode("utf-8"))
 
     # -- show_wv ------------------------------------
-    def show_wv(self, content: str) -> bool:  # TODO: document
-        return bool(_raw.webui_show_wv(self._window, content.encode("utf-8")))
+    def show_wv(self, content: str) -> bool:
+        """Show a WebView window using embedded HTML, a file, or a URL.
+
+        This function displays a WebView window with the provided content. The content
+        can be raw HTML, a local file path, or a URL. If the window is already open, it
+        will be refreshed.
+
+        Note:
+            On Win32 systems, `WebView2Loader.dll` is required for this function to work.
+
+        Args:
+            content (str): The HTML content, a file path, or a URL to load in the WebView window.
+
+        Returns:
+            bool: True if the WebView window was successfully shown, False otherwise.
+
+        Example:
+            success = my_window.show_wv("<html>...</html>")
+            success = my_window.show_wv("index.html")
+            success = my_window.show_wv("http://example.com")
+        """
+        return bool(_raw.webui_show_wv(c_size_t(self._window), content.encode("utf-8")))
 
     # -- set_kiosk ----------------------------------
-    def set_kiosk(self, status: bool) -> None:  # TODO: document
+    def set_kiosk(self, status: bool) -> None:
+        """Set the window in Kiosk mode (full screen).
+
+        This function enables or disables Kiosk mode for the specified window.
+        Kiosk mode forces the window into full-screen mode without window controls.
+
+        Args:
+            status (bool): True to enable Kiosk mode, False to disable it.
+
+        Returns:
+            None
+
+        Example:
+            my_window.set_kiosk(True)  # Enable Kiosk mode
+            my_window.set_kiosk(False) # Disable Kiosk mode
         """
-        Set or unset kiosk (fullscreen) mode.
+        _raw.webui_set_kiosk(c_size_t(self._window), c_bool(status))
+
+    # -- set_custom_parameters ----------------------
+    def set_custom_parameters(self, params: str) -> None:
+        """Add user-defined command-line parameters for the web browser.
+
+        This function sets custom command-line parameters for the web browser
+        used to display the window.
+
+        Args:
+            params (str): The command-line parameters to pass to the web browser.
+
+        Returns:
+            None
+
+        Example:
+            my_window.set_custom_parameters("--remote-debugging-port=9222")
         """
-        _raw.webui_set_kiosk(self._window, c_bool(status))
+        _raw.webui_set_custom_parameters(c_size_t(self._window), c_char_p(params.encode("utf-8")))
 
     # -- set_high_contrast --------------------------
-    def set_high_contrast(self, status: bool) -> None:  # TODO: document
-        _raw.webui_set_high_contrast(self._window, c_bool(status))
+    def set_high_contrast(self, status: bool) -> None:
+        """Enable or disable high-contrast mode for the window.
+
+        This function enables or disables high-contrast support for the window.
+        It is useful when building a high-contrast theme using CSS to improve
+        accessibility.
+
+        Args:
+            status (bool): True to enable high-contrast mode, False to disable it.
+
+        Returns:
+            None
+
+        Example:
+            my_window.set_high_contrast(True)  # Enable high-contrast mode
+            my_window.set_high_contrast(False) # Disable high-contrast mode
+        """
+        _raw.webui_set_high_contrast(c_size_t(self._window), c_bool(status))
 
     # -- close --------------------------------------
     def close(self) -> None:  # TODO: document
+        """Close a specific window.
+
+        This function closes the specified window, but the window object still exists
+        and can be reopened if needed. It does not affect other windows or clients.
+
+        Returns:
+            None
+
+        Example:
+            my_window.close()  # Close the current window.
         """
-        Close this window (all clients).
-        """
-        _raw.webui_close(self._window)
+        _raw.webui_close(c_size_t(self._window))
 
     # -- destroy ------------------------------------
     def destroy(self) -> None:  # TODO: document
         """
         Close this window and free all memory resources used by it.
         """
-        _raw.webui_destroy(self._window)
+        _raw.webui_destroy(c_size_t(self._window))
 
     # -- set_root_folder ----------------------------
     def set_root_folder(self, path: str) -> bool:  # TODO: document
-        return bool(_raw.webui_set_root_folder(self._window, path.encode("utf-8")))
+        return bool(_raw.webui_set_root_folder(c_size_t(self._window), path.encode("utf-8")))
 
-    # -- set_file_handler----------------------------
+    # -- set_file_handler ---------------------------
     def set_file_handler(self, handler: Callable[[str], bytes]) -> None:  # TODO: document
         """
         Set a custom file handler to serve files for this window.
@@ -740,19 +886,21 @@ class Window:  # TODO: document
         # Keep a reference so it doesnt get garbage collected
         self._file_handler_cfunc = filehandler_callback(_internal_file_handler)
 
-        _raw.webui_set_file_handler(self._window, self._file_handler_cfunc)
+        _raw.webui_set_file_handler(c_size_t(self._window), self._file_handler_cfunc)
 
     # -- set_file_handler_window --------------------
     # TODO: set_file_handler_window
+    def set_file_handler_window(self):
+        pass
 
     # -- is_shown -----------------------------------
     def is_shown(self) -> bool:  # TODO: document
         """Return True if the window is currently shown."""
-        return bool(_raw.webui_is_shown(self._window))
+        return bool(_raw.webui_is_shown(c_size_t(self._window)))
 
     # -- set_icon -----------------------------------
     def set_icon(self, icon: str, icon_type: str) -> None:  # TODO: document
-        _raw.webui_set_icon(self._window, icon.encode("utf-8"), icon_type.encode("utf-8"))
+        _raw.webui_set_icon(c_size_t(self._window), icon.encode("utf-8"), icon_type.encode("utf-8"))
 
     # -- send_raw -----------------------------------
     def send_raw(self, function: str, raw: Optional[c_void_p], size: int) -> None:  # TODO: document
@@ -772,6 +920,10 @@ class Window:  # TODO: document
     # -- set_size -----------------------------------
     def set_size(self, width: int, height: int) -> None:   # TODO: document
         _raw.webui_set_size(c_size_t(self._window), c_uint(width), c_uint(height))
+
+    # -- set_minimum_size ---------------------------
+    def set_minimum_size(self, width: int, height: int) -> None: # TODO: document
+        _raw.webui_set_minimum_size(self._window, c_uint(width), c_uint(height))
 
     # -- set_position -------------------------------
     def set_position(self, x: int, y: int) -> None:   # TODO: document
@@ -829,7 +981,7 @@ class Window:  # TODO: document
         """
         Run JavaScript in the window without waiting for a return.
         """
-        _raw.webui_run(self._window, script.encode("utf-8"))
+        _raw.webui_run(c_size_t(self._window), script.encode("utf-8"))
 
     # -- script -------------------------------------
     def script(self, script: str, timeout: int = 0, buffer_size: int = 4096) -> JavaScript:  # TODO: document
@@ -848,7 +1000,7 @@ class Window:  # TODO: document
 
         # Call the raw C function
         success = _raw.webui_script(
-            self._window,
+            c_size_t(self._window),
             script.encode('utf-8'),   # Convert Python str -> bytes
             timeout,
             buffer,

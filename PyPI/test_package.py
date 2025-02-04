@@ -115,6 +115,9 @@ def main():
 	MyWindow.bind('JS2P', js_to_python)
 	MyWindow.bind('Exit', exit)
 
+	browser = MyWindow.get_best_browser()
+	print(browser)
+
 	# Show the window
 	MyWindow.show_browser(html, webui.Browser.AnyBrowser)
 

@@ -66,10 +66,10 @@ if [[ "$1" == "minimal" ]]; then
     # Download WebUI library for only the current OS.
 
     # Nightly Build
-    # BASE_URL="https://github.com/webui-dev/webui/releases/download/nightly/"
+    BASE_URL="https://github.com/webui-dev/webui/releases/download/nightly/"
 
     # Release
-    BASE_URL="https://github.com/webui-dev/webui/releases/download/2.5.0-beta.2/"
+    # BASE_URL="https://github.com/webui-dev/webui/releases/download/2.5.0-beta.2/"
 
     # Detect OS (macOS / Linux)
     OS="linux"

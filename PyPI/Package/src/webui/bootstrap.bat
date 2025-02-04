@@ -73,7 +73,11 @@ GOTO :EOF
 :: Download WebUI library for only the current OS.
 :MINIMAL
 
-SET "BASE_URL=https://github.com/webui-dev/webui/releases/download/2.5.0-beta.2/"
+:: Nightly base url
+SET "BASE_URL=https://github.com/webui-dev/webui/releases/download/nightly/"
+
+:: Targeted base url
+:: SET "BASE_URL=https://github.com/webui-dev/webui/releases/download/2.5.0-beta.2/"
 
 :: Check the CPU architecture
 IF "%PROCESSOR_ARCHITECTURE%"=="x86" (

@@ -422,7 +422,7 @@ webui_set_kiosk.restype  = None
 
 
 # -- set_custom_parameters ---------------------- 2.5.0-beta.3
-# webui_set_custom_parameters = webui_lib.webui_set_custom_parameters
+webui_set_custom_parameters = webui_lib.webui_set_custom_parameters
 """
 brief:
  Add a user-defined web browser's CLI parameters.
@@ -436,11 +436,11 @@ example:
 C Signature: 
  WEBUI_EXPORT void webui_set_custom_parameters(size_t window, char *params);
 """
-# webui_set_custom_parameters.argtypes = [
-#     c_size_t,  # size_t window
-#     c_char_p   # char* params
-# ]
-# webui_set_custom_parameters.restype  = None
+webui_set_custom_parameters.argtypes = [
+    c_size_t,  # size_t window
+    c_char_p   # char* params
+]
+webui_set_custom_parameters.restype = None
 
 
 # -- set_high_contrast --------------------------
@@ -943,7 +943,7 @@ webui_set_size.restype = None
 
 
 # -- set_minimum_size --------------------------- 2.5.0-beta.3
-# webui_set_minimum_size = webui_lib.webui_set_minimum_size
+webui_set_minimum_size = webui_lib.webui_set_minimum_size
 """
 brief:
  Set the window minimum size.
@@ -958,12 +958,12 @@ example:
 C Signature:
  WEBUI_EXPORT void webui_set_minimum_size(size_t window, unsigned int width, unsigned int height);
 """
-# webui_set_minimum_size.argtypes = [
-#     c_size_t,  # size_t window
-#     c_uint,    # unsigned int width
-#     c_uint,    # unsigned int height
-# ]
-# webui_set_minimum_size.restype = None
+webui_set_minimum_size.argtypes = [
+    c_size_t,  # size_t window
+    c_uint,    # unsigned int width
+    c_uint,    # unsigned int height
+]
+webui_set_minimum_size.restype = None
 
 
 # -- set_position -------------------------------
