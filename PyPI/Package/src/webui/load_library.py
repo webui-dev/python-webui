@@ -30,7 +30,7 @@ def _get_library_folder_name() -> str:
     elif platform.system() == 'Windows':
         return f'\\webui-windows-msvc-{arch}\\webui-2.dll'
     elif platform.system() == 'Linux':
-        return f'/webui-linux-gcc-{arch}/webui-2.so'
+        return f'/webui-linux-clang-{arch}/webui-2.so'  # return f'/webui-linux-gcc-{arch}/webui-2.so'
     else:
         return ""
 
@@ -45,7 +45,7 @@ def run_cmd(command):
 
 
 def _download_library():
-    script = 'sh bootstrap.sh'
+    script = 'bash bootstrap.sh'
     cd = 'cd '
     if platform.system() == 'Windows':
         script = 'bootstrap.bat'

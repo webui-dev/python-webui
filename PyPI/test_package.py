@@ -9,8 +9,7 @@ import webui
 # from webui import webui
 
 # HTML
-html = """
-<!DOCTYPE html>
+html = """<!DOCTYPE html>
 <html>
 	<head>
 		<title>WebUI 2 - Python Wrapper Test</title>
@@ -119,7 +118,7 @@ def main():
 	print(browser)
 
 	# Show the window
-	MyWindow.show_browser(html, webui.Browser.AnyBrowser)
+	MyWindow.show(html)
 
 	# Wait until all windows are closed
 	webui.wait()

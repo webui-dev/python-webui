@@ -15,7 +15,8 @@ if [[ "$1" == "" ]]; then
     # Nightly Build
     LINUX_ARM="https://github.com/webui-dev/webui/releases/download/nightly/webui-linux-gcc-arm.zip"
     LINUX_ARM64="https://github.com/webui-dev/webui/releases/download/nightly/webui-linux-gcc-arm64.zip"
-    LINUX_X64="https://github.com/webui-dev/webui/releases/download/nightly/webui-linux-gcc-x64.zip"
+    LINUX_GCC_X64="https://github.com/webui-dev/webui/releases/download/nightly/webui-linux-gcc-x64.zip"
+    LINUX_CLANG_X64="https://github.com/webui-dev/webui/releases/download/nightly/webui-linux-clang-x64.zip"
     MACOS_ARM64="https://github.com/webui-dev/webui/releases/download/nightly/webui-macos-clang-arm64.zip"
     MACOS_X64="https://github.com/webui-dev/webui/releases/download/nightly/webui-macos-clang-x64.zip"
     WINDOWS_MSVC_X64="https://github.com/webui-dev/webui/releases/download/nightly/webui-windows-msvc-x64.zip"
@@ -23,7 +24,8 @@ if [[ "$1" == "" ]]; then
     # Release
     # LINUX_ARM="https://github.com/webui-dev/webui/releases/download/2.5.0-beta.2/webui-linux-gcc-arm.zip"
     # LINUX_ARM64="https://github.com/webui-dev/webui/releases/download/2.5.0-beta.2/webui-linux-gcc-arm64.zip"
-    # LINUX_X64="https://github.com/webui-dev/webui/releases/download/2.5.0-beta.2/webui-linux-gcc-x64.zip"
+    # LINUX_GCC_X64="https://github.com/webui-dev/webui/releases/download/2.5.0-beta.2/webui-linux-gcc-x64.zip"
+    # LINUX_CLANG_X64="https://github.com/webui-dev/webui/releases/download/2.5.0-beta.2/webui-linux-clang-x64.zip"
     # MACOS_ARM64="https://github.com/webui-dev/webui/releases/download/2.5.0-beta.2/webui-macos-clang-arm64.zip"
     # MACOS_X64="https://github.com/webui-dev/webui/releases/download/2.5.0-beta.2/webui-macos-clang-x64.zip"
     # WINDOWS_MSVC_X64="https://github.com/webui-dev/webui/releases/download/2.5.0-beta.2/webui-windows-msvc-x64.zip"
@@ -49,7 +51,8 @@ if [[ "$1" == "" ]]; then
 
     download_and_extract $LINUX_ARM "webui-linux-gcc-arm" "webui-2.so"
     download_and_extract $LINUX_ARM64 "webui-linux-gcc-arm64" "webui-2.so"
-    download_and_extract $LINUX_X64 "webui-linux-gcc-x64" "webui-2.so"
+    download_and_extract $LINUX_GCC_X64 "webui-linux-gcc-x64" "webui-2.so"
+    download_and_extract $LINUX_CLANG_X64 "webui-linux-clang-x64" "webui-2.so"
     download_and_extract $MACOS_ARM64 "webui-macos-clang-arm64" "webui-2.dylib"
     download_and_extract $MACOS_X64 "webui-macos-clang-x64" "webui-2.dylib"
     download_and_extract $WINDOWS_MSVC_X64 "webui-windows-msvc-x64" "webui-2.dll"
@@ -73,7 +76,7 @@ if [[ "$1" == "minimal" ]]; then
 
     # Detect OS (macOS / Linux)
     OS="linux"
-    CC="gcc"
+    CC="clang" # "gcc"
     EXT="so"
     if [[ "$OSTYPE" == "darwin"* ]]; then
         OS="macos"

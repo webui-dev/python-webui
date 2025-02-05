@@ -6,20 +6,11 @@ from ctypes import *
 # Import all the raw bindings
 import webui_bindings as _raw
 
-# The C function type for the file handler
-filehandler_callback = CFUNCTYPE(
-    c_void_p,               # Return type: pointer to the HTTP response bytes
-    c_char_p,               # filename: const char*
-    POINTER(c_int)          # length: int*
-)
+
 
 # C function type for the file handler window
-filehandler_window_callback = CFUNCTYPE(
-    c_size_t,
-    c_void_p,
-    c_char_p,
-    POINTER(c_int)
-)
+filehandler_window_callback = CFUNCTYPE(c_void_p, c_size_t, c_char_p, POINTER(c_int))
+
 
 # == Enums ====================================================================
 
@@ -609,14 +600,15 @@ class Window:
         self._window_id: str = str(self._window)
 
         # Dispatch function conversion to C bind for binding functions
-        callback_function_type = _raw.CFUNCTYPE(None, _raw.POINTER(_raw.WebuiEventT))
+        callback_function_type = CFUNCTYPE(None, POINTER(_raw.WebuiEventT))
         self._dispatcher_cfunc = callback_function_type(self._make_dispatcher())
 
         # Dict to keep track of bound functions: {bind_id: python_function}
         self._cb_func_list: dict = {}
 
-        #
-        self._file_handler_cfunc = None
+        # gets used for both filehandler and filehandler_window, should wipe out the other just how it does in C
+        self._file_handler_cb = None
+        self._buffers = []
 
     # -- dispatcher for function bindings -----------
     def _make_dispatcher(self):
@@ -706,6 +698,7 @@ class Window:
 
         This function displays a window with the provided content using a specified web browser.
         The content can be raw HTML, a local file path, or a URL. If the window is already open,
+        The content can be raw HTML, a local file path, or a URL. If the window is already open,
         it will be refreshed. In multi-client mode, all windows will be refreshed.
 
         Args:
@@ -719,7 +712,7 @@ class Window:
             success = my_window.show_browser("<html>...</html>", Browser.Chrome)
             success = my_window.show_browser("index.html", Browser.Firefox)
         """
-        return bool(_raw.webui_show_browser(c_size_t(self._window), c_char_p(content.encode("utf-8")), c_size_t(browser.value)))
+        return _raw.webui_show_browser(c_size_t(self._window), c_char_p(content.encode("utf-8")), c_size_t(browser.value))
 
     # -- start_server -------------------------------
     def start_server(self, content: str) -> str:
@@ -822,7 +815,7 @@ class Window:
         _raw.webui_set_high_contrast(c_size_t(self._window), c_bool(status))
 
     # -- close --------------------------------------
-    def close(self) -> None:  # TODO: document
+    def close(self) -> None:
         """Close a specific window.
 
         This function closes the specified window, but the window object still exists
@@ -837,41 +830,133 @@ class Window:
         _raw.webui_close(c_size_t(self._window))
 
     # -- destroy ------------------------------------
-    def destroy(self) -> None:  # TODO: document
-        """
-        Close this window and free all memory resources used by it.
+    def destroy(self) -> None:
+        """Close a specific window and free all memory resources.
+
+        This function closes the specified window and releases all associated
+        memory resources. Once destroyed, the window object cannot be reused.
+
+        Returns:
+            None
+
+        Example:
+            my_window.destroy()  # Close and free resources for the current window.
         """
         _raw.webui_destroy(c_size_t(self._window))
 
     # -- set_root_folder ----------------------------
-    def set_root_folder(self, path: str) -> bool:  # TODO: document
+    def set_root_folder(self, path: str) -> bool:
+        """Set the web server's root folder path for a specific window.
+
+        This function sets the root folder for the web server associated with the given window.
+        The specified path must be an absolute path to a local directory.
+
+        Args:
+            path (str): The full path to the local folder to be used as the web server's root.
+
+        Returns:
+            bool: True if the root folder was successfully set, False otherwise.
+
+        Example:
+            success = my_window.set_root_folder("/home/Foo/Bar/")
+            if success:
+                print("Root folder set successfully.")
+        """
         return bool(_raw.webui_set_root_folder(c_size_t(self._window), path.encode("utf-8")))
 
     # -- set_file_handler ---------------------------
-    def set_file_handler(self, handler: Callable[[str], bytes]) -> None:  # TODO: document
-        """
-        Set a custom file handler to serve files for this window.
+    def set_file_handler(self, handler: Callable[[str], Optional[str]]) -> None:
+        """Set a custom file handler for serving files.
 
-        The custom handler must return a complete HTTP response (header + body)
-        as bytes. This disables any previously set file handler for this window.
+        This function registers a custom file handler that processes file requests
+        and serves HTTP responses. The handler must return a full HTTP response
+        (headers and body) as a UTF-8 encoded string. Setting a new handler overrides
+        any previously registered file handler.
 
         Args:
-            handler (Callable[[str], bytes]): A Python function that takes the
-            requested filename as a string and returns the full HTTP response
-            (including headers) as bytes.
+            handler (Callable[[str], str]): A function that takes a filename as input
+                and returns a complete HTTP response as a string.
 
         Returns:
             None
+
+        Example:
+            def my_handler(filename: str) -> str:
+                response_body = "Hello, World!"
+                response_headers = (
+                    "HTTP/1.1 200 OK\r\n"
+                    "Content-Type: text/plain\r\n"
+                    f"Content-Length: {len(response_body)}\r\n"
+                    "\r\n"
+                )
+                return response_headers + response_body
+
+            my_window.set_file_handler(my_handler)
         """
-        def _internal_file_handler(filename_ptr: c_char_p, length_ptr: POINTER(c_int)) -> c_void_p:
+
+        # Define the internal C callback matching the C function signature.
+        def c_file_handler(filename_ptr: c_char_p, length_ptr: POINTER(c_int)) -> c_void_p:
+            # Convert the C string (if any) to a Python string.
+            fname = filename_ptr.decode('utf-8') if filename_ptr else ""
+            # Call the user-supplied Python handler.
+            response = handler(fname)
+            if response is None:
+                response_bytes = b""
+            else:
+                response_bytes = response.encode("utf-8")
+            # Create a ctypes buffer to hold the response bytes.
+            buf = create_string_buffer(response_bytes)
+            # Save the buffer reference to keep it alive.
+            self._buffers.append(buf)
+            # Set the output length value.
+            length_ptr[0] = len(response_bytes)
+            # Return the pointer to the buffer.
+            return cast(buf, c_void_p)
+
+        # Wrap our Python callback with our CFUNCTYPE.
+        FILE_HANDLER_CB = CFUNCTYPE(c_void_p, c_char_p, POINTER(c_int))
+        self._file_handler_cb = FILE_HANDLER_CB(c_file_handler)
+        # Now call the C function with our window handle and callback.
+        _raw.webui_set_file_handler(c_size_t(self._window), FILE_HANDLER_CB(c_file_handler))
+
+    # -- set_file_handler_window --------------------
+    def set_file_handler_window(self, handler: Callable[[int, str], Optional[str]]) -> None:
+        """Set a custom file handler for a specific window.
+
+        This function registers a custom file handler that processes file requests
+        for a specific window and serves HTTP responses. The handler must return
+        a full HTTP response (headers and body) as a UTF-8 encoded string.
+        Setting a new handler overrides any previously registered file handler.
+
+        Args:
+            handler (Callable[[int, str], str]): A function that takes a window ID
+                and a filename as input and returns a complete HTTP response as a string.
+
+        Returns:
+            None
+
+        Example:
+            def my_handler(window_id: int, filename: str) -> str:
+                response_body = "Hello, World!"
+                response_headers = (
+                    "HTTP/1.1 200 OK\r\n"
+                    "Content-Type: text/plain\r\n"
+                    f"Content-Length: {len(response_body)}\r\n"
+                    "\r\n"
+                )
+                return response_headers + response_body
+
+            my_window.set_file_handler_window(my_handler)
+        """
+        def _internal_file_handler(window_id: c_size_t, filename_ptr: c_char_p, length_ptr: POINTER(c_int)) -> c_void_p:
             """
-            Internal C callback that matches the signature required by webui_set_file_handler.
+            Internal C callback that matches the signature required by webui_set_file_handler_window.
             """
             # Decode the incoming filename from C
             filename = filename_ptr.decode('utf-8') if filename_ptr else ""
 
             # Call the Python-level handler to get the HTTP response
-            response_bytes = handler(filename)
+            response_bytes = handler(int(window_id), filename).encode("utf-8")
 
             # Create a ctypes buffer from the Python bytes; this buffer must remain alive
             # at least until WebUI is done with it.
@@ -883,27 +968,70 @@ class Window:
             # Return a pointer (void*) to the buffer
             return cast(buf, c_void_p)
 
-        # Keep a reference so it doesnt get garbage collected
-        self._file_handler_cfunc = filehandler_callback(_internal_file_handler)
+        # Keep a reference so it doesn't get garbage collected
+        self._file_handler_cfunc = filehandler_window_callback(_internal_file_handler)
 
-        _raw.webui_set_file_handler(c_size_t(self._window), self._file_handler_cfunc)
-
-    # -- set_file_handler_window --------------------
-    # TODO: set_file_handler_window
-    def set_file_handler_window(self):
-        pass
+        _raw.webui_set_file_handler_window(c_size_t(self._window), self._file_handler_cfunc)
 
     # -- is_shown -----------------------------------
-    def is_shown(self) -> bool:  # TODO: document
-        """Return True if the window is currently shown."""
+    def is_shown(self) -> bool:
+        """Check if the specified window is still running.
+
+        This function verifies whether the window associated with this instance
+        is currently open and running.
+
+        Returns:
+            bool: True if the window is still running, False otherwise.
+
+        Example:
+            if my_window.is_shown():
+                print("The window is still open.")
+            else:
+                print("The window has been closed.")
+        """
         return bool(_raw.webui_is_shown(c_size_t(self._window)))
 
     # -- set_icon -----------------------------------
-    def set_icon(self, icon: str, icon_type: str) -> None:  # TODO: document
+    def set_icon(self, icon: str, icon_type: str) -> None:
+        """Set the default embedded HTML favicon for the window.
+
+        This function sets a custom favicon for the window using an embedded
+        SVG or another supported icon format.
+
+        Args:
+            icon (str): The icon content as a string (e.g., an SVG string).
+            icon_type (str): The MIME type of the icon (e.g., "image/svg+xml").
+
+        Returns:
+            None
+
+        Example:
+            my_window.set_icon("<svg>...</svg>", "image/svg+xml")
+        """
         _raw.webui_set_icon(c_size_t(self._window), icon.encode("utf-8"), icon_type.encode("utf-8"))
 
     # -- send_raw -----------------------------------
-    def send_raw(self, function: str, raw: Optional[c_void_p], size: int) -> None:  # TODO: document
+    def send_raw(self, function: str, raw: Optional[c_void_p], size: int) -> None:
+        """Safely send raw data to the UI for all clients.
+
+        This function sends a raw data buffer to a JavaScript function in the UI.
+        The JavaScript function should be capable of handling raw binary data.
+
+        Args:
+            function (str): The JavaScript function that will receive the raw data.
+            raw (Optional[c_void_p]): A pointer to the raw data buffer. Must not be `None`.
+            size (int): The size of the raw data in bytes.
+
+        Raises:
+            ValueError: If `raw` is `None`.
+
+        Returns:
+            None
+
+        Example:
+            my_window.send_raw("myJavaScriptFunc", my_buffer, 64)
+            # Sends 64 bytes of raw data to the JavaScript function `myJavaScriptFunc`.
+        """
         if raw is None:
             raise ValueError("Invalid pointer: Cannot send a null pointer.")
         _raw.webui_send_raw(
@@ -914,86 +1042,331 @@ class Window:
         )
 
     # -- set_hide -----------------------------------
-    def set_hide(self, status: bool) -> bool:  # TODO: document
+    def set_hide(self, status: bool) -> bool:
+        """Set the window in hidden mode.
+
+        This function hides or shows the window. It should be called before `show()`
+        to take effect.
+
+        Args:
+            status (bool): True to hide the window, False to make it visible.
+
+        Returns:
+            bool: True if the operation was successful, False otherwise.
+
+        Example:
+            my_window.set_hide(True)  # Hide the window
+            my_window.set_hide(False) # Show the window
+        """
         return bool(_raw.webui_set_hide(c_size_t(self._window), c_bool(status)))
 
     # -- set_size -----------------------------------
-    def set_size(self, width: int, height: int) -> None:   # TODO: document
+    def set_size(self, width: int, height: int) -> None:
+        """Set the window size.
+
+        This function sets the dimensions of the window in pixels.
+
+        Args:
+            width (int): The desired width of the window in pixels.
+            height (int): The desired height of the window in pixels.
+
+        Returns:
+            None
+
+        Example:
+            my_window.set_size(800, 600)  # Set window size to 800x600 pixels
+        """
         _raw.webui_set_size(c_size_t(self._window), c_uint(width), c_uint(height))
 
     # -- set_minimum_size ---------------------------
-    def set_minimum_size(self, width: int, height: int) -> None: # TODO: document
+    def set_minimum_size(self, width: int, height: int) -> None:
+        """Set the minimum window size.
+
+        This function defines the minimum allowable dimensions for the window in pixels.
+
+        Args:
+            width (int): The minimum width of the window in pixels.
+            height (int): The minimum height of the window in pixels.
+
+        Returns:
+            None
+
+        Example:
+            my_window.set_minimum_size(800, 600)  # Set minimum window size to 800x600 pixels
+        """
         _raw.webui_set_minimum_size(self._window, c_uint(width), c_uint(height))
 
     # -- set_position -------------------------------
-    def set_position(self, x: int, y: int) -> None:   # TODO: document
+    def set_position(self, x: int, y: int) -> None:
+        """Set the window position.
+
+        This function sets the position of the window on the screen,
+        using screen coordinates (in pixels).
+
+        Args:
+            x (int): The X-coordinate of the window's top-left corner.
+            y (int): The Y-coordinate of the window's top-left corner.
+
+        Returns:
+            None
+
+        Example:
+            my_window.set_position(100, 100)  # Move window to (100, 100) on the screen
+        """
         _raw.webui_set_position(c_size_t(self._window), c_uint(x), c_uint(y))
 
     # -- set_profile --------------------------------
-    def set_profile(self, name: str, path: str) -> None:  # TODO: document
+    def set_profile(self, name: str, path: str) -> None:
+        """Set the web browser profile to use.
+
+        This function configures the web browser profile for the window.
+        If both `name` and `path` are empty, the default user profile will be used.
+        It must be called before `show()`.
+
+        Args:
+            name (str): The name of the web browser profile. An empty string uses the default profile.
+            path (str): The full path to the web browser profile directory. An empty string uses the default location.
+
+        Returns:
+            None
+
+        Example:
+            my_window.set_profile("Bar", "/Home/Foo/Bar")  # Use a custom profile
+            my_window.set_profile("", "")  # Use the default profile
+        """
         _raw.webui_set_profile(c_size_t(self._window), c_char_p(name.encode("utf-8")), c_char_p(path.encode("utf-8")))
 
     # -- set_proxy ----------------------------------
-    def set_proxy(self, proxy_server: str) -> None:  # TODO: document
+    def set_proxy(self, proxy_server: str) -> None:
+        """Set the web browser proxy server.
+
+        This function configures the web browser to use a specified proxy server.
+        It must be called before `show()` to take effect.
+
+        Args:
+            proxy_server (str): The proxy server URL (e.g., "http://127.0.0.1:8888").
+
+        Returns:
+            None
+
+        Example:
+            my_window.set_proxy("http://127.0.0.1:8888")  # Set the proxy server
+        """
         _raw.webui_set_proxy(c_size_t(self._window), c_char_p(proxy_server.encode("utf-8")))
 
     # -- get_url ------------------------------------
-    def get_url(self) -> str:  # TODO: document
+    def get_url(self) -> str:
+        """Get the current URL of a running window.
+
+        This function retrieves the full URL of the web page currently loaded
+        in the specified window.
+
+        Returns:
+            str: The full URL of the running window.
+
+        Example:
+            url = my_window.get_url()
+            print(f"Current URL: {url}")
         """
-        Get the current URL as a string.
-        """
-        return _raw.webui_get_url(c_size_t(self._window)).decode("utf-8")
+        return str(_raw.webui_get_url(c_size_t(self._window)).decode("utf-8"))
 
     # -- set_public ---------------------------------
-    def set_public(self, status: bool) -> None:  # TODO: document
+    def set_public(self, status: bool) -> None:
+        """Allow a window's address to be accessible from a public network.
+
+        This function enables or disables public network access for the specified window.
+        When enabled, the window's address can be accessed by other devices on the network.
+
+        Args:
+            status (bool): True to allow public access, False to restrict access.
+
+        Returns:
+            None
+
+        Example:
+            my_window.set_public(True)  # Enable public network access
+            my_window.set_public(False) # Restrict access to local connections
+        """
         _raw.webui_set_public(c_size_t(self._window), c_bool(status))
 
     # -- navigate -----------------------------------
-    def navigate(self, url: str) -> None:  # TODO: document
+    def navigate(self, url: str) -> None:
+        """Navigate the window to a specific URL.
+
+        This function loads the specified URL in the web UI window.
+        It affects all connected clients.
+
+        Args:
+            url (str): The full HTTP or HTTPS URL to navigate to.
+
+        Returns:
+            None
+
+        Example:
+            my_window.navigate("http://domain.com")  # Navigate to the specified URL
+        """
         _raw.webui_navigate(c_size_t(self._window), c_char_p(url.encode("utf-8")))
 
     # -- delete_profile -----------------------------
-    def delete_profile(self) -> None:  # TODO: document
+    def delete_profile(self) -> None:
+        """Delete the local browser profile folder for the window.
+
+        This function deletes the local folder profile associated with the specified window's web browser.
+        It should be used with caution, as deleting a profile may affect other windows using the same browser.
+
+        Note:
+            This can break the functionality of other windows if they are using the same web browser profile.
+
+        Returns:
+            None
+
+        Example:
+            my_window.delete_profile()  # Delete the browser profile for this window
+        """
         _raw.webui_delete_profile(c_size_t(self._window))
 
     # -- get_parent_process_id ----------------------
-    def get_parent_process_id(self) -> int:  # TODO: document
+    def get_parent_process_id(self) -> int:
+        """Get the ID of the parent process.
+
+        This function retrieves the process ID of the parent process that
+        launched the web browser. Note that the web browser may create
+        a new process, meaning this ID may not always correspond to the
+        active browser process.
+
+        Returns:
+            int: The parent process ID.
+
+        Example:
+            parent_pid = my_window.get_parent_process_id()
+            print(f"Parent Process ID: {parent_pid}")
+        """
         return int(_raw.webui_get_parent_process_id(c_size_t(self._window)))
 
     # -- get_child_process_id -----------------------
-    def get_child_process_id(self) -> int:  # TODO: document
+    def get_child_process_id(self) -> int:
+        """Get the ID of the last child process.
+
+       This function retrieves the process ID of the most recently created
+       child process associated with the window.
+
+       Returns:
+           int: The child process ID.
+
+       Example:
+           child_pid = my_window.get_child_process_id()
+           print(f"Child Process ID: {child_pid}")
+       """
         return int(_raw.webui_get_child_process_id(c_size_t(self._window)))
 
     # -- get_port -----------------------------------
-    def get_port(self) -> int:  # TODO: document
+    def get_port(self) -> int:
+        """Get the network port of a running window.
+
+        This function retrieves the network port assigned to the web server
+        of the specified window. It can be useful for determining the HTTP
+        link of `webui.js`.
+
+        Returns:
+            int: The network port of the running window.
+
+        Example:
+            port = my_window.get_port()
+            print(f"WebUI is running on port: {port}")
+        """
         return int(_raw.webui_get_port(c_size_t(self._window)))
 
     # -- set_port -----------------------------------
-    def set_port(self, port: int) -> bool:  # TODO: document
+    def set_port(self, port: int) -> bool:
+        """Set a custom network port for the WebUI web server.
+
+        This function assigns a custom network port for WebUI's web server
+        and WebSocket communication. It can be useful when integrating WebUI
+        with an external web server, such as NGINX.
+
+        Args:
+            port (int): The network port WebUI should use for its web server.
+
+        Returns:
+            bool: True if the port is available and successfully assigned, False otherwise.
+
+        Example:
+            success = my_window.set_port(8080)
+            if success:
+                print("WebUI is now using port 8080.")
+            else:
+                print("Port 8080 is unavailable.")
+        """
         return bool(_raw.webui_set_port(c_size_t(self._window), c_size_t(port)))
 
     # -- set_event_blocking -------------------------
-    def set_event_blocking(self, status: bool) -> None:  # TODO: document
+    def set_event_blocking(self, status: bool) -> None:
+        """Control how UI events are processed for this window.
+
+        This function determines whether UI events from this window should be processed
+        one at a time in a single blocking thread (`True`), or handled concurrently in
+        separate non-blocking threads (`False`).
+
+        Note:
+            This function applies only to the specified window. To update event blocking
+            behavior for all windows, use `webui_set_config(ui_event_blocking, ...)`.
+
+        Args:
+            status (bool):
+                - `True` to process events sequentially in a single blocking thread.
+                - `False` to handle each event in a new non-blocking thread.
+
+        Returns:
+            None
+
+        Example:
+            my_window.set_event_blocking(True)  # Enable blocking event processing
+            my_window.set_event_blocking(False) # Enable non-blocking event processing
+        """
         _raw.webui_set_event_blocking(c_size_t(self._window), c_bool(status))
 
     # -- run ----------------------------------------
-    def run(self, script: str) -> None:  # TODO: document
-        """
-        Run JavaScript in the window without waiting for a return.
+    def run(self, script: str) -> None:
+        """Execute JavaScript in the web UI without waiting for a response.
+
+        This function runs the specified JavaScript code in the web UI
+        for all connected clients. It does not wait for a response.
+
+        Args:
+            script (str): The JavaScript code to execute.
+
+        Returns:
+            None
+
+        Example:
+            my_window.run("alert('Hello');")  # Run an alert in the web UI
         """
         _raw.webui_run(c_size_t(self._window), script.encode("utf-8"))
 
     # -- script -------------------------------------
-    def script(self, script: str, timeout: int = 0, buffer_size: int = 4096) -> JavaScript:  # TODO: document
-        """
-        Run JavaScript in single-client mode and return the result as a string.
-        If there's an execution error or an empty response, returns None.
+    def script(self, script: str, timeout: int = 0, buffer_size: int = 4096) -> JavaScript:
+        """Execute JavaScript and retrieve the response.
 
-        :param script:   The JavaScript to run (e.g. "return 4 + 6;")
-        :param timeout:  The time in seconds to wait for JS execution. 0 means no limit.
-        :param buffer_size:  The size of the local buffer that will store the result.
+        This function runs JavaScript in the web UI and returns the result.
+        It only works in single-client mode. Ensure that the buffer size is
+        sufficient to store the response.
 
-        :return: The response from JavaScript as a string, or None if error or empty.
+        Args:
+            script (str): The JavaScript code to execute.
+            timeout (int, optional): The execution timeout in seconds. Defaults to 0 (no timeout).
+            buffer_size (int, optional): The size of the local buffer to store the response. Defaults to 4096 bytes.
+
+        Returns:
+            JavaScript: An object containing the script execution result.
+            - `data` (str): The JavaScript execution result.
+            - `error` (bool): True if an execution error occurred, False otherwise.
+
+        Example:
+            result = my_window.script("return 4 + 6;")
+            if result.error:
+                print("JavaScript execution failed.")
+            else:
+                print(f"JavaScript result: {result.data}")
         """
         # Create a mutable buffer in which the C function can store the result
         buffer = create_string_buffer(buffer_size)
@@ -1015,62 +1388,238 @@ class Window:
         return res
 
     # -- set_runtime --------------------------------
-    def set_runtime(self, runtime: Runtime) -> None:  # TODO: document
+    def set_runtime(self, runtime: Runtime) -> None:
+        """Choose the JavaScript/TypeScript runtime environment.
+
+        This function sets the runtime engine (Deno, Bun, Node.js, or None)
+        for executing `.js` and `.ts` files in the WebUI environment.
+
+        Args:
+            runtime (Runtime): The runtime environment to use. Options are:
+                - `Runtime.Deno`
+                - `Runtime.Bun`
+                - `Runtime.Nodejs`
+                - `Runtime.None` (disable runtime execution)
+
+        Returns:
+            None
+
+        Example:
+            my_window.set_runtime(Runtime.Deno)  # Use Deno as the JavaScript/TypeScript runtime
+        """
         _raw.webui_set_runtime(c_size_t(self._window), c_size_t(runtime.value))
-
-
 
 
 # == Global functions below ===================================================
 
 
 # -- get_new_window_id --------------------------
-def get_new_window_id() -> int:  # TODO: document
+def get_new_window_id() -> int:
+    """Get the first available free window ID.
+
+    This function retrieves an unused window ID that can be used
+    for creating a new window.
+
+    Returns:
+        int: The first available free window ID, starting from 1.
+
+    Example:
+        window_id = get_new_window_id()
+        print(f"Available window ID: {window_id}")
+    """
     return int(_raw.webui_get_new_window_id)
 
 # -- is_high_contrast ---------------------------
-def is_high_contrast() -> bool:  # TODO: document
-    """Return True if the OS is using a high-contrast theme."""
+def is_high_contrast() -> bool:
+    """Check if the operating system is using a high-contrast theme.
+
+    This function detects whether the OS is currently set to a high-contrast
+    display mode.
+
+    Returns:
+        bool: True if the OS is using a high-contrast theme, False otherwise.
+
+    Example:
+        if is_high_contrast():
+            print("High-contrast mode is enabled.")
+        else:
+            print("High-contrast mode is disabled.")
+    """
     return bool(_raw.webui_is_high_contrast())
 
 # -- browser_exist ------------------------------
-def browser_exist(browser: Browser) -> bool:  # TODO: document
+def browser_exist(browser: Browser) -> bool:
+    """Check if a specific web browser is installed.
+
+    This function verifies whether the specified web browser is installed
+    on the system.
+
+    Args:
+        browser (Browser): The browser to check (e.g., `Browser.Chrome`, `Browser.Firefox`).
+
+    Returns:
+        bool: True if the specified browser is available, False otherwise.
+
+    Example:
+        if browser_exist(Browser.Chrome):
+            print("Chrome is installed.")
+        else:
+            print("Chrome is not available.")
+    """
     return bool(_raw.webui_browser_exist(c_size_t(browser.value)))
 
 # -- wait ---------------------------------------
-def wait() -> None:  # TODO: document
-    """Wait until all opened windows get closed."""
+def wait() -> None:
+    """Block execution until all opened windows are closed.
+
+    This function pauses execution and waits until all WebUI windows
+    are closed before proceeding.
+
+    Returns:
+        None
+
+    Example:
+        wait()  # Wait until all windows are closed before continuing
+    """
     _raw.webui_wait()
 
 # -- exit ---------------------------------------
-def exit() -> None:  # TODO: document
-    """Close all open windows and break out of webui_wait()."""
+def exit() -> None:
+    """Close all open windows and exit `webui_wait()`.
+
+    This function forcefully closes all currently open WebUI windows
+    and causes `wait()` to return.
+
+    Returns:
+        None
+
+    Example:
+        exit()  # Close all WebUI windows and stop waiting
+    """
     _raw.webui_exit()
 
 # -- set_default_root_folder --------------------
-def set_default_root_folder(path: str) -> bool:  # TODO: document
+def set_default_root_folder(path: str) -> bool:
+    """Set the default web server root folder for all windows.
+
+    This function defines the root folder for the web server across all WebUI windows.
+    It must be called before `show()` to take effect.
+
+    Args:
+        path (str): The absolute path to the local folder to be used as the web server's root.
+
+    Returns:
+        bool: True if the root folder was successfully set, False otherwise.
+
+    Example:
+        success = set_default_root_folder("/home/Foo/Bar/")
+        if success:
+            print("Default root folder set successfully.")
+    """
     return bool(_raw.webui_set_default_root_folder(path.encode("utf-8")))
 
 # -- set_timeout --------------------------------
-def set_timeout(seconds: int) -> None:  # TODO: document
+def set_timeout(seconds: int) -> None:
+    """Set the maximum wait time for the window to connect.
+
+    This function defines the maximum number of seconds to wait for a
+    WebUI window to connect. It affects both `show()` and `wait()`.
+    A value of `0` means it will wait indefinitely.
+
+    Args:
+        seconds (int): The timeout duration in seconds. Use `0` to wait forever.
+
+    Returns:
+        None
+
+    Example:
+        set_timeout(30)  # Set a timeout of 30 seconds for window connections
+    """
     _raw.webui_set_timeout(c_size_t(seconds))
 
 # -- encode -------------------------------------
-def ui_encode(string: str) -> str:  # TODO: document
-    return _raw.webui_encode(string.encode("utf-8")).decode("utf-8")
+def ui_encode(string: str) -> str:
+    """Encode a string to Base64.
+
+    This function encodes the given string to Base64 format.
+
+    Args:
+        string (str): The string to encode. It should be null-terminated.
+
+    Returns:
+        str: The Base64-encoded string.
+
+    Example:
+        encoded_string = ui_encode("Foo Bar")
+        print(f"Base64 Encoded: {encoded_string}")
+    """
+    return str(_raw.webui_encode(string.encode("utf-8")).decode("utf-8"))
 
 # -- decode -------------------------------------
-def ui_decode(string: str) -> str:  # TODO: document
+def ui_decode(string: str) -> str:
+    """Decode a Base64-encoded string.
+
+    This function decodes a given Base64-encoded string back into its
+    original text format.
+
+    Args:
+        string (str): The Base64-encoded string to decode. It should be null-terminated.
+
+    Returns:
+        str: The decoded string.
+
+    Example:
+        decoded_string = ui_decode("SGVsbG8=")
+        print(f"Decoded String: {decoded_string}")  # Output: Hello
+    """
     return _raw.webui_decode(string.encode("utf-8")).decode("utf-8")
 
 # -- free ---------------------------------------
-def free(ptr: Optional[c_void_p]) -> None:  # TODO: document
+def free(ptr: Optional[c_void_p]) -> None:
+    """Safely free a buffer allocated by WebUI.
+
+    This function releases memory previously allocated by `webui_malloc()`.
+    Attempting to free a null pointer will raise a `ValueError`.
+
+    Args:
+        ptr (Optional[c_void_p]): The buffer to be freed.
+
+    Raises:
+        ValueError: If `ptr` is `None`.
+
+    Returns:
+        None
+
+    Example:
+        free(my_buffer)  # Free the allocated buffer
+    """
     if ptr is None:
         raise ValueError("Invalid pointer: Cannot free a null pointer.")
     _raw.webui_free(ptr)
 
 # -- malloc -------------------------------------
-def malloc(size: int) -> Optional[int]:  # TODO: document
+def malloc(size: int) -> Optional[int]:
+    """Allocate memory using the WebUI memory management system.
+
+    This function allocates memory of the specified size in bytes. The
+    allocated memory can be safely freed using `free()`. If allocation
+    fails, the function returns `None`.
+
+    Args:
+        size (int): The number of bytes to allocate. Must be a positive integer.
+
+    Returns:
+        Optional[int]: A pointer to the allocated memory as an integer, or `None` if allocation fails.
+
+    Raises:
+        ValueError: If `size` is not a positive integer.
+
+    Example:
+        buffer = malloc(1024)
+        if buffer:
+            print(f"Memory allocated at address: {buffer}")
+            free(buffer)  # Free the allocated memory
+    """
     if size <= 0:
         raise ValueError("Size must be a positive integer.")
     ptr = _raw.webui_malloc(c_size_t(size))
@@ -1079,27 +1628,109 @@ def malloc(size: int) -> Optional[int]:  # TODO: document
     return int(ptr)
 
 # -- open_url -----------------------------------
-def open_url(url: str) -> None:  # TODO: document
+def open_url(url: str) -> None:
+    """Open a URL in the default web browser.
+
+    This function launches the system's default web browser and
+    navigates to the specified URL.
+
+    Args:
+        url (str): The URL to open.
+
+    Returns:
+        None
+
+    Example:
+        open_url("https://webui.me")  # Open the WebUI website in the default browser
+    """
     _raw.webui_open_url(c_char_p(url.encode("utf-8")))
 
 # -- clean --------------------------------------
-def clean() -> None:  # TODO: document
+def clean() -> None:
+    """Free all allocated memory resources.
+
+    This function releases all memory resources used by WebUI. It should
+    only be called at the end of the application's execution to ensure
+    proper cleanup.
+
+    Returns:
+        None
+
+    Example:
+        wait()  # Wait until all WebUI windows are closed
+        clean() # Free all WebUI-related resources
+    """
     _raw.webui_clean()
 
 # -- delete_all_profiles ------------------------
-def delete_all_profiles() -> None:  # TODO: document
+def delete_all_profiles() -> None:
+    """Delete all local web browser profile folders.
+
+    This function removes all stored web browser profile folders used by WebUI.
+    It should only be called at the end of the application to ensure proper cleanup.
+
+    Returns:
+        None
+
+    Example:
+        wait()  # Wait until all WebUI windows are closed
+        delete_all_profiles()  # Delete all browser profiles
+        clean()  # Free all WebUI-related resources
+    """
     _raw.webui_delete_all_profiles()
 
 # -- get_free_port ------------------------------
-def get_free_port() -> int:  # TODO: document
+def get_free_port() -> int:
+    """Get an available free network port.
+
+    This function retrieves an unused network port that can be used
+    for WebUI's web server or other network-related operations.
+
+    Returns:
+        int: A free and available network port.
+
+    Example:
+        port = get_free_port()
+        print(f"Available port: {port}")
+    """
     return int(_raw.webui_get_free_port())
 
 # -- set_config ---------------------------------
-def set_config(option: Config, status: bool) -> None:  # TODO: document
+def set_config(option: Config, status: bool) -> None:
+    """Configure WebUI behavior.
+
+    This function enables or disables specific WebUI configuration options.
+    It is recommended to call this function at the beginning of the program
+    before initializing WebUI windows.
+
+    Args:
+        option (Config): The desired configuration option from the `webui_config` enum.
+        status (bool): True to enable the option, False to disable it.
+
+    Returns:
+        None
+
+    Example:
+        set_config(Config.SHOW_WAIT_CONNECTION, False)  # Disable waiting for connection
+    """
     _raw.webui_set_config(c_int(option.value), c_bool(status))
 
 # -- get_mime_type ------------------------------
-def get_mime_type(file: str) -> str:   # TODO: document
+def get_mime_type(file: str) -> str:
+    """Get the HTTP MIME type of a file.
+
+    This function determines the MIME type of a given file based on its extension.
+
+    Args:
+        file (str): The file name or path.
+
+    Returns:
+        str: The corresponding HTTP MIME type as a string.
+
+    Example:
+        mime_type = get_mime_type("foo.png")
+        print(f"MIME type: {mime_type}")  # Output: image/png
+    """
     return str(_raw.webui_get_mime_type(c_char_p(file.encode("utf-8"))).decode("utf-8"))
 
 
@@ -1107,5 +1738,29 @@ def get_mime_type(file: str) -> str:   # TODO: document
 
 
 # -- set_tls_certificate ------------------------
-def set_tls_certificate(certificate_pem: str, private_key_pem: str) -> bool:  # TODO: document
+def set_tls_certificate(certificate_pem: str, private_key_pem: str) -> bool:
+    """Set the SSL/TLS certificate and private key.
+
+    This function sets the SSL/TLS certificate and private key content,
+    both in PEM format. It works only with the `webui-2-secure` library.
+    If both parameters are set to empty strings, WebUI will generate
+    a self-signed certificate.
+
+    Args:
+        certificate_pem (str): The SSL/TLS certificate content in PEM format.
+        private_key_pem (str): The private key content in PEM format.
+
+    Returns:
+        bool: True if the certificate and private key are valid, False otherwise.
+
+    Example:
+        success = set_tls_certificate(
+            "-----BEGIN CERTIFICATE-----\n...",
+            "-----BEGIN PRIVATE KEY-----\n..."
+        )
+        if success:
+            print("TLS certificate successfully set.")
+        else:
+            print("Failed to set TLS certificate.")
+    """
     return bool(_raw.webui_set_tls_certificate(c_char_p(certificate_pem.encode("utf-8")), c_char_p(private_key_pem.encode("utf-8"))))

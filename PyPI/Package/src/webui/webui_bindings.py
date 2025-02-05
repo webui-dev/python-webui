@@ -20,6 +20,7 @@ if lib is None:
     print('WebUI Dynamic Library not found.')
     sys.exit(1)
 else:
+    print('WebUI Dynamic Library found.')
     webui_lib: CDLL = lib
 
 
@@ -342,7 +343,7 @@ webui_show_browser.argtypes = [
     c_char_p,  # const char* content
     c_size_t   # size_t browser
 ]
-webui_show_browser.restype  = c_bool
+webui_show_browser.restype = c_bool
 
 
 # -- start_server -------------------------------
@@ -686,7 +687,7 @@ C Signature:
 """
 webui_set_file_handler.argtypes = [
     c_size_t,                                                         # size_t window
-    CFUNCTYPE(c_size_t, c_void_p, c_char_p, POINTER(c_int))  # const void* (*handler)(size_t window, const char* filename, int* length)
+    CFUNCTYPE(c_void_p,c_size_t, c_char_p, POINTER(c_int))  # const void* (*handler)(size_t window, const char* filename, int* length)
 ]
 webui_set_file_handler.restype = None
 
@@ -1399,19 +1400,22 @@ webui_get_mime_type.restype = c_char_p
 # -- set_tls_certificate ------------------------
 webui_set_tls_certificate = webui_lib.webui_set_tls_certificate
 """
-#  * @brief Set the SSL/TLS certificate and the private key content, both in PEM
-#  * format. This works only with `webui-2-secure` library. If set empty WebUI
-#  * will generate a self-signed certificate.
-#  *
-#  * @param certificate_pem The SSL/TLS certificate content in PEM format
-#  * @param private_key_pem The private key content in PEM format
-#  *
-#  * @return Returns True if the certificate and the key are valid.
-#  *
-#  * @example bool ret = webui_set_tls_certificate("-----BEGIN
-#  * CERTIFICATE-----\n...", "-----BEGIN PRIVATE KEY-----\n...");
-#  */
-# WEBUI_EXPORT bool webui_set_tls_certificate(const char* certificate_pem, const char* private_key_pem);
+brief:
+ Set the SSL/TLS certificate and the private key content, both in PEM
+ format. This works only with `webui-2-secure` library. If set empty WebUI
+ will generate a self-signed certificate.
+
+param: certificate_pem - The SSL/TLS certificate content in PEM format
+param: private_key_pem - The private key content in PEM format
+
+return Returns True if the certificate and the key are valid.
+
+example:
+ bool ret = webui_set_tls_certificate("-----BEGIN
+ CERTIFICATE-----\n...", "-----BEGIN PRIVATE KEY-----\n...");
+
+C Signature:
+ WEBUI_EXPORT bool webui_set_tls_certificate(const char* certificate_pem, const char* private_key_pem);
 """
 webui_set_tls_certificate.argtypes = [
     c_char_p,  # const char* certificate_pem
