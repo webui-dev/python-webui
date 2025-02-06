@@ -16,13 +16,13 @@ def get_local_ip():
         s.close()
     return local_ip
 
-def all_events(e : webui.event):
-	if e.event_type == webui.eventType.CONNECTED:
+def all_events(e : webui.Event):
+	if e.event_type == webui.EventType.CONNECTED:
 		print('Connected.')
-	if e.event_type == webui.eventType.DISCONNECTED:
+	if e.event_type == webui.EventType.DISCONNECTED:
 		print('Disconnected.')
 
-def exit(e : webui.event):
+def exit(e : webui.Event):
 	webui.exit()
 
 def main():
@@ -36,23 +36,23 @@ def main():
         """
 
     # New window
-    MyWindow = webui.window()
+    my_window = webui.Window()
 
     # Make the window URL accessible from public networks
-    MyWindow.set_public(True)
+    my_window.set_public(True)
 
     # Wait forever (Otherwise WebUI will timeout after 30s)
     webui.set_timeout(0)
 	
     # Bind
-    MyWindow.bind('', all_events)
-    MyWindow.bind('Exit', exit)
+    my_window.bind('', all_events)
+    my_window.bind('Exit', exit)
 
     # Start the window without any browser
-    MyWindow.show(html, webui.browser.NoBrowser)
+    my_window.show_browser(html, webui.Browser.NoBrowser)
 
     # Get URL of the window
-    url = MyWindow.get_url()
+    url = my_window.get_url()
 	
     # Get local IP
     local_ip = get_local_ip()

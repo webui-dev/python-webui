@@ -1,6 +1,5 @@
 # Install WebUI
 # pip install --upgrade webui2
-
 from webui import webui
 
 # CSS
@@ -72,7 +71,7 @@ dashboard_html = f"""
 """
 
 # This function get called every time the user click on "MyButton1"
-def check_the_password(e : webui.event):
+def check_the_password(e : webui.Event):
 
 	# Run JavaScript to get the password
 	res = e.window.script("return document.getElementById(\"MyInput\").value;")
@@ -90,20 +89,20 @@ def check_the_password(e : webui.event):
 		print("Wrong password: " + res.data)
 		e.window.script(" document.getElementById('err').innerHTML = '[ ! ] Wrong password'; ")
 
-def close_the_application(e : webui.event):
+def close_the_application(e : webui.Event):
 	webui.exit()
 
 def main():
 
 	# Create a window object
-	MyWindow = webui.window()
+	my_window = webui.Window()
 
 	# Bind am HTML element ID with a python function
-	MyWindow.bind('CheckPassword', check_the_password)
-	MyWindow.bind('Exit', close_the_application)
+	my_window.bind('CheckPassword', check_the_password)
+	my_window.bind('Exit', close_the_application)
 
 	# Show the window
-	MyWindow.show(login_html)
+	my_window.show_browser(login_html, webui.Browser.Chrome)
 
 	# Wait until all windows are closed
 	webui.wait()
