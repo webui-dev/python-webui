@@ -601,13 +601,13 @@ class Window:
 
         # Dispatch function conversion to C bind for binding functions
         callback_function_type = CFUNCTYPE(None, POINTER(_raw.WebuiEventT))
-        self._dispatcher_cfunc = callback_function_type(self._make_dispatcher())
+        self._dispatcher_cb = callback_function_type(self._make_dispatcher())
 
         # Dict to keep track of bound functions: {bind_id: python_function}
         self._cb_func_list: dict = {}
 
         # gets used for both filehandler and filehandler_window, should wipe out the other just how it does in C
-        self._file_handler_cb = None
+        self._file_handler_cb: _raw.FILE_HANDLER_CB = None
         self._buffers = []
 
     # -- dispatcher for function bindings -----------
@@ -651,7 +651,7 @@ class Window:
             print(f"Function bound with ID: {bind_id}")
         """
         element_c = element.encode('utf-8') if element else None
-        bind_id = _raw.webui_bind(c_size_t(self._window), element_c, self._dispatcher_cfunc)
+        bind_id = _raw.webui_bind(c_size_t(self._window), element_c, self._dispatcher_cb)
         self._cb_func_list[bind_id] = func
         return bind_id
 
@@ -893,31 +893,30 @@ class Window:
 
             my_window.set_file_handler(my_handler)
         """
+        def _internal_file_handler(filename_ptr: c_char_p, length_ptr: POINTER(c_int)) -> c_void_p:
+            """
+            Internal C callback that matches the signature required by webui_set_file_handler_window.
+            """
+            # Decode the incoming filename from C
+            filename = filename_ptr.decode('utf-8') if filename_ptr else ""
 
-        # Define the internal C callback matching the C function signature.
-        def c_file_handler(filename_ptr: c_char_p, length_ptr: POINTER(c_int)) -> c_void_p:
-            # Convert the C string (if any) to a Python string.
-            fname = filename_ptr.decode('utf-8') if filename_ptr else ""
-            # Call the user-supplied Python handler.
-            response = handler(fname)
-            if response is None:
-                response_bytes = b""
-            else:
-                response_bytes = response.encode("utf-8")
-            # Create a ctypes buffer to hold the response bytes.
+            # Call the Python-level handler to get the HTTP response
+            response_bytes = handler(filename).encode("utf-8")
+
+            # Create a ctypes buffer from the Python bytes; this buffer must remain alive
+            # at least until WebUI is done with it.
             buf = create_string_buffer(response_bytes)
-            # Save the buffer reference to keep it alive.
-            self._buffers.append(buf)
-            # Set the output length value.
+
+            # Set the length (the int* that C expects)
             length_ptr[0] = len(response_bytes)
-            # Return the pointer to the buffer.
+
+            # Return a pointer (void*) to the buffer
             return cast(buf, c_void_p)
 
-        # Wrap our Python callback with our CFUNCTYPE.
-        FILE_HANDLER_CB = CFUNCTYPE(c_void_p, c_char_p, POINTER(c_int))
-        self._file_handler_cb = FILE_HANDLER_CB(c_file_handler)
-        # Now call the C function with our window handle and callback.
-        _raw.webui_set_file_handler(c_size_t(self._window), FILE_HANDLER_CB(c_file_handler))
+        # Keep a reference so it doesn't get garbage collected
+        self._file_handler_cb = filehandler_window_callback(_internal_file_handler)
+        _raw.webui_set_file_handler_window(c_size_t(self._window), _raw.FILE_HANDLER_CB(self._file_handler_cb))
+
 
     # -- set_file_handler_window --------------------
     def set_file_handler_window(self, handler: Callable[[int, str], Optional[str]]) -> None:
@@ -969,9 +968,9 @@ class Window:
             return cast(buf, c_void_p)
 
         # Keep a reference so it doesn't get garbage collected
-        self._file_handler_cfunc = filehandler_window_callback(_internal_file_handler)
+        self._file_handler_cb = filehandler_window_callback(_internal_file_handler)
 
-        _raw.webui_set_file_handler_window(c_size_t(self._window), self._file_handler_cfunc)
+        _raw.webui_set_file_handler_window(c_size_t(self._window), self._file_handler_cb)
 
     # -- is_shown -----------------------------------
     def is_shown(self) -> bool:

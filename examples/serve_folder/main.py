@@ -1,20 +1,18 @@
+from __future__ import annotations
+
 # --[ Debugging and Development Test ]-----------
 # > pip uninstall webui2
 import sys
-
-from typing_extensions import Optional
-
 sys.path.append('../../PyPI/Package/src/webui')
 import webui
 
 # Install WebUI
 # pip install --upgrade webui2
 # from webui import webui
-
+from typing import Optional
 
 my_window = webui.Window(1)
 my_second_window = webui.Window(2)
-count: int = 0
 
 
 def exit_app(e : webui.Event):
@@ -75,14 +73,14 @@ def my_file_handler(filename: str) -> Optional[str]:
 		)
 	elif filename == "/dynamic.html":
 		# Dynamic file example
+		my_file_handler.count += 1
 		body = (
 			"<html>"
             "   This is a dynamic file content example. <br>"
-            f"   Count: {count} <a href=\"dynamic.html\">[Refresh]</a><br>"
+            f"   Count: {my_file_handler.count} <a href=\"dynamic.html\">[Refresh]</a><br>"
             "   <script src=\"webui.js\"></script>"
             "</html>"
 		)
-		count += 1
 		header_and_body = (
 			"HTTP/1.1 200 OK\r\n"
 			"Content-Type: text/html\r\n"
@@ -96,6 +94,7 @@ def my_file_handler(filename: str) -> Optional[str]:
 	# looks for the file locally.
 	return None
 
+my_file_handler.count: int = 0
 
 def main():
 	# windows were made globally already at the top.

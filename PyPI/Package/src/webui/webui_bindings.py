@@ -661,9 +661,10 @@ example:
 C Signature: 
  WEBUI_EXPORT void webui_set_file_handler(size_t window, const void* (*handler)(const char* filename, int* length));
 """
+FILE_HANDLER_CB = CFUNCTYPE(c_void_p, c_char_p, POINTER(c_int))
 webui_set_file_handler.argtypes = [
     c_size_t,                                               # size_t window
-    CFUNCTYPE(c_void_p, c_char_p, POINTER(c_int))  # const void* (*handler)(const char* filename, int* length)
+    FILE_HANDLER_CB
 ]
 webui_set_file_handler.restype = None
 
