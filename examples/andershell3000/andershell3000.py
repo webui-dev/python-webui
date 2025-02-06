@@ -1,10 +1,6 @@
-import sys
-sys.path.append('../../PyPI/Package/src/webui')
-import webui
-
 # Install WebUI
 # pip install --upgrade webui2
-# from webui import webui
+from webui import webui
 import subprocess
 import time
 
@@ -53,6 +49,6 @@ executor = CommandExecutor()
 MyWindow = webui.Window()
 MyWindow.bind("Run", run_command)
 MyWindow.set_root_folder("ui/")
-MyWindow.show_browser('index.html', webui.Browser.Chrome)
+MyWindow.show_browser('index.html', webui.Browser.AnyBrowser)
 webui.wait()
 executor.close()

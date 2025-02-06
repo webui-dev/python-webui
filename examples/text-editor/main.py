@@ -1,8 +1,4 @@
-import sys
-sys.path.append('../../PyPI/Package/src/webui')
-import webui
-
-# from webui import webui
+from webui import webui
 
 def close(e: webui.Event):
     print("Exit.")
@@ -20,7 +16,7 @@ def main():
     window.set_root_folder("ui/")
 
     # Show the window
-    window.show_browser("index.html", webui.Browser.Chrome)
+    window.show_browser("index.html", webui.Browser.AnyBrowser)
 
     # Wait until all windows get closed
     webui.wait()

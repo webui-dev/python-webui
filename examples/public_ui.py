@@ -1,8 +1,4 @@
-import sys
-sys.path.append('../PyPI/Package/src/webui')
-import webui
-
-# from webui import webui # GUI
+from webui import webui # GUI
 import socket # To get local IP
 
 
