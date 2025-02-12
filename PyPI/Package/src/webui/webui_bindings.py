@@ -422,7 +422,7 @@ webui_set_kiosk.argtypes = [
 webui_set_kiosk.restype  = None
 
 
-# -- set_custom_parameters ---------------------- 2.5.0-beta.3
+# -- set_custom_parameters ----------------------
 webui_set_custom_parameters = webui_lib.webui_set_custom_parameters
 """
 brief:
@@ -944,7 +944,7 @@ webui_set_size.argtypes = [
 webui_set_size.restype = None
 
 
-# -- set_minimum_size --------------------------- 2.5.0-beta.3
+# -- set_minimum_size ---------------------------
 webui_set_minimum_size = webui_lib.webui_set_minimum_size
 """
 brief:
