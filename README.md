@@ -36,8 +36,8 @@
 ```python
 from webui import webui
 
-MyWindow = webui.window()
-MyWindow.show('<html><script src="webui.js"></script> Hello World! </html>')
+my_window = webui.Window()
+my_window.show('<html><script src="webui.js"></script> Hello World! </html>')
 webui.wait()
 ```
 
