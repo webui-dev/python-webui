@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sys
 from ctypes import *
-from load_library import _load_library
+from . import load_library as ll
 import enum
 
 # WebUI Library
@@ -15,7 +15,7 @@ import enum
 
 
 # Loading the library in for bindings
-lib: CDLL | None = _load_library()
+lib: CDLL | None = ll.load_library()
 if lib is None:
     print('WebUI Dynamic Library not found.')
     sys.exit(1)
