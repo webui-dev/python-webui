@@ -12,14 +12,14 @@
 from __future__ import annotations
 
 import warnings
-from typing import Callable, Optional
+from typing import Callable, Optional, TypeAlias
 from ctypes import *
 
 # Import all the raw bindings
 from . import webui_bindings as _raw
 
 
-
+_FileHandlerCallback: TypeAlias = _raw.FILE_HANDLER_CB
 # C function type for the file handler window
 filehandler_window_callback = CFUNCTYPE(c_void_p, c_size_t, c_char_p, POINTER(c_int))
 
@@ -308,7 +308,7 @@ class Event:
         # Initializing Result
         res = JavaScript()
 
-        res.data = buffer.value.decode('utf-8', errors='ignore')
+        res.data = buffer.value.decode('utf-8', errors='ignore')  # type: ignore
         res.error = not success
         return res
 
@@ -619,8 +619,8 @@ class Window:
         self._cb_func_list: dict = {}
 
         # gets used for both filehandler and filehandler_window, should wipe out the other just how it does in C
-        self._file_handler_cb: _raw.FILE_HANDLER_CB = None
-        self._buffers = []
+        self._file_handler_cb: _FileHandlerCallback = None
+        self._buffers: list = []
 
     # -- dispatcher for function bindings -----------
     def _make_dispatcher(self):
@@ -1051,7 +1051,7 @@ class Window:
         _raw.webui_send_raw(
             c_size_t(self._window),
             c_char_p(function.encode("utf-8")),
-            c_void_p(raw),
+            c_void_p(raw),  # type: ignore
             c_size_t(size)
         )
 
@@ -1397,7 +1397,7 @@ class Window:
         # Initializing Result
         res = JavaScript()
 
-        res.data = buffer.value.decode('utf-8', errors='ignore')
+        res.data = buffer.value.decode('utf-8', errors='ignore')  # type: ignore
         res.error = not success
         return res
 
