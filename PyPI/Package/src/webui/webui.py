@@ -210,7 +210,7 @@ class Event:
         _raw.webui_close_client(byref(self._c_event()))
 
     # -- send_raw_client ----------------------------
-    def send_raw_client(self, function: str, data: Union[bytes, bytearray, memoryview, array.array]) -> None:
+    def send_raw_to_javascript_client(self, function: str, data: Union[bytes, bytearray, memoryview, array.array]) -> None:
         """Safely send raw data to the UI for a single client.
 
         This function sends raw data to a JavaScript function in the UI. The JavaScript function must
@@ -224,7 +224,7 @@ class Event:
             ValueError: If `data` is `None` or empty.
 
         Example:
-            e.send_raw_client("myJavaScriptFunc", bytearray([0x01, 0x0A, 0xFF]))
+            e.send_raw_to_javascript_client("myJavaScriptFunc", bytearray([0x01, 0x0A, 0xFF]))
             # Sends 3 bytes of raw data to the JavaScript function `myJavaScriptFunc`.
         """
         if data is None or len(data) == 0:
@@ -1041,7 +1041,7 @@ class Window:
         _raw.webui_set_icon(c_size_t(self._window), icon.encode("utf-8"), icon_type.encode("utf-8"))
 
     # -- send_raw -----------------------------------
-    def send_raw(self, function: str, data: Union[bytes, bytearray, memoryview, array.array]) -> None:
+    def send_raw_to_javascript(self, function: str, data: Union[bytes, bytearray, memoryview, array.array]) -> None:
         """
         Safely send raw data to the UI for all clients.
 
@@ -1059,7 +1059,7 @@ class Window:
             None
 
         Example:
-            my_window.send_raw("myJavaScriptFunc", bytearray([0x01, 0x0A, 0xFF]))
+            my_window.send_raw_to_javascript("myJavaScriptFunc", bytearray([0x01, 0x0A, 0xFF]))
             # Sends 3 bytes of raw data to the JavaScript function `myJavaScriptFunc`.
         """
         if data is None or len(data) == 0:
