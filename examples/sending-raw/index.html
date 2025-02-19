@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<h1>Hello there!</h1>
+
+<script src="/webui.js"></script>
+<script type="application/javascript">
+    function myJavaScriptFunc(rawData) {
+        // `rawData` should be a Uint8Array variable
+        console.log("rawData: ", rawData)
+
+        // Create a Blob from the raw data, specifying the MIME type as 'image/png'
+        const blob = new Blob([rawData], { type: 'image/png' });
+
+        // Generate a URL for the Blob
+        const imageUrl = URL.createObjectURL(blob);
+
+        // Create an <img> element and set its src attribute to the Blob URL
+        const img = document.createElement('img');
+        img.src = imageUrl;
+
+        // Add the img element to the body of the html
+        document.body.appendChild(img);
+        console.log("Image has been added to the page.");
+    }
+</script>
+</body>
+</html>

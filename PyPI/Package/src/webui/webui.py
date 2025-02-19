@@ -1,4 +1,4 @@
-# Python WebUI v2.5.1
+# Python WebUI v2.5.2
 #
 # http://webui.me
 # https://github.com/webui-dev/python-webui
@@ -11,6 +11,7 @@
 # webui.py
 from __future__ import annotations
 
+import array
 import warnings
 from typing import Any, Callable, Optional, TypeAlias
 from ctypes import *
@@ -209,29 +210,45 @@ class Event:
         _raw.webui_close_client(byref(self._c_event()))
 
     # -- send_raw_client ----------------------------
-    def send_raw_client(self, function: str, raw: Optional[int], size: int) -> None:
+    def send_raw_client(self, function: str, data: Union[bytes, bytearray, memoryview, array.array]) -> None:
         """Safely send raw data to the UI for a single client.
 
         This function sends raw data to a JavaScript function in the UI. The JavaScript function must
         be defined to accept the raw data, such as: `function myFunc(myData) {}`.
 
         Args:
-            function (str): The name of the JavaScript function to receive the raw data, encoded in UTF-8.
-            raw (Optional[int]): The pointer to the raw data buffer. Must not be `None`.
-            size (int): The size of the raw data buffer in bytes.
+            function (str): The name of the JavaScript function to receive the raw data.
+            data (Union[bytes, bytearray, memoryview, array.array]): The raw data buffer.
 
         Raises:
-            ValueError: If `raw` is `None`.
+            ValueError: If `data` is `None` or empty.
 
         Example:
-            e.send_raw_client("myJavaScriptFunc", my_buffer, 64)
+            e.send_raw_client("myJavaScriptFunc", bytearray([0x01, 0x0A, 0xFF]))
+            # Sends 3 bytes of raw data to the JavaScript function `myJavaScriptFunc`.
         """
-        if raw is None:
-            raise ValueError("Invalid Pointer: Cannot send a null pointer.")
+        if data is None or len(data) == 0:
+            raise ValueError("Data must not be None or empty.")
+
+        # Ensure data is a memoryview for uniformity
+        if not isinstance(data, memoryview):
+            data = memoryview(data)
+
+        # Ensure that data is a writable copy to obtain void pointer,
+        # from_buffer will throw error if the buffer passed in is not writable.
+        if data.readonly:
+            data = memoryview(bytearray(data))
+
+        # Obtain a c_void_p pointer to the data buffer
+        ptr = c_void_p(addressof(c_char.from_buffer(data)))
+
+        # Determine the size of the data
+        size = len(data)
+
         _raw.webui_send_raw_client(
             byref(self._c_event()),
             c_char_p(function.encode("utf-8")),
-            c_void_p(raw),
+            ptr,
             c_size_t(size)
         )
 
@@ -1024,33 +1041,50 @@ class Window:
         _raw.webui_set_icon(c_size_t(self._window), icon.encode("utf-8"), icon_type.encode("utf-8"))
 
     # -- send_raw -----------------------------------
-    def send_raw(self, function: str, raw: Optional[c_void_p], size: int) -> None:
-        """Safely send raw data to the UI for all clients.
+    def send_raw(self, function: str, data: Union[bytes, bytearray, memoryview, array.array]) -> None:
+        """
+        Safely send raw data to the UI for all clients.
 
         This function sends a raw data buffer to a JavaScript function in the UI.
         The JavaScript function should be capable of handling raw binary data.
 
         Args:
             function (str): The JavaScript function that will receive the raw data.
-            raw (Optional[c_void_p]): A pointer to the raw data buffer. Must not be `None`.
-            size (int): The size of the raw data in bytes.
+            data (Union[bytes, bytearray, memoryview, array.array]): The raw data buffer.
 
         Raises:
-            ValueError: If `raw` is `None`.
+            ValueError: If `data` is `None` or empty.
 
         Returns:
             None
 
         Example:
-            my_window.send_raw("myJavaScriptFunc", my_buffer, 64)
-            # Sends 64 bytes of raw data to the JavaScript function `myJavaScriptFunc`.
+            my_window.send_raw("myJavaScriptFunc", bytearray([0x01, 0x0A, 0xFF]))
+            # Sends 3 bytes of raw data to the JavaScript function `myJavaScriptFunc`.
         """
-        if raw is None:
-            raise ValueError("Invalid pointer: Cannot send a null pointer.")
+        if data is None or len(data) == 0:
+            raise ValueError("Data must not be None or empty.")
+
+        # Ensure data is a memoryview for uniformity
+        if not isinstance(data, memoryview):
+            data = memoryview(data)
+
+        # Ensure that data is a writable copy to obtain void pointer,
+        # from_buffer will throw error if the buffer passed in is not writable.
+        if data.readonly:
+            data = memoryview(bytearray(data))
+
+        # Obtain a c_void_p pointer to the data buffer
+        ptr = c_void_p(addressof(c_char.from_buffer(data)))
+
+        # Determine the size of the data
+        size = len(data)
+
+        # Call the underlying function to send the data
         _raw.webui_send_raw(
             c_size_t(self._window),
             c_char_p(function.encode("utf-8")),
-            c_void_p(raw),  # type: ignore
+            ptr,
             c_size_t(size)
         )
 
