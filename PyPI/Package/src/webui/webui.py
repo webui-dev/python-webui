@@ -13,12 +13,11 @@ from __future__ import annotations
 
 import array
 import warnings
-from typing import Callable, Optional
+from typing import Any, Callable, Optional, TypeAlias
 from ctypes import *
 
 # Import all the raw bindings
 from . import webui_bindings as _raw
-
 
 
 # C function type for the file handler window
@@ -325,7 +324,7 @@ class Event:
         # Initializing Result
         res = JavaScript()
 
-        res.data = buffer.value.decode('utf-8', errors='ignore')
+        res.data = buffer.value.decode('utf-8', errors='ignore')  # type: ignore
         res.error = not success
         return res
 
@@ -636,8 +635,8 @@ class Window:
         self._cb_func_list: dict = {}
 
         # gets used for both filehandler and filehandler_window, should wipe out the other just how it does in C
-        self._file_handler_cb: _raw.FILE_HANDLER_CB = None
-        self._buffers = []
+        self._file_handler_cb: Any = None
+        self._buffers: list = []
 
     # -- dispatcher for function bindings -----------
     def _make_dispatcher(self):
@@ -1431,7 +1430,7 @@ class Window:
         # Initializing Result
         res = JavaScript()
 
-        res.data = buffer.value.decode('utf-8', errors='ignore')
+        res.data = buffer.value.decode('utf-8', errors='ignore')  # type: ignore
         res.error = not success
         return res
 

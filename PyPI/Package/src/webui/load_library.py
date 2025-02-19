@@ -56,7 +56,7 @@ def _download_library():
 
 
 # Load WebUI Dynamic Library
-def load_library() -> CDLL:
+def load_library() -> CDLL | None:
     library: CDLL | None = None
     lib_path = _get_library_path()
     if not os.path.exists(lib_path):
