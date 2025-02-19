@@ -102,7 +102,7 @@ def main():
 	my_window.bind('Exit', close_the_application)
 
 	# Show the window
-	my_window.show_browser(login_html, webui.Browser.Chrome)
+	my_window.show(login_html)
 
 	# Wait until all windows are closed
 	webui.wait()
