@@ -17,10 +17,9 @@ import enum
 # Loading the library in for bindings
 lib: CDLL | None = ll.load_library()
 if lib is None:
-    print('WebUI Dynamic Library not found.')
+    print('WebUI: Dynamic Library not found.')
     sys.exit(1)
 else:
-    print('WebUI Dynamic Library found.')
     webui_lib: CDLL = lib
 
 

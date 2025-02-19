@@ -68,7 +68,7 @@ def load_library() -> CDLL | None:
     if platform.system() == 'Darwin':
         library = CDLL(lib_path)
         if library is None:
-            print("WebUI Dynamic Library not found.")
+            print("WebUI: Dynamic Library not found.")
     elif platform.system() == 'Windows':
         if sys.version_info.major==3 and sys.version_info.minor<=8:
             os.chdir(os.getcwd())
@@ -79,12 +79,12 @@ def load_library() -> CDLL | None:
             os.add_dll_directory(os.getcwd())
             library = cdll.LoadLibrary(lib_path)
         if library is None:
-            print("WebUI Dynamic Library not found.")
+            print("WebUI: Dynamic Library not found.")
     elif platform.system() == 'Linux':
         library = CDLL(lib_path)
         if library is None:
-            print("WebUI Dynamic Library not found.")
+            print("WebUI: Dynamic Library not found.")
     else:
-        print("Unsupported OS")
+        print("WebUI: Unsupported OS")
 
     return library
