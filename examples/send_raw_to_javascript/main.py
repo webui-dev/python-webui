@@ -13,7 +13,7 @@ def main():
 
     #print(raw_bytes)
     # Send over the byte data from the picture to the javascript function we have in the html.
-    my_window.send_raw_to_javascript("myJavaScriptFunc", raw_bytes)
+    my_window.send_raw("myJavaScriptFunc", raw_bytes)
 
     # waits for all windows to close before terminating the program.
     webui.wait()
