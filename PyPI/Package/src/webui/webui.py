@@ -1811,3 +1811,14 @@ def set_tls_certificate(certificate_pem: str, private_key_pem: str) -> bool:
             print("Failed to set TLS certificate.")
     """
     return bool(_raw.webui_set_tls_certificate(c_char_p(certificate_pem.encode("utf-8")), c_char_p(private_key_pem.encode("utf-8"))))
+
+# == Alias ==================================================================
+# Supporting old projects based on WebUI 2.4.x
+
+window = Window
+event = Event
+browser = Browser
+runtime = Runtime
+eventType = EventType
+javascript = JavaScript
+config = Config
