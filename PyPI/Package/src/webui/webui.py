@@ -1,4 +1,4 @@
-# Python WebUI v2.5.3
+# Python WebUI v2.5.4
 #
 # http://webui.me
 # https://github.com/webui-dev/python-webui
