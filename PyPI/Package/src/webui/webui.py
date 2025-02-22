@@ -1456,6 +1456,17 @@ class Window:
         """
         _raw.webui_set_runtime(c_size_t(self._window), c_size_t(runtime.value))
 
+    # -- Alias -----------------------------------
+    # Supporting old projects based on WebUI 2.4.x
+
+    def get_str(self, e: event, index: c_size_t = 0) -> str:
+        return e.get_string_at(index)
+    
+    def get_int(self, e: event, index: c_size_t = 0) -> int:
+        return e.get_int_at(index)
+    
+    def get_bool(self, e: event, index: c_size_t = 0) -> bool:
+        return e.get_bool_at(index)
 
 # == Global functions below ===================================================
 
