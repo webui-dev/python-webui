@@ -32,11 +32,11 @@ SET "WINDOWS_MSVC_X64=https://github.com/webui-dev/webui/releases/download/night
 :: SET "WINDOWS_MSVC_X64=https://github.com/webui-dev/webui/releases/download/2.5.0-beta.2/webui-windows-msvc-x64.zip"
 
 :: Download and extract archives
-CALL :DOWNLOAD_AND_EXTRACT %LINUX_ARM% webui-linux-gcc-arm webui-2.so
-CALL :DOWNLOAD_AND_EXTRACT %LINUX_ARM64% webui-linux-gcc-arm64 webui-2.so
-CALL :DOWNLOAD_AND_EXTRACT %LINUX_X64% webui-linux-gcc-x64 webui-2.so
-CALL :DOWNLOAD_AND_EXTRACT %MACOS_ARM64% webui-macos-clang-arm64 webui-2.dylib
-CALL :DOWNLOAD_AND_EXTRACT %MACOS_X64% webui-macos-clang-x64 webui-2.dylib
+CALL :DOWNLOAD_AND_EXTRACT %LINUX_ARM% webui-linux-gcc-arm libwebui-2.so
+CALL :DOWNLOAD_AND_EXTRACT %LINUX_ARM64% webui-linux-gcc-arm64 libwebui-2.so
+CALL :DOWNLOAD_AND_EXTRACT %LINUX_X64% webui-linux-gcc-x64 libwebui-2.so
+CALL :DOWNLOAD_AND_EXTRACT %MACOS_ARM64% webui-macos-clang-arm64 libwebui-2.dylib
+CALL :DOWNLOAD_AND_EXTRACT %MACOS_X64% webui-macos-clang-x64 libwebui-2.dylib
 CALL :DOWNLOAD_AND_EXTRACT %WINDOWS_MSVC_X64% webui-windows-msvc-x64 webui-2.dll
 
 :: Remove cache folder

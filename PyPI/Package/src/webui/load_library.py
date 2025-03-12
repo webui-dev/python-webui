@@ -26,11 +26,11 @@ def _get_architecture() -> str:
 def _get_library_folder_name() -> str:
     arch = _get_architecture()
     if platform.system() == 'Darwin':
-        return f'/webui-macos-clang-{arch}/webui-2.dylib'
+        return f'/webui-macos-clang-{arch}/libwebui-2.dylib'
     elif platform.system() == 'Windows':
         return f'\\webui-windows-msvc-{arch}\\webui-2.dll'
     elif platform.system() == 'Linux':
-        return f'/webui-linux-clang-{arch}/webui-2.so'  # return f'/webui-linux-gcc-{arch}/webui-2.so'
+        return f'/webui-linux-clang-{arch}/libwebui-2.so'  # return f'/webui-linux-gcc-{arch}/libwebui-2.so'
     else:
         return ""
 
