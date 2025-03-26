@@ -123,7 +123,7 @@ if [[ "$1" == "minimal" ]]; then
 
     # Copy library
     mkdir -p "$FILENAME" 2>/dev/null
-    cp -f "cache/$FILENAME/webui-2.${EXT}" "$FILENAME/webui-2.${EXT}"
+    cp -f "cache/$FILENAME/libwebui-2.${EXT}" "$FILENAME/libwebui-2.${EXT}"
 
     # Remove cache folder
     rm -rf "cache"
