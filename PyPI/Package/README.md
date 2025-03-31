@@ -1,4 +1,4 @@
-# Python WebUI v2.5.4
+# Python WebUI v2.5.5
 
 > Use any web browser as GUI, with Python in the backend and HTML5 in the frontend, all in a lightweight Python package.
 
