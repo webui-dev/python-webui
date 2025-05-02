@@ -12,7 +12,7 @@ class VirtualFile:
 
 
 virtual_files: list[VirtualFile] = []
-# flat list: [dir_key, index_path, dir_key, index_path, …]
+# flat list: [dir_key, index_path, dir_key, index_path, ...]
 index_files: list[str] = []
 
 
@@ -32,7 +32,7 @@ def build_vfs(directory: str):
         virtual_files: Cleared and then extended with VirtualFile instances
                        for each file found.
         index_files:   Cleared and then populated with flat [dir_key, index_path]
-                       pairs corresponding to each directory’s index file.
+                       pairs corresponding to each directory's index file.
     """
     global virtual_files, index_files
     virtual_files.clear()
@@ -49,7 +49,7 @@ def build_vfs(directory: str):
             full = os.path.join(root, fn)
             vpath = f"/{rel_dir}/{fn}".replace('//','/')
 
-            # read raw bytes → latin-1 so we preserve 1:1 in the str
+            # read raw bytes
             with open(full, 'rb') as f:
                 body = f.read().decode('latin-1')
 
