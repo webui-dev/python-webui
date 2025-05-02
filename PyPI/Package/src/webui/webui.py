@@ -1,4 +1,4 @@
-# Python WebUI v2.5.5
+# Python WebUI v2.5.6
 #
 # http://webui.me
 # https://github.com/webui-dev/python-webui
@@ -18,10 +18,6 @@ from ctypes import *
 
 # Import all the raw bindings
 from . import webui_bindings as _raw
-
-
-# C function type for the file handler window
-filehandler_window_callback = CFUNCTYPE(c_void_p, c_size_t, c_char_p, POINTER(c_int))
 
 
 # == Enums ====================================================================
@@ -635,8 +631,8 @@ class Window:
         self._cb_func_list: dict = {}
 
         # gets used for both filehandler and filehandler_window, should wipe out the other just how it does in C
-        self._file_handler_cb: Any = None
-        self._buffers: list = []
+        self._file_handler_cb = None
+        self._buffers = []
 
     # -- dispatcher for function bindings -----------
     def _make_dispatcher(self):
@@ -895,58 +891,64 @@ class Window:
         """
         return bool(_raw.webui_set_root_folder(c_size_t(self._window), path.encode("utf-8")))
 
-    # -- set_file_handler ---------------------------  # TODO: still errors on call to c bind
-    # def set_file_handler(self, handler: Callable[[str], Optional[str]]) -> None:
-    #     """Set a custom file handler for serving files.
-    #
-    #     This function registers a custom file handler that processes file requests
-    #     and serves HTTP responses. The handler must return a full HTTP response
-    #     (headers and body) as a UTF-8 encoded string. Setting a new handler overrides
-    #     any previously registered file handler.
-    #
-    #     Args:
-    #         handler (Callable[[str], str]): A function that takes a filename as input
-    #             and returns a complete HTTP response as a string.
-    #
-    #     Returns:
-    #         None
-    #
-    #     Example:
-    #         def my_handler(filename: str) -> str:
-    #             response_body = "Hello, World!"
-    #             response_headers = (
-    #                 "HTTP/1.1 200 OK\r\n"
-    #                 "Content-Type: text/plain\r\n"
-    #                 f"Content-Length: {len(response_body)}\r\n"
-    #                 "\r\n"
-    #             )
-    #             return response_headers + response_body
-    #
-    #         my_window.set_file_handler(my_handler)
-    #     """
-    #     def _internal_file_handler(filename_ptr: c_char_p, length_ptr: POINTER(c_int)) -> c_void_p:
-    #         """
-    #         Internal C callback that matches the signature required by webui_set_file_handler_window.
-    #         """
-    #         # Decode the incoming filename from C
-    #         filename = filename_ptr.decode('utf-8') if filename_ptr else ""
-    #
-    #         # Call the Python-level handler to get the HTTP response
-    #         response_bytes = handler(filename).encode("utf-8")
-    #
-    #         # Create a ctypes buffer from the Python bytes; this buffer must remain alive
-    #         # at least until WebUI is done with it.
-    #         buf = create_string_buffer(response_bytes)
-    #
-    #         # Set the length (the int* that C expects)
-    #         length_ptr[0] = len(response_bytes)
-    #
-    #         # Return a pointer (void*) to the buffer
-    #         return cast(buf, c_void_p)
-    #
-    #     # Keep a reference so it doesn't get garbage collected
-    #     self._file_handler_cb = filehandler_window_callback(_internal_file_handler)
-    #     _raw.webui_set_file_handler_window(c_size_t(self._window), _raw.FILE_HANDLER_CB(self._file_handler_cb))
+    # -- set_file_handler --------------------------- 
+    def set_file_handler(self, handler: Callable[[str], Optional[str]]) -> None:
+        """Set a custom file handler for serving files.
+    
+        This function registers a custom file handler that processes file requests
+        and serves HTTP responses. The handler must return a full HTTP response
+        (headers and body) as a UTF-8 encoded string. Setting a new handler overrides
+        any previously registered file handler.
+    
+        Args:
+            handler (Callable[[str], str]): A function that takes a filename as input
+                and returns a complete HTTP response as a string.
+    
+        Returns:
+            None
+    
+        Example:
+            def my_handler(filename: str) -> Optional[str]:
+                response_body = "Hello, World!"
+                response_headers = (
+                    "HTTP/1.1 200 OK\r\n"
+                    "Content-Type: text/plain\r\n"
+                    f"Content-Length: {len(response_body)}\r\n"
+                    "\r\n"
+                )
+                return response_headers + response_body
+    
+            my_window.set_file_handler(my_handler)
+        """
+        # _raw bindings moved here due to CFUNCTYPE factory conflicts
+        callback_handler_type = CFUNCTYPE(c_void_p, c_char_p, POINTER(c_int))
+        _raw.webui_set_file_handler.argtypes = [c_size_t, callback_handler_type]
+        _raw.webui_set_file_handler.restype  = None
+
+        self._buffers.clear()
+
+        def _c_handler(filename_ptr, length_ptr):
+            path = filename_ptr.decode("utf-8")
+            response_str = handler(path)
+
+            # None, tells WebUI to look for files elsewhere
+            if response_str is None:
+                length_ptr[0] = 0
+                return 0
+
+            data = response_str.encode("utf-8")
+            length_ptr[0] = len(data)
+
+            # allocate and pin
+            buf = create_string_buffer(data)
+            self._buffers.append(buf)
+
+            # return the raw address as an integer
+            return addressof(buf)
+
+        # Keep a reference so it doesn't get garbage collected
+        self._file_handler_cb = callback_handler_type(_c_handler)
+        _raw.webui_set_file_handler(self._window, self._file_handler_cb)
 
 
     # -- set_file_handler_window --------------------  # TODO: still errors on call to c bind

@@ -74,7 +74,7 @@ class WebuiConfig(enum.IntEnum):
 
     show_wait_connection = 0
     """
-    Control if 'webui_show()', 'webui_show_browser()' and
+    Control if 'webui_show()', ' # TODO: still errors on call to c bind # TODO: still errors on call to c bindrowser()' and
     'webui_show_wv()' should wait for the window to connect
     before returns or not.
 
@@ -643,7 +643,7 @@ webui_set_default_root_folder.argtypes = [
 webui_set_default_root_folder.restype = c_bool
 
 
-# -- set_file_handler---------------------------- # TODO: testing required
+# -- set_file_handler----------------------------
 webui_set_file_handler = webui_lib.webui_set_file_handler
 """
 brief:
@@ -660,12 +660,9 @@ example:
 C Signature: 
  WEBUI_EXPORT void webui_set_file_handler(size_t window, const void* (*handler)(const char* filename, int* length));
 """
-FILE_HANDLER_CB = CFUNCTYPE(c_void_p, c_char_p, POINTER(c_int))
-webui_set_file_handler.argtypes = [
-    c_size_t,                                               # size_t window
-    FILE_HANDLER_CB
-]
-webui_set_file_handler.restype = None
+# Due to wierd CFUNCTYPE instancing, the argtypes and restype 
+# are in the wrapper function to keep a single instance of the 
+# CFUNCTYPE factory.
 
 
 # -- set_file_handler_window -------------------- # TODO: python wrapper
@@ -686,7 +683,7 @@ C Signature:
  WEBUI_EXPORT void webui_set_file_handler_window(size_t window, const void* (*handler)(size_t window, const char* filename, int* length));
 """
 webui_set_file_handler.argtypes = [
-    c_size_t,                                                         # size_t window
+    c_size_t,                                               # size_t window
     CFUNCTYPE(c_void_p,c_size_t, c_char_p, POINTER(c_int))  # const void* (*handler)(size_t window, const char* filename, int* length)
 ]
 webui_set_file_handler.restype = None
