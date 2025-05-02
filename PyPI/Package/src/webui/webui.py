@@ -936,7 +936,7 @@ class Window:
                 length_ptr[0] = 0
                 return 0
 
-            data = response_str.encode("utf-8")
+            data = response_str.encode("latin-1")
             length_ptr[0] = len(data)
 
             # allocate and pin
