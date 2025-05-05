@@ -1,8 +1,8 @@
 # --[ Debugging and Development Test ]-----------
 # > pip uninstall webui2
 import sys
-sys.path.append('./Package/src/webui')
-import webui
+sys.path.append('./Package/src')
+from webui import webui
 
 # --[ Production Test ]--------------------------
 # > pip install --upgrade webui2
