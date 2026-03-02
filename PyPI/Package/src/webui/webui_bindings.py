@@ -8,7 +8,7 @@ import enum
 # WebUI Library
 # https://webui.me
 # https://github.com/webui-dev/webui
-# Copyright (c) 2020-2025 Hassan Draga.
+# Copyright (c) 2020-2026 Hassan Draga.
 # Licensed under MIT License.
 # All rights reserved.
 # Canada.
@@ -128,6 +128,15 @@ class WebuiConfig(enum.IntEnum):
     """
 
 
+class WebuiLoggerLevel(enum.IntEnum):
+    """
+    WebUI Logger Level enum definition.
+    """
+    DEBUG = 0  # 0. All logs with all details
+    INFO  = 1  # 1. Only general logs
+    ERROR = 2  # 2. Only fatal error logs
+
+
 # == Structs ==================================================================
 
 
@@ -235,6 +244,54 @@ webui_bind.argtypes = [
     CFUNCTYPE(None, POINTER(WebuiEventT))  # void (*func)(webui_event_t* e)
 ]
 webui_bind.restype  = c_size_t
+
+
+# -- set_context --------------------------------
+webui_set_context = webui_lib.webui_set_context
+"""
+brief:
+ Use this API after using `webui_bind()` to add any user data to it that
+ can be read later using `webui_get_context()`.
+
+param: window - The window number
+param: element - The HTML element / JavaScript object
+param: context - Any user data pointer
+
+example:
+ webui_set_context(myWindow, "myFunction", myData);
+
+C Signature:
+ WEBUI_EXPORT void webui_set_context(size_t window, const char* element, void* context);
+"""
+webui_set_context.argtypes = [
+    c_size_t,  # size_t window
+    c_char_p,  # const char* element
+    c_void_p   # void* context
+]
+webui_set_context.restype = None
+
+
+# -- get_context --------------------------------
+webui_get_context = webui_lib.webui_get_context
+"""
+brief:
+ Get user data that was previously set using `webui_set_context()`.
+
+param: e - The event struct
+
+return:
+ Returns the user data pointer.
+
+example:
+ void* myData = webui_get_context(e);
+
+C Signature:
+ WEBUI_EXPORT void* webui_get_context(webui_event_t* e);
+"""
+webui_get_context.argtypes = [
+    POINTER(WebuiEventT)  # webui_event_t* e
+]
+webui_get_context.restype = c_void_p
 
 
 # -- get_best_browser ---------------------------
@@ -421,6 +478,49 @@ webui_set_kiosk.argtypes = [
 webui_set_kiosk.restype  = None
 
 
+# -- focus --------------------------------------
+webui_focus = webui_lib.webui_focus
+"""
+brief:
+ Bring a window to the front and focus it.
+
+param: window - The window number
+
+example:
+ webui_focus(myWindow);
+
+C Signature:
+ WEBUI_EXPORT void webui_focus(size_t window);
+"""
+webui_focus.argtypes = [
+    c_size_t  # size_t window
+]
+webui_focus.restype = None
+
+
+# -- set_resizable ------------------------------
+webui_set_resizable = webui_lib.webui_set_resizable
+"""
+brief:
+ Sets whether the window frame is resizable or fixed.
+ Works only on WebView window.
+
+param: window - The window number
+param: status - True or False
+
+example:
+ webui_set_resizable(myWindow, true);
+
+C Signature:
+ WEBUI_EXPORT void webui_set_resizable(size_t window, bool status);
+"""
+webui_set_resizable.argtypes = [
+    c_size_t,  # size_t window
+    c_bool     # bool status
+]
+webui_set_resizable.restype = None
+
+
 # -- set_custom_parameters ----------------------
 webui_set_custom_parameters = webui_lib.webui_set_custom_parameters
 """
@@ -522,6 +622,27 @@ webui_wait.argtypes = []
 webui_wait.restype  = None
 
 
+# -- wait_async ---------------------------------
+webui_wait_async = webui_lib.webui_wait_async
+"""
+brief:
+ Wait asynchronously until all opened windows get closed.
+ Note: In WebView mode, you need to call this from the main thread.
+
+return:
+ Returns True if more windows are still open, False otherwise.
+
+example:
+ while webui_wait_async():
+     pass  # Your main thread code here
+
+C Signature:
+ WEBUI_EXPORT bool webui_wait_async(void);
+"""
+webui_wait_async.argtypes = []
+webui_wait_async.restype  = c_bool
+
+
 # -- close --------------------------------------
 webui_close = webui_lib.webui_close
 """
@@ -541,6 +662,46 @@ webui_close.argtypes = [
     c_size_t  # size_t window
 ]
 webui_close.restype  = None
+
+
+# -- minimize -----------------------------------
+webui_minimize = webui_lib.webui_minimize
+"""
+brief:
+ Minimize a WebView window.
+
+param: window - The window number
+
+example:
+ webui_minimize(myWindow);
+
+C Signature:
+ WEBUI_EXPORT void webui_minimize(size_t window);
+"""
+webui_minimize.argtypes = [
+    c_size_t  # size_t window
+]
+webui_minimize.restype = None
+
+
+# -- maximize -----------------------------------
+webui_maximize = webui_lib.webui_maximize
+"""
+brief:
+ Maximize a WebView window.
+
+param: window - The window number
+
+example:
+ webui_maximize(myWindow);
+
+C Signature:
+ WEBUI_EXPORT void webui_maximize(size_t window);
+"""
+webui_maximize.argtypes = [
+    c_size_t  # size_t window
+]
+webui_maximize.restype = None
 
 
 # -- close_client -------------------------------
@@ -643,6 +804,49 @@ webui_set_default_root_folder.argtypes = [
 webui_set_default_root_folder.restype = c_bool
 
 
+# -- set_browser_folder -------------------------
+webui_set_browser_folder = webui_lib.webui_set_browser_folder
+"""
+brief:
+ Set custom browser folder path.
+
+param: path - The browser folder path
+
+example:
+ webui_set_browser_folder("/home/Foo/Bar/");
+
+C Signature:
+ WEBUI_EXPORT void webui_set_browser_folder(const char* path);
+"""
+webui_set_browser_folder.argtypes = [
+    c_char_p  # const char* path
+]
+webui_set_browser_folder.restype = None
+
+
+# -- set_close_handler_wv -----------------------
+webui_set_close_handler_wv = webui_lib.webui_set_close_handler_wv
+"""
+brief:
+ Set a callback to catch the close event of the WebView window.
+ The handler must return False to prevent the close event, True otherwise.
+
+param: window - The window number
+param: close_handler - The handler function: `bool myHandler(size_t window)`
+
+example:
+ webui_set_close_handler_wv(myWindow, myCloseEvent);
+
+C Signature:
+ WEBUI_EXPORT void webui_set_close_handler_wv(size_t window, bool (*close_handler)(size_t window));
+"""
+webui_set_close_handler_wv.argtypes = [
+    c_size_t,                          # size_t window
+    CFUNCTYPE(c_bool, c_size_t)        # bool (*close_handler)(size_t window)
+]
+webui_set_close_handler_wv.restype = None
+
+
 # -- set_file_handler----------------------------
 webui_set_file_handler = webui_lib.webui_set_file_handler
 """
@@ -657,20 +861,19 @@ param: handler - The handler function: `void myHandler(const char* filename, int
 example:
  webui_set_file_handler(myWindow, myHandlerFunction);
 
-C Signature: 
+C Signature:
  WEBUI_EXPORT void webui_set_file_handler(size_t window, const void* (*handler)(const char* filename, int* length));
 """
-# Due to wierd CFUNCTYPE instancing, the argtypes and restype 
-# are in the wrapper function to keep a single instance of the 
-# CFUNCTYPE factory.
+# Due to CFUNCTYPE factory conflicts, argtypes/restype are set inside the
+# high-level wrapper (webui.py) so each call gets a single CFUNCTYPE instance.
 
 
-# -- set_file_handler_window -------------------- # TODO: python wrapper
-webui_set_file_handler_window = webui_lib.webui_set_file_handler
+# -- set_file_handler_window --------------------
+webui_set_file_handler_window = webui_lib.webui_set_file_handler_window
 """
 brief:
  Set a custom handler to serve files. This custom handler should
- return full HTTP header and body. This deactivates any previous 
+ return full HTTP header and body. This deactivates any previous
  handler set with `webui_set_file_handler`
 
 param: window - The window number
@@ -679,14 +882,36 @@ param: handler - The handler function: `void myHandler(size_t window, const char
 example:
  webui_set_file_handler_window(myWindow, myHandlerFunction);
 
-C Signature: 
+C Signature:
  WEBUI_EXPORT void webui_set_file_handler_window(size_t window, const void* (*handler)(size_t window, const char* filename, int* length));
 """
-webui_set_file_handler.argtypes = [
-    c_size_t,                                               # size_t window
-    CFUNCTYPE(c_void_p,c_size_t, c_char_p, POINTER(c_int))  # const void* (*handler)(size_t window, const char* filename, int* length)
+# Due to CFUNCTYPE factory conflicts, argtypes/restype are set inside the
+# high-level wrapper (webui.py) so each call gets a single CFUNCTYPE instance.
+
+
+# -- interface_set_response_file_handler --------
+webui_interface_set_response_file_handler = webui_lib.webui_interface_set_response_file_handler
+"""
+brief:
+ Use this API to set a file handler response if your backend needs async
+ response for `webui_set_file_handler()`.
+
+param: window - The window number
+param: response - The response buffer
+param: length - The response size
+
+example:
+ webui_interface_set_response_file_handler(myWindow, buffer, 1024);
+
+C Signature:
+ WEBUI_EXPORT void webui_interface_set_response_file_handler(size_t window, const void* response, int length);
+"""
+webui_interface_set_response_file_handler.argtypes = [
+    c_size_t,  # size_t window
+    c_void_p,  # const void* response
+    c_int      # int length
 ]
-webui_set_file_handler.restype = None
+webui_interface_set_response_file_handler.restype = None
 
 
 # -- is_shown -----------------------------------
@@ -841,6 +1066,30 @@ webui_malloc.argtypes = [
 webui_malloc.restype = c_void_p
 
 
+# -- memcpy -------------------------------------
+webui_memcpy = webui_lib.webui_memcpy
+"""
+brief:
+ Copy raw data.
+
+param: dest - Destination memory pointer
+param: src - Source memory pointer
+param: count - Bytes to copy
+
+example:
+ webui_memcpy(myBuffer, myData, 64);
+
+C Signature:
+ WEBUI_EXPORT void webui_memcpy(void* dest, void* src, size_t count);
+"""
+webui_memcpy.argtypes = [
+    c_void_p,  # void* dest
+    c_void_p,  # void* src
+    c_size_t   # size_t count
+]
+webui_memcpy.restype = None
+
+
 # -- send_raw -----------------------------------
 webui_send_raw = webui_lib.webui_send_raw
 """
@@ -986,6 +1235,27 @@ webui_set_position.argtypes = [
     c_uint,    # unsigned int y
 ]
 webui_set_position.restype = None
+
+
+# -- set_center ---------------------------------
+webui_set_center = webui_lib.webui_set_center
+"""
+brief:
+ Centers the window on the screen. Works better with WebView.
+ Call this function before `webui_show()` for better results.
+
+param: window - The window number
+
+example:
+ webui_set_center(myWindow);
+
+C Signature:
+ WEBUI_EXPORT void webui_set_center(size_t window);
+"""
+webui_set_center.argtypes = [
+    c_size_t  # size_t window
+]
+webui_set_center.restype = None
 
 
 # -- set_profile --------------------------------
@@ -1253,6 +1523,56 @@ webui_get_child_process_id.argtypes = [
 webui_get_child_process_id.restype = c_size_t
 
 
+# -- win32_get_hwnd -----------------------------
+webui_win32_get_hwnd = webui_lib.webui_win32_get_hwnd
+"""
+brief:
+ Gets Win32 window HWND. More reliable with WebView than web browser
+ window, as browser PIDs may change on launch.
+
+param: window - The window number
+
+return:
+ Returns the window HWND as void*
+
+example:
+ HWND hwnd = webui_win32_get_hwnd(myWindow);
+
+C Signature:
+ WEBUI_EXPORT void* webui_win32_get_hwnd(size_t window);
+"""
+webui_win32_get_hwnd.argtypes = [
+    c_size_t  # size_t window
+]
+webui_win32_get_hwnd.restype = c_void_p
+
+
+# -- get_hwnd -----------------------------------
+webui_get_hwnd = webui_lib.webui_get_hwnd
+"""
+brief:
+ Get window HWND. More reliable with WebView than web browser window,
+ as browser PIDs may change on launch. Returns HWND on Win32,
+ GtkWindow* on Linux.
+
+param: window - The window number
+
+return:
+ Returns the window handle as void*
+
+example:
+ HWND hwnd = webui_get_hwnd(myWindow);  # Win32
+ GtkWindow* w = webui_get_hwnd(myWindow);  # Linux
+
+C Signature:
+ WEBUI_EXPORT void* webui_get_hwnd(size_t window);
+"""
+webui_get_hwnd.argtypes = [
+    c_size_t  # size_t window
+]
+webui_get_hwnd.restype = c_void_p
+
+
 # -- get_port -----------------------------------
 webui_get_port = webui_lib.webui_get_port
 """
@@ -1319,11 +1639,33 @@ example:
 C Signature:
  WEBUI_EXPORT size_t webui_get_free_port(void);
 """
-webui_get_port.argtypes = []
-webui_get_port.restype = c_size_t
+webui_get_free_port.argtypes = []
+webui_get_free_port.restype = c_size_t
 
 
-# -- set_config --------------------------------- # TODO: testing required
+# -- set_logger ---------------------------------
+webui_set_logger = webui_lib.webui_set_logger
+"""
+brief:
+ Set a custom logger function.
+
+param: func - The logger callback: `void myLogger(size_t level, const char* log, void* user_data)`
+param: user_data - Optional user data pointer passed to the logger
+
+example:
+ webui_set_logger(myLogger, NULL);
+
+C Signature:
+ WEBUI_EXPORT void webui_set_logger(void (*func)(size_t level, const char* log, void* user_data), void *user_data);
+"""
+webui_set_logger.argtypes = [
+    CFUNCTYPE(None, c_size_t, c_char_p, c_void_p),  # void (*func)(size_t, const char*, void*)
+    c_void_p                                          # void* user_data
+]
+webui_set_logger.restype = None
+
+
+# -- set_config ---------------------------------
 webui_set_config = webui_lib.webui_set_config
 """
 brief:
@@ -1368,6 +1710,50 @@ webui_set_event_blocking.argtypes = [
     c_bool     # bool status
 ]
 webui_set_event_blocking.restype = None
+
+
+# -- set_frameless ------------------------------
+webui_set_frameless = webui_lib.webui_set_frameless
+"""
+brief:
+ Make a WebView window frameless.
+
+param: window - The window number
+param: status - The frameless status `true` or `false`
+
+example:
+ webui_set_frameless(myWindow, true);
+
+C Signature:
+ WEBUI_EXPORT void webui_set_frameless(size_t window, bool status);
+"""
+webui_set_frameless.argtypes = [
+    c_size_t,  # size_t window
+    c_bool     # bool status
+]
+webui_set_frameless.restype = None
+
+
+# -- set_transparent ----------------------------
+webui_set_transparent = webui_lib.webui_set_transparent
+"""
+brief:
+ Make a WebView window transparent.
+
+param: window - The window number
+param: status - The transparency status `true` or `false`
+
+example:
+ webui_set_transparent(myWindow, true);
+
+C Signature:
+ WEBUI_EXPORT void webui_set_transparent(size_t window, bool status);
+"""
+webui_set_transparent.argtypes = [
+    c_size_t,  # size_t window
+    c_bool     # bool status
+]
+webui_set_transparent.restype = None
 
 
 # -- get_mime_type ------------------------------
@@ -1693,6 +2079,15 @@ webui_get_string_at.argtypes = [
 ]
 webui_get_string_at.restype = c_char_p
 
+# Raw-pointer variant: POINTER(c_char) restype avoids null-byte truncation
+# Uses __getitem__ (subscript) to get a fresh, independent ctypes function object
+webui_get_string_at_ptr = webui_lib['webui_get_string_at']
+webui_get_string_at_ptr.argtypes = [
+    POINTER(WebuiEventT),  # webui_event_t* e
+    c_size_t               # size_t index
+]
+webui_get_string_at_ptr.restype = POINTER(c_char)
+
 
 # -- get_string ---------------------------------
 webui_get_string = webui_lib.webui_get_string
@@ -1715,6 +2110,13 @@ webui_get_string.argtypes = [
     POINTER(WebuiEventT)  # webui_event_t* e
 ]
 webui_get_string.restype = c_char_p
+
+# Raw-pointer variant: avoids null-byte truncation for binary data
+webui_get_string_ptr = webui_lib['webui_get_string']
+webui_get_string_ptr.argtypes = [
+    POINTER(WebuiEventT)  # webui_event_t* e
+]
+webui_get_string_ptr.restype = POINTER(c_char)
 
 
 # -- get_bool_at --------------------------------
@@ -1901,262 +2303,435 @@ webui_return_bool.argtypes = [
 webui_return_bool.restype = None
 
 
+# -- get_last_error_number ----------------------
+webui_get_last_error_number = webui_lib.webui_get_last_error_number
+"""
+brief:
+ Get the last WebUI error code.
+
+return:
+ Returns the last error code as size_t
+
+example:
+ size_t err = webui_get_last_error_number();
+
+C Signature:
+ WEBUI_EXPORT size_t webui_get_last_error_number();
+"""
+webui_get_last_error_number.argtypes = []
+webui_get_last_error_number.restype = c_size_t
+
+
+# -- get_last_error_message ---------------------
+webui_get_last_error_message = webui_lib.webui_get_last_error_message
+"""
+brief:
+ Get the last WebUI error message.
+
+return:
+ Returns the last error message as string
+
+example:
+ const char* msg = webui_get_last_error_message();
+
+C Signature:
+ WEBUI_EXPORT const char* webui_get_last_error_message();
+"""
+webui_get_last_error_message.argtypes = []
+webui_get_last_error_message.restype = c_char_p
+
+
 # == Wrapper's Interface ======================================================
 
 
 # -- interface_bind -----------------------------
+webui_interface_bind = webui_lib.webui_interface_bind
 """
-# /**
-#  * @brief Bind a specific HTML element click event with a function. Empty element means all events.
-#  *
-#  * @param window The window number
-#  * @param element The element ID
-#  * @param func The callback as myFunc(Window, EventType, Element, EventNumber, BindID)
-#  *
-#  * @return Returns unique bind ID
-#  *
-#  * @example size_t id = webui_interface_bind(myWindow, "myID", myCallback);
-#  */
-# WEBUI_EXPORT size_t webui_interface_bind(size_t window, const char* element,
-#     void (*func)(size_t, size_t, char*, size_t, size_t));
-""" # TODO:
+brief:
+ Bind a specific HTML element click event with a function.
+ Empty element means all events.
+ Callback signature: myFunc(Window, EventType, Element, EventNumber, BindID)
+
+param: window - The window number
+param: element - The element ID
+param: func - The callback function
+
+return:
+ Returns unique bind ID
+
+example:
+ size_t id = webui_interface_bind(myWindow, "myID", myCallback);
+
+C Signature:
+ WEBUI_EXPORT size_t webui_interface_bind(size_t window, const char* element,
+     void (*func)(size_t, size_t, char*, size_t, size_t));
+"""
+webui_interface_bind.argtypes = [
+    c_size_t,                                                               # size_t window
+    c_char_p,                                                               # const char* element
+    CFUNCTYPE(None, c_size_t, c_size_t, c_char_p, c_size_t, c_size_t)      # void (*func)(size_t, size_t, char*, size_t, size_t)
+]
+webui_interface_bind.restype = c_size_t
 
 
 # -- interface_set_response ---------------------
+webui_interface_set_response = webui_lib.webui_interface_set_response
 """
-# /**
-#  * @brief When using `webui_interface_bind()`, you may need this function to easily set a response.
-#  *
-#  * @param window The window number
-#  * @param event_number The event number
-#  * @param response The response as string to be send to JavaScript
-#  *
-#  * @example webui_interface_set_response(myWindow, e->event_number, "Response...");
-#  */
-# WEBUI_EXPORT void webui_interface_set_response(size_t window, size_t event_number, const char* response);
-""" # TODO:
+brief:
+ When using `webui_interface_bind()`, use this to set a response.
+
+param: window - The window number
+param: event_number - The event number
+param: response - The response as string to be sent to JavaScript
+
+example:
+ webui_interface_set_response(myWindow, e->event_number, "Response...");
+
+C Signature:
+ WEBUI_EXPORT void webui_interface_set_response(size_t window, size_t event_number, const char* response);
+"""
+webui_interface_set_response.argtypes = [
+    c_size_t,  # size_t window
+    c_size_t,  # size_t event_number
+    c_char_p   # const char* response
+]
+webui_interface_set_response.restype = None
 
 
 # -- interface_is_app_running -------------------
+webui_interface_is_app_running = webui_lib.webui_interface_is_app_running
 """
-# /**
-#  * @brief Check if the app still running.
-#  *
-#  * @return Returns True if app is running
-#  *
-#  * @example bool status = webui_interface_is_app_running();
-#  */
-# WEBUI_EXPORT bool webui_interface_is_app_running(void);
-""" # TODO:
+brief:
+ Check if the app is still running.
+
+return:
+ Returns True if app is running
+
+example:
+ bool status = webui_interface_is_app_running();
+
+C Signature:
+ WEBUI_EXPORT bool webui_interface_is_app_running(void);
+"""
+webui_interface_is_app_running.argtypes = []
+webui_interface_is_app_running.restype = c_bool
 
 
 # -- interface_get_window_id --------------------
-
+webui_interface_get_window_id = webui_lib.webui_interface_get_window_id
 """
-# /**
-#  * @brief Get a unique window ID.
-#  *
-#  * @param window The window number
-#  *
-#  * @return Returns the unique window ID as integer
-#  *
-#  * @example size_t id = webui_interface_get_window_id(myWindow);
-#  */
-# WEBUI_EXPORT size_t webui_interface_get_window_id(size_t window);
-""" # TODO:
+brief:
+ Get a unique window ID.
+
+param: window - The window number
+
+return:
+ Returns the unique window ID as integer
+
+example:
+ size_t id = webui_interface_get_window_id(myWindow);
+
+C Signature:
+ WEBUI_EXPORT size_t webui_interface_get_window_id(size_t window);
+"""
+webui_interface_get_window_id.argtypes = [
+    c_size_t  # size_t window
+]
+webui_interface_get_window_id.restype = c_size_t
 
 
 # -- interface_get_string_at --------------------
-
+webui_interface_get_string_at = webui_lib.webui_interface_get_string_at
 """
-# /**
-#  * @brief Get an argument as string at a specific index.
-#  *
-#  * @param window The window number
-#  * @param event_number The event number
-#  * @param index The argument position
-#  *
-#  * @return Returns argument as string
-#  *
-#  * @example const char* myStr = webui_interface_get_string_at(myWindow, e->event_number, 0);
-#  */
-# WEBUI_EXPORT const char* webui_interface_get_string_at(size_t window, size_t event_number, size_t index);
-""" # TODO:
+brief:
+ Get an argument as string at a specific index.
+
+param: window - The window number
+param: event_number - The event number
+param: index - The argument position
+
+return:
+ Returns argument as string
+
+example:
+ const char* myStr = webui_interface_get_string_at(myWindow, e->event_number, 0);
+
+C Signature:
+ WEBUI_EXPORT const char* webui_interface_get_string_at(size_t window, size_t event_number, size_t index);
+"""
+webui_interface_get_string_at.argtypes = [
+    c_size_t,  # size_t window
+    c_size_t,  # size_t event_number
+    c_size_t   # size_t index
+]
+webui_interface_get_string_at.restype = c_char_p
 
 
 # -- interface_get_int_at -----------------------
-
+webui_interface_get_int_at = webui_lib.webui_interface_get_int_at
 """
-# /**
-#  * @brief Get an argument as integer at a specific index.
-#  *
-#  * @param window The window number
-#  * @param event_number The event number
-#  * @param index The argument position
-#  *
-#  * @return Returns argument as integer
-#  *
-#  * @example long long int myNum = webui_interface_get_int_at(myWindow, e->event_number, 0);
-#  */
-# WEBUI_EXPORT long long int webui_interface_get_int_at(size_t window, size_t event_number, size_t index);
-""" # TODO:
+brief:
+ Get an argument as integer at a specific index.
+
+param: window - The window number
+param: event_number - The event number
+param: index - The argument position
+
+return:
+ Returns argument as integer
+
+example:
+ long long int myNum = webui_interface_get_int_at(myWindow, e->event_number, 0);
+
+C Signature:
+ WEBUI_EXPORT long long int webui_interface_get_int_at(size_t window, size_t event_number, size_t index);
+"""
+webui_interface_get_int_at.argtypes = [
+    c_size_t,  # size_t window
+    c_size_t,  # size_t event_number
+    c_size_t   # size_t index
+]
+webui_interface_get_int_at.restype = c_longlong
 
 
 # -- interface_get_float_at ---------------------
+webui_interface_get_float_at = webui_lib.webui_interface_get_float_at
 """
-# /**
-#  * @brief Get an argument as float at a specific index.
-#  *
-#  * @param window The window number
-#  * @param event_number The event number
-#  * @param index The argument position
-#  *
-#  * @return Returns argument as float
-#  *
-#  * @example double myFloat = webui_interface_get_int_at(myWindow, e->event_number, 0);
-#  */
-# WEBUI_EXPORT double webui_interface_get_float_at(size_t window, size_t event_number, size_t index);
-""" # TODO:
+brief:
+ Get an argument as float at a specific index.
+
+param: window - The window number
+param: event_number - The event number
+param: index - The argument position
+
+return:
+ Returns argument as float
+
+example:
+ double myFloat = webui_interface_get_float_at(myWindow, e->event_number, 0);
+
+C Signature:
+ WEBUI_EXPORT double webui_interface_get_float_at(size_t window, size_t event_number, size_t index);
+"""
+webui_interface_get_float_at.argtypes = [
+    c_size_t,  # size_t window
+    c_size_t,  # size_t event_number
+    c_size_t   # size_t index
+]
+webui_interface_get_float_at.restype = c_double
 
 
 # -- interface_get_bool_at ----------------------
+webui_interface_get_bool_at = webui_lib.webui_interface_get_bool_at
 """
-# /**
-#  * @brief Get an argument as boolean at a specific index.
-#  *
-#  * @param window The window number
-#  * @param event_number The event number
-#  * @param index The argument position
-#  *
-#  * @return Returns argument as boolean
-#  *
-#  * @example bool myBool = webui_interface_get_bool_at(myWindow, e->event_number, 0);
-#  */
-# WEBUI_EXPORT bool webui_interface_get_bool_at(size_t window, size_t event_number, size_t index);
-""" # TODO:
+brief:
+ Get an argument as boolean at a specific index.
+
+param: window - The window number
+param: event_number - The event number
+param: index - The argument position
+
+return:
+ Returns argument as boolean
+
+example:
+ bool myBool = webui_interface_get_bool_at(myWindow, e->event_number, 0);
+
+C Signature:
+ WEBUI_EXPORT bool webui_interface_get_bool_at(size_t window, size_t event_number, size_t index);
+"""
+webui_interface_get_bool_at.argtypes = [
+    c_size_t,  # size_t window
+    c_size_t,  # size_t event_number
+    c_size_t   # size_t index
+]
+webui_interface_get_bool_at.restype = c_bool
 
 
 # -- interface_get_size_at ----------------------
-
+webui_interface_get_size_at = webui_lib.webui_interface_get_size_at
 """
-# /**
-#  * @brief Get the size in bytes of an argument at a specific index.
-#  *
-#  * @param window The window number
-#  * @param event_number The event number
-#  * @param index The argument position
-#  *
-#  * @return Returns size in bytes
-#  *
-#  * @example size_t argLen = webui_interface_get_size_at(myWindow, e->event_number, 0);
-#  */
-# WEBUI_EXPORT size_t webui_interface_get_size_at(size_t window, size_t event_number, size_t index);
-""" # TODO:
+brief:
+ Get the size in bytes of an argument at a specific index.
+
+param: window - The window number
+param: event_number - The event number
+param: index - The argument position
+
+return:
+ Returns size in bytes
+
+example:
+ size_t argLen = webui_interface_get_size_at(myWindow, e->event_number, 0);
+
+C Signature:
+ WEBUI_EXPORT size_t webui_interface_get_size_at(size_t window, size_t event_number, size_t index);
+"""
+webui_interface_get_size_at.argtypes = [
+    c_size_t,  # size_t window
+    c_size_t,  # size_t event_number
+    c_size_t   # size_t index
+]
+webui_interface_get_size_at.restype = c_size_t
 
 
 # -- interface_show_client ----------------------
-
+webui_interface_show_client = webui_lib.webui_interface_show_client
 """
-# /**
-#  * @brief Show a window using embedded HTML, or a file. If the window is already
-#  * open, it will be refreshed. Single client.
-#  *
-#  * @param window The window number
-#  * @param event_number The event number
-#  * @param content The HTML, URL, Or a local file
-#  *
-#  * @return Returns True if showing the window is successed.
-#  *
-#  * @example webui_show_client(e, "<html>...</html>"); |
-#  * webui_show_client(e, "index.html"); | webui_show_client(e, "http://...");
-#  */
-# WEBUI_EXPORT bool webui_interface_show_client(size_t window, size_t event_number, const char* content);
-""" # TODO:
+brief:
+ Show a window using embedded HTML, or a file. Single client.
 
+param: window - The window number
+param: event_number - The event number
+param: content - The HTML, URL, Or a local file
+
+return:
+ Returns True if showing the window succeeded.
+
+example:
+ webui_interface_show_client(myWindow, e->event_number, "<html>...</html>");
+
+C Signature:
+ WEBUI_EXPORT bool webui_interface_show_client(size_t window, size_t event_number, const char* content);
+"""
+webui_interface_show_client.argtypes = [
+    c_size_t,  # size_t window
+    c_size_t,  # size_t event_number
+    c_char_p   # const char* content
+]
+webui_interface_show_client.restype = c_bool
 
 
 # -- interface_close_client ---------------------
-
+webui_interface_close_client = webui_lib.webui_interface_close_client
 """
-# /**
-#  * @brief Close a specific client.
-#  *
-#  * @param window The window number
-#  * @param event_number The event number
-#  *
-#  * @example webui_close_client(e);
-#  */
-# WEBUI_EXPORT void webui_interface_close_client(size_t window, size_t event_number);
-""" # TODO:
+brief:
+ Close a specific client.
+
+param: window - The window number
+param: event_number - The event number
+
+example:
+ webui_interface_close_client(myWindow, e->event_number);
+
+C Signature:
+ WEBUI_EXPORT void webui_interface_close_client(size_t window, size_t event_number);
+"""
+webui_interface_close_client.argtypes = [
+    c_size_t,  # size_t window
+    c_size_t   # size_t event_number
+]
+webui_interface_close_client.restype = None
 
 
 # -- interface_send_raw_client ------------------
+webui_interface_send_raw_client = webui_lib.webui_interface_send_raw_client
 """
-# /**
-#  * @brief Safely send raw data to the UI. Single client.
-#  *
-#  * @param window The window number
-#  * @param event_number The event number
-#  * @param function The JavaScript function to receive raw data: `function
-#  * myFunc(myData){}`
-#  * @param raw The raw data buffer
-#  * @param size The raw data size in bytes
-#  *
-#  * @example webui_send_raw_client(e, "myJavaScriptFunc", myBuffer, 64);
-#  */
-# WEBUI_EXPORT void webui_interface_send_raw_client(size_t window, size_t event_number, const char* function, const void* raw, size_t size);
-""" # TODO:
+brief:
+ Safely send raw data to the UI. Single client.
+
+param: window - The window number
+param: event_number - The event number
+param: function - The JavaScript function to receive raw data
+param: raw - The raw data buffer
+param: size - The raw data size in bytes
+
+example:
+ webui_interface_send_raw_client(myWindow, e->event_number, "myJavaScriptFunc", myBuffer, 64);
+
+C Signature:
+ WEBUI_EXPORT void webui_interface_send_raw_client(size_t window, size_t event_number, const char* function, const void* raw, size_t size);
+"""
+webui_interface_send_raw_client.argtypes = [
+    c_size_t,  # size_t window
+    c_size_t,  # size_t event_number
+    c_char_p,  # const char* function
+    c_void_p,  # const void* raw
+    c_size_t   # size_t size
+]
+webui_interface_send_raw_client.restype = None
 
 
 # -- interface_navigate_client ------------------
+webui_interface_navigate_client = webui_lib.webui_interface_navigate_client
 """
-# /**
-#  * @brief Navigate to a specific URL. Single client.
-#  *
-#  * @param window The window number
-#  * @param event_number The event number
-#  * @param url Full HTTP URL
-#  *
-#  * @example webui_navigate_client(e, "http://domain.com");
-#  */
-# WEBUI_EXPORT void webui_interface_navigate_client(size_t window, size_t event_number, const char* url);
-""" # TODO:
+brief:
+ Navigate to a specific URL. Single client.
+
+param: window - The window number
+param: event_number - The event number
+param: url - Full HTTP URL
+
+example:
+ webui_interface_navigate_client(myWindow, e->event_number, "http://domain.com");
+
+C Signature:
+ WEBUI_EXPORT void webui_interface_navigate_client(size_t window, size_t event_number, const char* url);
+"""
+webui_interface_navigate_client.argtypes = [
+    c_size_t,  # size_t window
+    c_size_t,  # size_t event_number
+    c_char_p   # const char* url
+]
+webui_interface_navigate_client.restype = None
 
 
 # -- interface_run_client -----------------------
+webui_interface_run_client = webui_lib.webui_interface_run_client
 """
-# /**
-#  * @brief Run JavaScript without waiting for the response. Single client.
-#  *
-#  * @param window The window number
-#  * @param event_number The event number
-#  * @param script The JavaScript to be run
-#  *
-#  * @example webui_run_client(e, "alert('Hello');");
-#  */
-# WEBUI_EXPORT void webui_interface_run_client(size_t window, size_t event_number, const char* script);
-""" # TODO:
+brief:
+ Run JavaScript without waiting for the response. Single client.
+
+param: window - The window number
+param: event_number - The event number
+param: script - The JavaScript to be run
+
+example:
+ webui_interface_run_client(myWindow, e->event_number, "alert('Hello');");
+
+C Signature:
+ WEBUI_EXPORT void webui_interface_run_client(size_t window, size_t event_number, const char* script);
+"""
+webui_interface_run_client.argtypes = [
+    c_size_t,  # size_t window
+    c_size_t,  # size_t event_number
+    c_char_p   # const char* script
+]
+webui_interface_run_client.restype = None
 
 
 # -- interface_script_client --------------------
+webui_interface_script_client = webui_lib.webui_interface_script_client
 """
-# /**
-#  * @brief Run JavaScript and get the response back. Single client.
-#  * Make sure your local buffer can hold the response.
-#  *
-#  * @param window The window number
-#  * @param event_number The event number
-#  * @param script The JavaScript to be run
-#  * @param timeout The execution timeout in seconds
-#  * @param buffer The local buffer to hold the response
-#  * @param buffer_length The local buffer size
-#  *
-#  * @return Returns True if there is no execution error
-#  *
-#  * @example bool err = webui_script_client(e, "return 4 + 6;", 0, myBuffer, myBufferSize);
-#  */
-# WEBUI_EXPORT bool webui_interface_script_client(size_t window, size_t event_number, const char* script, size_t timeout, char* buffer, size_t buffer_length);
-""" # TODO:
+brief:
+ Run JavaScript and get the response back. Single client.
+ Make sure your local buffer can hold the response.
+
+param: window - The window number
+param: event_number - The event number
+param: script - The JavaScript to be run
+param: timeout - The execution timeout in seconds
+param: buffer - The local buffer to hold the response
+param: buffer_length - The local buffer size
+
+return:
+ Returns True if there is no execution error
+
+example:
+ bool ok = webui_interface_script_client(myWindow, e->event_number, "return 4 + 6;", 0, myBuffer, myBufferSize);
+
+C Signature:
+ WEBUI_EXPORT bool webui_interface_script_client(size_t window, size_t event_number, const char* script, size_t timeout, char* buffer, size_t buffer_length);
+"""
+webui_interface_script_client.argtypes = [
+    c_size_t,  # size_t window
+    c_size_t,  # size_t event_number
+    c_char_p,  # const char* script
+    c_size_t,  # size_t timeout
+    c_char_p,  # char* buffer
+    c_size_t   # size_t buffer_length
+]
+webui_interface_script_client.restype = c_bool
 
 
 

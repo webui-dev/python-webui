@@ -1,9 +1,9 @@
-# Python WebUI v2.5.6
+# Python WebUI v2.5.0-beta.4
 #
 # http://webui.me
 # https://github.com/webui-dev/python-webui
 #
-# Copyright (c) 2020-2025 Hassan Draga.
+# Copyright (c) 2020-2026 Hassan Draga.
 # Licensed under MIT License.
 # All rights reserved.
 # Canada.
@@ -85,7 +85,7 @@ show_wait_connection:
     'webui_show_wv()' should wait for the window to connect
     before returns or not.
     Default: True
-    
+
 ui_event_blocking:
     Control if WebUI should block and process the UI events
     one a time in a single thread `True`, or process every
@@ -104,7 +104,7 @@ multi_client:
     This is helpful for web apps (non-desktop software),
     Please see the documentation for more details.
     Default: False
-    
+
 use_cookies:
     Allow or prevent WebUI from adding `webui_auth` cookies.
     WebUI uses these cookies to identify clients and block
@@ -112,11 +112,20 @@ use_cookies:
     Please keep this option to `True` if you want only a single
     client to access the window content.
     Default: True
-    
+
 asynchronous_response:
     If the backend uses asynchronous operations, set this
     option to `True`. This will make webui wait until the
     backend sets a response using `webui_return_x()`.
+"""
+
+LoggerLevel = _raw.WebuiLoggerLevel
+"""
+DEBUG: All logs with all details
+
+INFO: Only general logs
+
+ERROR: Only fatal error logs
 """
 
 
@@ -168,6 +177,18 @@ class Event:
             connection_id=self.connection_id,
             cookies=self.cookies.encode('utf-8')
         )
+
+    # -- get_context --------------------------------
+    def get_context(self) -> Optional[int]:
+        """Get user data previously attached with Window.set_context().
+
+        Returns:
+            Optional[int]: The context pointer as an integer, or None if not set.
+
+        Example:
+            ctx_ptr = e.get_context()
+        """
+        return _raw.webui_get_context(byref(self._c_event()))
 
     # -- show_client --------------------------------
     def show_client(self, content: str) -> bool:
@@ -525,6 +546,55 @@ class Event:
         """
         return int(_raw.webui_get_size(byref(self._c_event())))
 
+    # -- get_bytes_at -------------------------------
+    def get_bytes_at(self, index: int) -> bytes:
+        """Get an argument as raw bytes at a specific index.
+
+        Unlike get_string_at(), this method is safe for binary data: it reads
+        exactly get_size_at(index) bytes without assuming null-termination or
+        UTF-8 encoding.
+
+        Args:
+            index (int): The position of the argument to retrieve, starting from 0.
+
+        Returns:
+            bytes: The raw bytes of the argument at the specified index.
+
+        Example:
+            data = e.get_bytes_at(0)
+            print(f"Received {len(data)} bytes: {data.hex()}")
+        """
+        length = self.get_size_at(index)
+        if length == 0:
+            return b""
+        ptr = _raw.webui_get_string_at_ptr(byref(self._c_event()), c_size_t(index))
+        if not ptr:
+            return b""
+        return bytes(ptr[:length])
+
+    # -- get_bytes ----------------------------------
+    def get_bytes(self) -> bytes:
+        """Get the first argument as raw bytes.
+
+        Unlike get_string(), this method is safe for binary data: it reads
+        exactly get_size() bytes without assuming null-termination or UTF-8
+        encoding.
+
+        Returns:
+            bytes: The raw bytes of the first argument.
+
+        Example:
+            data = e.get_bytes()
+            print(f"Received {len(data)} bytes: {data.hex()}")
+        """
+        length = self.get_size()
+        if length == 0:
+            return b""
+        ptr = _raw.webui_get_string_ptr(byref(self._c_event()))
+        if not ptr:
+            return b""
+        return bytes(ptr[:length])
+
     # -- return_int ---------------------------------
     def return_int(self, n: int) -> None:
         """Return the response to JavaScript as an integer.
@@ -679,6 +749,23 @@ class Window:
         self._cb_func_list[bind_id] = func
         return bind_id
 
+    # -- set_context --------------------------------
+    def set_context(self, element: str, context: Any) -> None:
+        """Attach arbitrary user data to a binding, retrievable via Event.get_context().
+
+        Must be called after bind() for the same element.
+
+        Args:
+            element (str): The HTML element / JavaScript object name used in bind().
+            context (Any): Any Python object. Stored as a raw pointer via id(); keep a
+                reference alive for as long as the binding exists.
+
+        Example:
+            my_window.bind("myFunc", my_handler)
+            my_window.set_context("myFunc", my_data)
+        """
+        _raw.webui_set_context(c_size_t(self._window), element.encode('utf-8'), id(context))
+
     # -- get_best_browser ---------------------------
     def get_best_browser(self) -> Browser:
         """Get the recommended web browser ID to use.
@@ -803,6 +890,27 @@ class Window:
         """
         _raw.webui_set_kiosk(c_size_t(self._window), c_bool(status))
 
+    # -- focus --------------------------------------
+    def focus(self) -> None:
+        """Bring the window to the front and focus it.
+
+        Example:
+            my_window.focus()
+        """
+        _raw.webui_focus(c_size_t(self._window))
+
+    # -- set_resizable ------------------------------
+    def set_resizable(self, status: bool) -> None:
+        """Set whether the WebView window frame is resizable or fixed.
+
+        Args:
+            status (bool): True to allow resizing, False to fix the size.
+
+        Example:
+            my_window.set_resizable(True)
+        """
+        _raw.webui_set_resizable(c_size_t(self._window), c_bool(status))
+
     # -- set_custom_parameters ----------------------
     def set_custom_parameters(self, params: str) -> None:
         """Add user-defined command-line parameters for the web browser.
@@ -856,6 +964,24 @@ class Window:
         """
         _raw.webui_close(c_size_t(self._window))
 
+    # -- minimize -----------------------------------
+    def minimize(self) -> None:
+        """Minimize the WebView window.
+
+        Example:
+            my_window.minimize()
+        """
+        _raw.webui_minimize(c_size_t(self._window))
+
+    # -- maximize -----------------------------------
+    def maximize(self) -> None:
+        """Maximize the WebView window.
+
+        Example:
+            my_window.maximize()
+        """
+        _raw.webui_maximize(c_size_t(self._window))
+
     # -- destroy ------------------------------------
     def destroy(self) -> None:
         """Close a specific window and free all memory resources.
@@ -891,7 +1017,28 @@ class Window:
         """
         return bool(_raw.webui_set_root_folder(c_size_t(self._window), path.encode("utf-8")))
 
-    # -- set_file_handler --------------------------- 
+    # -- set_close_handler_wv -----------------------
+    def set_close_handler_wv(self, handler: Callable[[int], bool]) -> None:
+        """Set a callback to intercept the WebView window close event.
+
+        The handler receives the window ID and must return False to prevent
+        the window from closing, or True to allow it.
+
+        Args:
+            handler (Callable[[int], bool]): A function that takes the window ID and
+                returns a boolean.
+
+        Example:
+            def on_close(window_id: int) -> bool:
+                return False  # Prevent close
+
+            my_window.set_close_handler_wv(on_close)
+        """
+        close_cb_type = CFUNCTYPE(c_bool, c_size_t)
+        self._close_handler_wv_cb = close_cb_type(lambda wid: handler(int(wid)))
+        _raw.webui_set_close_handler_wv(c_size_t(self._window), self._close_handler_wv_cb)
+
+    # -- set_file_handler ---------------------------
     def set_file_handler(self, handler: Callable[[str], Optional[str]]) -> None:
         """Set a custom file handler for serving files.
     
@@ -951,59 +1098,56 @@ class Window:
         _raw.webui_set_file_handler(self._window, self._file_handler_cb)
 
 
-    # -- set_file_handler_window --------------------  # TODO: still errors on call to c bind
-    # def set_file_handler_window(self, handler: Callable[[int, str], Optional[str]]) -> None:
-    #     """Set a custom file handler for a specific window.
-    #
-    #     This function registers a custom file handler that processes file requests
-    #     for a specific window and serves HTTP responses. The handler must return
-    #     a full HTTP response (headers and body) as a UTF-8 encoded string.
-    #     Setting a new handler overrides any previously registered file handler.
-    #
-    #     Args:
-    #         handler (Callable[[int, str], str]): A function that takes a window ID
-    #             and a filename as input and returns a complete HTTP response as a string.
-    #
-    #     Returns:
-    #         None
-    #
-    #     Example:
-    #         def my_handler(window_id: int, filename: str) -> str:
-    #             response_body = "Hello, World!"
-    #             response_headers = (
-    #                 "HTTP/1.1 200 OK\r\n"
-    #                 "Content-Type: text/plain\r\n"
-    #                 f"Content-Length: {len(response_body)}\r\n"
-    #                 "\r\n"
-    #             )
-    #             return response_headers + response_body
-    #
-    #         my_window.set_file_handler_window(my_handler)
-    #     """
-    #     def _internal_file_handler(window_id: c_size_t, filename_ptr: c_char_p, length_ptr: POINTER(c_int)) -> c_void_p:
-    #         """
-    #         Internal C callback that matches the signature required by webui_set_file_handler_window.
-    #         """
-    #         # Decode the incoming filename from C
-    #         filename = filename_ptr.decode('utf-8') if filename_ptr else ""
-    #
-    #         # Call the Python-level handler to get the HTTP response
-    #         response_bytes = handler(int(window_id), filename).encode("utf-8")
-    #
-    #         # Create a ctypes buffer from the Python bytes; this buffer must remain alive
-    #         # at least until WebUI is done with it.
-    #         buf = create_string_buffer(response_bytes)
-    #
-    #         # Set the length (the int* that C expects)
-    #         length_ptr[0] = len(response_bytes)
-    #
-    #         # Return a pointer (void*) to the buffer
-    #         return cast(buf, c_void_p)
-    #
-    #     # Keep a reference so it doesn't get garbage collected
-    #     self._file_handler_cb = filehandler_window_callback(_internal_file_handler)
-    #
-    #     _raw.webui_set_file_handler_window(c_size_t(self._window), self._file_handler_cb)
+    # -- set_file_handler_window --------------------
+    def set_file_handler_window(self, handler: Callable[[int, str], Optional[str]]) -> None:
+        """Set a custom file handler that also receives the window ID.
+
+        Like set_file_handler(), but the handler also receives the window number so it
+        can serve different content per window. Setting this deactivates any handler
+        previously set with set_file_handler().
+
+        Args:
+            handler (Callable[[int, str], Optional[str]]): A function that takes the
+                window ID (int) and filename (str) and returns a complete HTTP response
+                string, or None to let WebUI serve the file normally.
+
+        Example:
+            def my_handler(window_id: int, filename: str) -> Optional[str]:
+                response_body = "Hello, World!"
+                response_headers = (
+                    "HTTP/1.1 200 OK\r\n"
+                    "Content-Type: text/plain\r\n"
+                    f"Content-Length: {len(response_body)}\r\n"
+                    "\r\n"
+                )
+                return response_headers + response_body
+
+            my_window.set_file_handler_window(my_handler)
+        """
+        callback_handler_type = CFUNCTYPE(c_void_p, c_size_t, c_char_p, POINTER(c_int))
+        _raw.webui_set_file_handler_window.argtypes = [c_size_t, callback_handler_type]
+        _raw.webui_set_file_handler_window.restype  = None
+
+        self._buffers.clear()
+
+        def _c_handler(window_id, filename_ptr, length_ptr):
+            path = filename_ptr.decode("utf-8") if filename_ptr else ""
+            response_str = handler(int(window_id), path)
+
+            if response_str is None:
+                length_ptr[0] = 0
+                return 0
+
+            data = response_str.encode("latin-1")
+            length_ptr[0] = len(data)
+
+            buf = create_string_buffer(data)
+            self._buffers.append(buf)
+
+            return addressof(buf)
+
+        self._file_handler_cb = callback_handler_type(_c_handler)
+        _raw.webui_set_file_handler_window(self._window, self._file_handler_cb)
 
     # -- is_shown -----------------------------------
     def is_shown(self) -> bool:
@@ -1163,6 +1307,56 @@ class Window:
             my_window.set_position(100, 100)  # Move window to (100, 100) on the screen
         """
         _raw.webui_set_position(c_size_t(self._window), c_uint(x), c_uint(y))
+
+    # -- set_center ---------------------------------
+    def set_center(self) -> None:
+        """Center the window on the screen.
+
+        Works better with WebView. Call before show() for best results.
+
+        Example:
+            my_window.set_center()
+        """
+        _raw.webui_set_center(c_size_t(self._window))
+
+    # -- set_frameless ------------------------------
+    def set_frameless(self, status: bool) -> None:
+        """Make the WebView window frameless (borderless).
+
+        Args:
+            status (bool): True to remove the window frame, False to restore it.
+
+        Example:
+            my_window.set_frameless(True)
+        """
+        _raw.webui_set_frameless(c_size_t(self._window), c_bool(status))
+
+    # -- set_transparent ----------------------------
+    def set_transparent(self, status: bool) -> None:
+        """Make the WebView window background transparent.
+
+        Args:
+            status (bool): True to enable transparency, False to disable it.
+
+        Example:
+            my_window.set_transparent(True)
+        """
+        _raw.webui_set_transparent(c_size_t(self._window), c_bool(status))
+
+    # -- get_hwnd -----------------------------------
+    def get_hwnd(self) -> Optional[int]:
+        """Get the native window handle.
+
+        Returns HWND on Windows (works with both WebView and browser windows),
+        GtkWindow* on Linux (WebView only).
+
+        Returns:
+            Optional[int]: The native window handle as an integer, or None if unavailable.
+
+        Example:
+            hwnd = my_window.get_hwnd()
+        """
+        return _raw.webui_get_hwnd(c_size_t(self._window))
 
     # -- set_profile --------------------------------
     def set_profile(self, name: str, path: str) -> None:
@@ -1543,6 +1737,21 @@ def wait() -> None:
     """
     _raw.webui_wait()
 
+# -- wait_async ---------------------------------
+def wait_async() -> bool:
+    """Non-blocking check: returns True while any window is still open.
+
+    Intended for use in a main-thread loop when running in WebView mode.
+
+    Returns:
+        bool: True if windows are still open, False when all have closed.
+
+    Example:
+        while wait_async():
+            pass  # do main-thread work
+    """
+    return bool(_raw.webui_wait_async())
+
 # -- exit ---------------------------------------
 def exit() -> None:
     """Close all open windows and exit `webui_wait()`.
@@ -1577,6 +1786,18 @@ def set_default_root_folder(path: str) -> bool:
             print("Default root folder set successfully.")
     """
     return bool(_raw.webui_set_default_root_folder(path.encode("utf-8")))
+
+# -- set_browser_folder -------------------------
+def set_browser_folder(path: str) -> None:
+    """Set a custom folder path for the browser executable.
+
+    Args:
+        path (str): The folder path containing the browser binary.
+
+    Example:
+        set_browser_folder("/home/Foo/Bar/")
+    """
+    _raw.webui_set_browser_folder(c_char_p(path.encode("utf-8")))
 
 # -- set_timeout --------------------------------
 def set_timeout(seconds: int) -> None:
@@ -1687,6 +1908,48 @@ def malloc(size: int) -> Optional[int]:
         return None  # Allocation failed
     return int(ptr)
 
+# -- memcpy -------------------------------------
+def memcpy(dest: int, src: int, count: int) -> None:
+    """Copy raw memory between two WebUI-managed buffers.
+
+    Args:
+        dest (int): Destination pointer (as integer).
+        src (int): Source pointer (as integer).
+        count (int): Number of bytes to copy.
+
+    Example:
+        memcpy(dest_ptr, src_ptr, 64)
+    """
+    _raw.webui_memcpy(c_void_p(dest), c_void_p(src), c_size_t(count))
+
+# -- get_last_error_number ----------------------
+def get_last_error_number() -> int:
+    """Get the last WebUI error code.
+
+    Returns:
+        int: The last error code.
+
+    Example:
+        err = get_last_error_number()
+    """
+    return int(_raw.webui_get_last_error_number())
+
+# -- get_last_error_message ---------------------
+def get_last_error_message() -> str:
+    """Get the last WebUI error message.
+
+    Returns:
+        str: The last error message string.
+
+    Example:
+        msg = get_last_error_message()
+        print(msg)
+    """
+    ptr = _raw.webui_get_last_error_message()
+    if ptr is None:
+        return ""
+    return ptr.decode("utf-8")
+
 # -- open_url -----------------------------------
 def open_url(url: str) -> None:
     """Open a URL in the default web browser.
@@ -1775,6 +2038,39 @@ def set_config(option: Config, status: bool) -> None:
     """
     _raw.webui_set_config(c_int(option.value), c_bool(status))
 
+# -- set_logger ---------------------------------
+def set_logger(func: Callable[[int, str], None], user_data: Any = None) -> None:
+    """Set a custom logger callback for WebUI internal log messages.
+
+    Args:
+        func (Callable[[int, str], None]): Logger function that receives
+            ``(level: int, message: str)``. The level corresponds to
+            LoggerLevel enum values (DEBUG=0, INFO=1, ERROR=2).
+        user_data (Any, optional): Optional context data; currently passed as
+            None to the C layer (kept for API compatibility).
+
+    Example:
+        def my_logger(level: int, message: str) -> None:
+            print(f"[{level}] {message}")
+
+        set_logger(my_logger)
+    """
+    from ctypes import CFUNCTYPE, c_size_t, c_char_p, c_void_p
+
+    logger_cb_type = CFUNCTYPE(None, c_size_t, c_char_p, c_void_p)
+
+    # Keep a module-level reference so it is not garbage-collected.
+    global _logger_cb_ref
+
+    def _c_logger(level, log_ptr, _udata):
+        msg = log_ptr.decode("utf-8") if log_ptr else ""
+        func(int(level), msg)
+
+    _logger_cb_ref = logger_cb_type(_c_logger)
+    _raw.webui_set_logger(_logger_cb_ref, None)
+
+_logger_cb_ref = None  # Module-level GC anchor for the logger callback
+
 # -- get_mime_type ------------------------------
 def get_mime_type(file: str) -> str:
     """Get the HTTP MIME type of a file.
@@ -1828,10 +2124,11 @@ def set_tls_certificate(certificate_pem: str, private_key_pem: str) -> bool:
 # == Alias ==================================================================
 # Supporting old projects based on WebUI 2.4.x
 
-window = Window
-event = Event
-browser = Browser
-runtime = Runtime
-eventType = EventType
-javascript = JavaScript
-config = Config
+window      = Window
+event       = Event
+browser     = Browser
+runtime     = Runtime
+eventType   = EventType
+javascript  = JavaScript
+config      = Config
+loggerLevel = LoggerLevel
