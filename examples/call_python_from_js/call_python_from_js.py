@@ -101,16 +101,15 @@ def my_function_boolean(e: webui.Event):
 
 def my_function_raw_binary(e: webui.Event):
     # JavaScript: my_function_raw_binary(new Uint8Array([0x41,0x42,0x43]), big_arr)
-    raw_1 = e.get_string()        # index 0 — raw bytes as str
-    raw_2 = e.get_string_at(1)
-    len_1 = e.get_size()          # index 0
-    len_2 = e.get_size_at(1)
+    raw_1 = e.get_bytes()
+    raw_2 = e.get_bytes_at(1)
+    len_1 = len(raw_1)
+    len_2 = len(raw_2)
 
-    hex_1 = " ".join(f"0x{b:02x}" for b in raw_1.encode("latin-1")[:len_1])
+    hex_1 = " ".join(f"0x{b:02x}" for b in raw_1)
     print(f"my_function_raw_binary 1 ({len_1} bytes): {hex_1}")
 
-    raw_2_bytes = raw_2.encode("latin-1")
-    valid = len_2 >= 2 and raw_2_bytes[0] == 0xA1 and raw_2_bytes[len_2 - 1] == 0xA2
+    valid = len_2 >= 2 and raw_2[0] == 0xA1 and raw_2[len_2 - 1] == 0xA2
     print(f"my_function_raw_binary 2 big ({len_2} bytes): valid data? {'Yes' if valid else 'No'}")
 
 
