@@ -1343,6 +1343,21 @@ class Window:
         """
         _raw.webui_set_transparent(c_size_t(self._window), c_bool(status))
 
+    # -- win32_get_hwnd -----------------------------
+    def win32_get_hwnd(self) -> Optional[int]:
+        """Get the Win32 HWND of the window.
+
+        More reliable than get_hwnd() with WebView than with a browser window,
+        as browser PIDs may change on launch. Windows only.
+
+        Returns:
+            Optional[int]: The Win32 HWND as an integer, or None if unavailable.
+
+        Example:
+            hwnd = my_window.win32_get_hwnd()
+        """
+        return _raw.webui_win32_get_hwnd(c_size_t(self._window))
+
     # -- get_hwnd -----------------------------------
     def get_hwnd(self) -> Optional[int]:
         """Get the native window handle.
@@ -1681,7 +1696,7 @@ def get_new_window_id() -> int:
         window_id = get_new_window_id()
         print(f"Available window ID: {window_id}")
     """
-    return int(_raw.webui_get_new_window_id)
+    return int(_raw.webui_get_new_window_id())
 
 # -- is_high_contrast ---------------------------
 def is_high_contrast() -> bool:
