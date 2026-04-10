@@ -12,6 +12,9 @@
 from __future__ import annotations
 
 import array
+import asyncio
+import inspect
+import threading
 import warnings
 from typing import Any, Callable, Optional, TypeAlias
 from ctypes import *
@@ -1055,7 +1058,7 @@ class Window:
             None
     
         Example:
-            def my_handler(filename: str) -> Optional[str]:
+            async def my_handler(filename: str) -> Optional[str]:
                 response_body = "Hello, World!"
                 response_headers = (
                     "HTTP/1.1 200 OK\r\n"
@@ -1072,26 +1075,33 @@ class Window:
         _raw.webui_set_file_handler.argtypes = [c_size_t, callback_handler_type]
         _raw.webui_set_file_handler.restype  = None
 
+        # Force async mode so WebUI waits for webui_interface_set_response_file_handler
+        # instead of the C callback return value. This lets us safely run the user
+        # handler in a background thread (supporting both sync and async handlers).
+        _raw.webui_set_config(_raw.WebuiConfig.asynchronous_response, True)
+
         self._buffers.clear()
 
-        def _c_handler(filename_ptr, length_ptr):
-            path = filename_ptr.decode("utf-8")
-            response_str = handler(path)
+        window_id = self._window
 
-            # None, tells WebUI to look for files elsewhere
+        def _respond(response_str):
             if response_str is None:
-                length_ptr[0] = 0
-                return 0
-
+                _raw.webui_interface_set_response_file_handler(window_id, None, 0)
+                return
             data = response_str.encode("latin-1")
-            length_ptr[0] = len(data)
-
-            # allocate and pin
             buf = create_string_buffer(data)
             self._buffers.append(buf)
+            _raw.webui_interface_set_response_file_handler(window_id, buf, len(data))
 
-            # return the raw address as an integer
-            return addressof(buf)
+        def _c_handler(filename_ptr, _):
+            path = filename_ptr.decode("utf-8")
+            if inspect.iscoroutinefunction(handler):
+                async def _run():
+                    _respond(await handler(path))
+                asyncio.run(_run())
+            else:
+                threading.Thread(target=lambda: _respond(handler(path)), daemon=True).start()
+            return 0
 
         # Keep a reference so it doesn't get garbage collected
         self._file_handler_cb = callback_handler_type(_c_handler)
@@ -1112,7 +1122,7 @@ class Window:
                 string, or None to let WebUI serve the file normally.
 
         Example:
-            def my_handler(window_id: int, filename: str) -> Optional[str]:
+            async def my_handler(window_id: int, filename: str) -> Optional[str]:
                 response_body = "Hello, World!"
                 response_headers = (
                     "HTTP/1.1 200 OK\r\n"
@@ -1128,23 +1138,32 @@ class Window:
         _raw.webui_set_file_handler_window.argtypes = [c_size_t, callback_handler_type]
         _raw.webui_set_file_handler_window.restype  = None
 
+        # Force async mode so WebUI waits for webui_interface_set_response_file_handler
+        # instead of the C callback return value. This lets us safely run the user
+        # handler in a background thread (supporting both sync and async handlers).
+        _raw.webui_set_config(_raw.WebuiConfig.asynchronous_response, True)
+
         self._buffers.clear()
 
-        def _c_handler(window_id, filename_ptr, length_ptr):
-            path = filename_ptr.decode("utf-8") if filename_ptr else ""
-            response_str = handler(int(window_id), path)
-
+        def _respond(wid, response_str):
             if response_str is None:
-                length_ptr[0] = 0
-                return 0
-
+                _raw.webui_interface_set_response_file_handler(wid, None, 0)
+                return
             data = response_str.encode("latin-1")
-            length_ptr[0] = len(data)
-
             buf = create_string_buffer(data)
             self._buffers.append(buf)
+            _raw.webui_interface_set_response_file_handler(wid, buf, len(data))
 
-            return addressof(buf)
+        def _c_handler(window_id, filename_ptr, _):
+            path = filename_ptr.decode("utf-8") if filename_ptr else ""
+            wid = int(window_id)
+            if inspect.iscoroutinefunction(handler):
+                async def _run():
+                    _respond(wid, await handler(wid, path))
+                asyncio.run(_run())
+            else:
+                threading.Thread(target=lambda: _respond(wid, handler(wid, path)), daemon=True).start()
+            return 0
 
         self._file_handler_cb = callback_handler_type(_c_handler)
         _raw.webui_set_file_handler_window(self._window, self._file_handler_cb)
